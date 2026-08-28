@@ -7,10 +7,10 @@ use Throwable;
 /** Captures a short project-relative stack without arguments or vendor frames. */
 final class CallSiteResolver
 {
-    /** Where Blade writes compiled templates, which is not always inside the project. */
+    /** Keep the configured path because Laravel may create this directory after boot. */
     private readonly ?string $configuredCompiledViewPath;
 
-    /** The real compiled template directory once it exists. */
+    /** Canonical directory used to identify compiled Blade stack frames. */
     private ?string $compiledViewPath;
 
     public function __construct(
@@ -37,6 +37,7 @@ final class CallSiteResolver
             return ['callsite' => null, 'stack' => []];
         }
 
+        // A custom compiled-view directory may not exist until Laravel renders its first view.
         $this->compiledViewPath ??= $this->normalizeDirectory($this->configuredCompiledViewPath);
 
         $frames = [];
