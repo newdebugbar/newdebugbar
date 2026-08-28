@@ -7,13 +7,19 @@ use Throwable;
 /** Captures a short project-relative stack without arguments or vendor frames. */
 final class CallSiteResolver
 {
+    /** Where Blade writes compiled templates, which is not always inside the project. */
+    private readonly ?string $compiledViewPath;
+
     public function __construct(
         private readonly string $projectPath,
         private readonly string $packagePath,
         private readonly bool $enabled = true,
         private readonly int $maxFrames = 5,
         private readonly int $scanLimit = 40,
-    ) {}
+        ?string $compiledViewPath = null,
+    ) {
+        $this->compiledViewPath = $this->normalizeDirectory($compiledViewPath);
+    }
 
     /**
      * @return array{
@@ -148,6 +154,23 @@ final class CallSiteResolver
         ];
     }
 
+    /** Compiled templates are matched by path, so a customized view.compiled still resolves. */
+    private function isCompiledView(string $file): bool
+    {
+        return $this->compiledViewPath !== null
+            && str_ends_with($file, '.php')
+            && str_starts_with($file, $this->compiledViewPath.'/');
+    }
+
+    private function normalizeDirectory(?string $path): ?string
+    {
+        if ($path === null || $path === '') {
+            return null;
+        }
+
+        return rtrim($this->normalizePath($path) ?? str_replace('\\', '/', $path), '/');
+    }
+
     private function normalizePath(string $path): ?string
     {
         $realPath = realpath($path);
@@ -176,7 +199,7 @@ final class CallSiteResolver
     /** @return array{file: string, line: int}|null */
     private function compiledAuthorizationLocation(string $file, int $line): ?array
     {
-        if (! str_contains($file, '/storage/framework/views/') || ! str_ends_with($file, '.php')) {
+        if (! $this->isCompiledView($file)) {
             return null;
         }
 
@@ -244,7 +267,7 @@ final class CallSiteResolver
     /** @return array{file: string, line: int, kind: string, template_file: string}|null */
     private function compiledViewLocation(string $file, int $line): ?array
     {
-        if (! str_contains($file, '/storage/framework/views/') || ! str_ends_with($file, '.php')) {
+        if (! $this->isCompiledView($file)) {
             return null;
         }
 

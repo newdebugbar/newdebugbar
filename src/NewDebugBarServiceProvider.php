@@ -103,6 +103,7 @@ final class NewDebugBarServiceProvider extends ServiceProvider
             enabled: (bool) config('newdebugbar.collection.call_sites', true),
             maxFrames: (int) config('newdebugbar.collection.call_site_frames', 5),
             scanLimit: (int) config('newdebugbar.collection.call_site_scan_limit', 40),
+            compiledViewPath: (string) (config('view.compiled') ?: storage_path('framework/views')),
         ));
         $this->app->singleton(ExceptionNormalizer::class, fn (): ExceptionNormalizer => new ExceptionNormalizer(
             projectPath: (string) (config('newdebugbar.collection.application_path') ?: base_path()),
