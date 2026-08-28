@@ -245,7 +245,18 @@
                                 class="ndb:space-y-4 ndb:border-l-0 ndb:bg-transparent ndb:p-4"
                             >
                                 <x-newdebugbar::inspector-source-fact label="Render source">
-                                    <x-slot:value x-text="selectedViewRender.source_label ?? 'Template source was not captured.'"></x-slot:value>
+                                    <x-slot:value>
+                                        <x-newdebugbar::inspector-source-link
+                                            data-ndb-view-copy-source
+                                            aria-label="Copy template path"
+                                            x-show.important="selectedViewRender.source_label"
+                                            ::title="selectedViewRender.source_label"
+                                            @click="copyText(selectedViewRender.source_label)"
+                                        >
+                                            <x-slot:value x-text="selectedViewRender.source_label"></x-slot:value>
+                                        </x-newdebugbar::inspector-source-link>
+                                        <span x-show.important="! selectedViewRender.source_label">Template source was not captured.</span>
+                                    </x-slot:value>
                                 </x-newdebugbar::inspector-source-fact>
 
                                 <template x-if="selectedViewRender.composers.length > 0">
