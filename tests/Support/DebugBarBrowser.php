@@ -135,7 +135,13 @@ final class DebugBarBrowser
 
     public static function waitForDetails(mixed $page): void
     {
-        $page->script(<<<'JS'
+        $page->script(self::waitForDetailsScript());
+    }
+
+    /** Return the wait Promise so fluent browser chains pause for deferred details. */
+    public static function waitForDetailsScript(): string
+    {
+        return <<<'JS'
             new Promise((resolve, reject) => {
                 const deadline = performance.now() + 10000;
                 let stableDetails = null;
@@ -186,7 +192,7 @@ final class DebugBarBrowser
 
                 check();
             })
-            JS);
+            JS;
     }
 
     public static function assertSectionSelected(mixed $page, string $section): void

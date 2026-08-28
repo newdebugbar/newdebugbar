@@ -1,5 +1,7 @@
 <?php
 
+use NewDebugBar\Tests\Support\DebugBarBrowser;
+
 it('keeps host styles and package styles isolated', function () {
     visit('/hostile-styles')
         ->assertScript("document.documentElement.getAttribute('data-theme') === 'dark'")
@@ -80,6 +82,7 @@ it('keeps host styles and package styles isolated', function () {
             })()
             JS)
         ->click('[data-ndb-toolbar="request"]')
+        ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->assertVisible('[data-ndb-section-panel="request"]')
         ->assertScript(<<<'JS'
             (() => {
@@ -94,6 +97,7 @@ it('keeps host styles and package styles isolated', function () {
             })()
             JS)
         ->click('[data-ndb-section="queries"]')
+        ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->assertVisible('[data-ndb-section-panel="queries"]')
         ->click('[data-ndb-query-sort-heading="duration"]')
         ->assertScript(<<<'JS'
@@ -161,6 +165,7 @@ it('keeps host styles and package styles isolated', function () {
             })()
             JS)
         ->click('[data-ndb-section="cache"]')
+        ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->assertVisible('[data-ndb-section-panel="cache"]')
         ->assertScript(<<<'JS'
             (() => {
@@ -196,6 +201,7 @@ it('keeps host styles and package styles isolated', function () {
             })()
             JS, [null, null, null, null, null, null, true, true, true, true, true, true, true, true, true, true, true, true])
         ->click('[data-ndb-section="http_client"]')
+        ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->assertVisible('[data-ndb-section-panel="http_client"]')
         ->click('[data-ndb-http-client-sort-heading="duration"]')
         ->assertScript(<<<'JS'
@@ -285,6 +291,7 @@ it('keeps host styles and package styles isolated', function () {
             })()
             JS)
         ->click('[data-ndb-section="mail"]')
+        ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->assertVisible('[data-ndb-section-panel="mail"]')
         ->assertScript(<<<'JS'
             (() => {
@@ -359,6 +366,7 @@ it('keeps host styles and package styles isolated', function () {
         ->assertScript("document.querySelector('[data-ndb-mail-open-related]').getBoundingClientRect().height < 91")
         ->keys('[data-ndb-mail-actions-trigger]', 'Escape')
         ->click('[data-ndb-section="queue"]')
+        ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->assertVisible('[data-ndb-section-panel="queue"]')
         ->assertVisible('[data-ndb-background-refresh]')
         ->assertScript(<<<'JS'
@@ -391,6 +399,7 @@ it('keeps host styles and package styles isolated', function () {
             })()
             JS)
         ->click('[data-ndb-section="redis"]')
+        ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->assertVisible('[data-ndb-section-panel="redis"]')
         ->assertScript(<<<'JS'
             (() => {
@@ -437,6 +446,7 @@ it('keeps host styles and package styles isolated', function () {
             })()
             JS)
         ->click('[data-ndb-section="notifications"]')
+        ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->assertVisible('[data-ndb-section-panel="notifications"]')
         ->assertVisible('[data-ndb-notification-profile-link]')
         ->assertScript(<<<'JS'
@@ -487,6 +497,7 @@ it('keeps host styles and package styles isolated', function () {
             })()
             JS)
         ->click('[data-ndb-section="authorization"]')
+        ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->assertVisible('[data-ndb-section-panel="authorization"]')
         ->assertScript(<<<'JS'
             (() => {
@@ -546,6 +557,7 @@ it('keeps host styles and package styles isolated', function () {
             })()
             JS, [true, true, true, true, true, true, true])
         ->click('[data-ndb-section="logs"]')
+        ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->assertVisible('[data-ndb-section-panel="logs"]')
         ->assertScript(<<<'JS'
             (() => {
@@ -619,6 +631,7 @@ it('keeps host styles and package styles isolated', function () {
             })()
             JS)
         ->click('[data-ndb-section="events"]')
+        ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->assertVisible('[data-ndb-section-panel="events"]')
         ->assertScript(<<<'JS'
             (() => {
@@ -712,6 +725,7 @@ it('keeps host styles and package styles isolated', function () {
             })()
             JS)
         ->click('[data-ndb-section="models"]')
+        ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->assertVisible('[data-ndb-section-panel="models"]')
         ->assertVisible('[data-ndb-model-workspace]')
         ->assertVisible('[data-ndb-model-detail-empty]')
@@ -836,6 +850,7 @@ it('keeps host styles and package styles isolated', function () {
             })()
             JS)
         ->click('[data-ndb-section="views"]')
+        ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->assertVisible('[data-ndb-section-panel="views"]')
         ->assertVisible('[data-ndb-view-workspace]')
         ->assertVisible('[data-ndb-view-detail-empty]')
