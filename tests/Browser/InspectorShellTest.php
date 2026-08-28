@@ -150,7 +150,7 @@ it('keeps host main element styles out of inspector content', function () {
         ->assertNoJavaScriptErrors();
 });
 
-it('caps the compact bar at large and the inspector at eight extra large', function () {
+it('caps the compact bar at large and insets the inspector on wide desktops', function () {
     visit('/profiled')
         ->resize(1440, 900)
         ->assertScript(<<<'JS'
@@ -207,9 +207,9 @@ it('caps the compact bar at large and the inspector at eight extra large', funct
                 const inspector = document.querySelector('[role="dialog"][aria-label="Request inspector"]');
                 const box = inspector.getBoundingClientRect();
 
-                return Math.abs(box.width - 1536) <= 1
-                    && Math.abs(box.left - (window.innerWidth - box.width) / 2) <= 1
-                    && Math.abs(window.innerWidth - box.right - box.left) <= 1;
+                return Math.abs(box.width - (window.innerWidth - 24)) <= 1
+                    && Math.abs(box.left - 12) <= 1
+                    && Math.abs(window.innerWidth - box.right - 12) <= 1;
             })()
             JS)
         ->resize(900, 900)
