@@ -8,7 +8,10 @@ use Throwable;
 final class CallSiteResolver
 {
     /** Where Blade writes compiled templates, which is not always inside the project. */
-    private readonly ?string $compiledViewPath;
+    private readonly ?string $configuredCompiledViewPath;
+
+    /** The real compiled template directory once it exists. */
+    private ?string $compiledViewPath;
 
     public function __construct(
         private readonly string $projectPath,
@@ -18,6 +21,7 @@ final class CallSiteResolver
         private readonly int $scanLimit = 40,
         ?string $compiledViewPath = null,
     ) {
+        $this->configuredCompiledViewPath = $compiledViewPath;
         $this->compiledViewPath = $this->normalizeDirectory($compiledViewPath);
     }
 
@@ -32,6 +36,8 @@ final class CallSiteResolver
         if (! $this->enabled) {
             return ['callsite' => null, 'stack' => []];
         }
+
+        $this->compiledViewPath ??= $this->normalizeDirectory($this->configuredCompiledViewPath);
 
         $frames = [];
         $compiledAuthorizationFrame = null;
@@ -168,7 +174,9 @@ final class CallSiteResolver
             return null;
         }
 
-        return rtrim($this->normalizePath($path) ?? str_replace('\\', '/', $path), '/');
+        $normalized = $this->normalizePath($path);
+
+        return $normalized === null ? null : rtrim($normalized, '/');
     }
 
     private function normalizePath(string $path): ?string

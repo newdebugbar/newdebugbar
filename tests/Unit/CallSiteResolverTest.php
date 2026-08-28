@@ -100,16 +100,24 @@ it('exposes compiled Blade provenance only when a collector asks for it', functi
     rmdir($root);
 });
 
-it('resolves compiled Blade provenance when the compiled view path is customized', function () {
+it('resolves compiled Blade provenance when a customized path is created after construction', function () {
     $root = sys_get_temp_dir().'/newdebugbar-callsite-'.bin2hex(random_bytes(6));
     $compiledDirectory = $root.'/compiled-views';
     $sourceDirectory = $root.'/resources/views';
-    mkdir($compiledDirectory, 0777, true);
     mkdir($sourceDirectory, 0777, true);
     $resolvedRoot = realpath($root);
     expect($resolvedRoot)->not->toBeFalse();
     $source = $sourceDirectory.'/custom.blade.php';
     $compiled = $compiledDirectory.'/custom.php';
+    $resolver = new CallSiteResolver(
+        projectPath: $resolvedRoot,
+        packagePath: dirname(__DIR__, 2),
+        compiledViewPath: $root.'/./compiled-views',
+    );
+
+    expect($resolver->capture(includeCompiledView: true))->toBe(['callsite' => null, 'stack' => []]);
+
+    mkdir($compiledDirectory, 0777, true);
     file_put_contents($source, '<p>Custom view</p>');
     file_put_contents($compiled, <<<'PHP'
         <?php
@@ -117,11 +125,6 @@ it('resolves compiled Blade provenance when the compiled view path is customized
         return $resolver->capture(includeCompiledView: true);
         ?>
         PHP.PHP_EOL.'<?php /**PATH '.$source.' ENDPATH**/ ?>');
-    $resolver = new CallSiteResolver(
-        projectPath: $resolvedRoot,
-        packagePath: dirname(__DIR__, 2),
-        compiledViewPath: $compiledDirectory,
-    );
 
     $location = (static fn (string $file, CallSiteResolver $resolver): array => include $file)($compiled, $resolver);
 
