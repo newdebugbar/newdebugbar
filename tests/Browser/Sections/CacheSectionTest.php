@@ -125,7 +125,7 @@ it('filters selects and inspects rich cache diagnostics', function () {
                     && getComputedStyle(metadata).display === 'grid'
                     && metadataLabels.join('|') === 'Result|Runtime|Store|Driver|Source'
                     && metadataValues[0] === 'Stored'
-                    && metadataValues[1].endsWith(' ms')
+                    && /^(?:<1|\d+(?:\.\d+)?) (?:µs|ms|s)$/.test(metadataValues[1])
                     && metadataValues[2] === 'array'
                     && metadataValues[3] === 'array'
                     && sourceLink?.textContent.trim().includes('.php:')
