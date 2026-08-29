@@ -3,6 +3,7 @@ import hljs from 'highlight.js/lib/core';
 import http from 'highlight.js/lib/languages/http';
 import json from 'highlight.js/lib/languages/json';
 import sql from 'highlight.js/lib/languages/sql';
+import { installCsrfRecovery } from './csrf-recovery.js';
 import { installLivewireTrace } from './livewire-trace.js';
 import { installProfileDiscoveryBridge, installRequestDiscovery } from './request-discovery.js';
 import { createNewDebugBar } from './state.js';
@@ -49,5 +50,6 @@ const livewireTrace = installLivewireTrace();
 
 window.newDebugBar = (summary, profileLimit) => createNewDebugBar(summary, null, [], profileLimit, livewireTrace);
 
+installCsrfRecovery();
 installProfileDiscoveryBridge();
 installRequestDiscovery();

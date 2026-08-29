@@ -35,6 +35,7 @@ use NewDebugBar\Collectors\QueueCollector;
 use NewDebugBar\Collectors\RedisCollector;
 use NewDebugBar\Collectors\ValidationCollector;
 use NewDebugBar\Http\Controllers\AssetController;
+use NewDebugBar\Http\Controllers\CsrfTokenController;
 use NewDebugBar\Http\Controllers\MailPreviewController;
 use NewDebugBar\Http\Middleware\ProfileRequest;
 use NewDebugBar\Livewire\DebugBar;
@@ -238,6 +239,9 @@ final class NewDebugBarServiceProvider extends ServiceProvider
         );
         Livewire::component('newdebugbar.toolbar', DebugBar::class);
         $this->registerMcpServer();
+        $router->get('/__newdebugbar/csrf', CsrfTokenController::class)
+            ->middleware('web')
+            ->name('newdebugbar.csrf');
         $router->get('/__newdebugbar/assets/{path}', AssetController::class)
             ->where('path', '.*')
             ->name('newdebugbar.asset');
