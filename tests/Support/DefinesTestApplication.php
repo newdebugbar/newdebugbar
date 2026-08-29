@@ -43,6 +43,7 @@ use NewDebugBar\Tests\Fixtures\Events\ProfiledApplicationListener;
 use NewDebugBar\Tests\Fixtures\Events\ProfiledQueuedApplicationListener;
 use NewDebugBar\Tests\Fixtures\HostCounter;
 use NewDebugBar\Tests\Fixtures\HostCounterGroup;
+use NewDebugBar\Tests\Fixtures\HostSessionRotator;
 use NewDebugBar\Tests\Fixtures\HostValidationForm;
 use NewDebugBar\Tests\Fixtures\Jobs\ProfiledAfterResponseMailJob;
 use NewDebugBar\Tests\Fixtures\Jobs\ProfiledFailingJob;
@@ -60,6 +61,7 @@ use NewDebugBar\Tests\Fixtures\Notifications\ProfiledNotificationChannel;
 use NewDebugBar\Tests\Fixtures\Policies\ProfiledAuthorizationPolicy;
 use NewDebugBar\Tests\Fixtures\Redis\ProfiledRedisCaller;
 use NewDebugBar\Tests\Fixtures\Redis\ProfiledRedisConnection;
+use NewDebugBar\Tests\Fixtures\VerifyLivewireRequestForgery;
 
 trait DefinesTestApplication
 {
@@ -67,8 +69,10 @@ trait DefinesTestApplication
     {
         Livewire::component('host-counter', HostCounter::class);
         Livewire::component('host-counter-group', HostCounterGroup::class);
+        Livewire::component('host-session-rotator', HostSessionRotator::class);
         Livewire::component('host-validation-form', HostValidationForm::class);
         Livewire::addLocation(viewPath: dirname(__DIR__).'/Fixtures/views/components');
+        $router->pushMiddlewareToGroup('web', VerifyLivewireRequestForgery::class);
 
         foreach ([StudioJob::class, Client::class, ProofVersion::class, JobActivity::class, User::class] as $modelClass) {
             new $modelClass;
@@ -205,6 +209,29 @@ trait DefinesTestApplication
                     <body><main><h1 data-testid="host-page">Livewire host</h1>{$component}</main></body>
                 </html>
                 HTML);
+        });
+
+        $router->middleware(['web', ProfileRequest::class])->get('/profiled-livewire-session-rotation', function (Request $request) {
+            foreach ([1, 2, 3] as $number) {
+                DB::select('select ? as number', [$number]);
+            }
+
+            $component = app('livewire')->mount('host-session-rotator', key: 'host-session-rotator-browser');
+
+            $response = response(<<<HTML
+                <!doctype html>
+                <html>
+                    <head>
+                        <meta name="viewport" content="width=device-width, initial-scale=1">
+                        <title>Session rotation host</title>
+                    </head>
+                    <body><main><h1 data-testid="host-page">Session rotation host</h1>{$component}</main></body>
+                </html>
+                HTML);
+
+            return $request->query('expire') === '1'
+                ? $response->withCookie(cookie(VerifyLivewireRequestForgery::COOKIE, '1', 5))
+                : $response;
         });
 
         $router->middleware(ProfileRequest::class)->get('/profiled-livewire-nested', function () {
