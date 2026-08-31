@@ -7,7 +7,10 @@ it('hands back the token the session currently holds', function (): void {
 
     $response = $this->get('/__newdebugbar/csrf');
 
-    $response->assertOk()->assertExactJson(['token' => session()->token()]);
+    $response
+        ->assertOk()
+        ->assertHeader('Cache-Control', 'no-store, private')
+        ->assertExactJson(['token' => session()->token()]);
 });
 
 it('reports the rotated token after the session regenerates', function (): void {

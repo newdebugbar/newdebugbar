@@ -16,6 +16,9 @@ final class CsrfTokenController
 {
     public function __invoke(Request $request): JsonResponse
     {
-        return new JsonResponse(['token' => $request->session()->token()]);
+        return new JsonResponse(
+            ['token' => $request->session()->token()],
+            headers: ['Cache-Control' => 'no-store, private'],
+        );
     }
 }
