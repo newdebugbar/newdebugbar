@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Contracts\Support\Renderable;
+use Illuminate\View\InvokableComponentVariable;
 use NewDebugBar\Support\Redactor;
 
 enum RedactorBackedValue: string
@@ -79,6 +82,42 @@ it('normalizes common debug values without leaking object internals', function (
     } finally {
         fclose($resource);
     }
+});
+
+it('does not stringify view objects that render when cast to string', function () {
+    $invoked = false;
+    $invokable = new InvokableComponentVariable(function () use (&$invoked) {
+        $invoked = true;
+
+        throw new RuntimeException('Blade view methods must not run during redaction.');
+    });
+    $view = new class implements Htmlable, Renderable, Stringable
+    {
+        public function toHtml(): string
+        {
+            throw new RuntimeException('Views must not render during redaction.');
+        }
+
+        public function render(): string
+        {
+            return $this->toHtml();
+        }
+
+        public function __toString(): string
+        {
+            return $this->toHtml();
+        }
+    };
+
+    expect((new Redactor)->clean([
+        'blade' => $invokable,
+        'view' => $view,
+        'label' => 'Context view',
+    ]))->toBe([
+        'blade' => '['.InvokableComponentVariable::class.']',
+        'view' => '['.$view::class.']',
+        'label' => 'Context view',
+    ])->and($invoked)->toBeFalse();
 });
 
 it('uses an explicit safety policy for positional query bindings', function () {
