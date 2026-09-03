@@ -27,6 +27,8 @@ Within the website:
 - Canvas: `[data-social-preview-canvas]`; its data attributes specify the intended **1200 × 630** CSS-pixel output.
 - Social metadata: `resources/views/components/layouts/site.blade.php`. Both Open Graph and Twitter use the final image through Vite; `vite.config.js` includes that asset. Normally neither file needs changing.
 
+Within the package, `README.md` displays `.github/readme/newdebugbar-og.png`, an identical copy of the website's final OG image. Keep this consumer in sync during refreshes.
+
 ## Get current product evidence
 
 When the bar has changed, take a fresh capture; re-exporting an old screenshot is not a refresh. Confirm the benchmark's `vendor/newdebugbar/newdebugbar` resolves to the intended package checkout and that the rendered frontend reflects the changes. Do not alter Composer linkage or unrelated dirty files.
@@ -57,7 +59,7 @@ Use browser rendering, not image generation or raster retouching. The approved B
 ## Finish within scope
 
 - Visually inspect the final PNG at 1200 × 630 and a 300-pixel-wide feed preview. Confirm the original positioning, crisp glowing description, softly separated 3D screenshot, and absence of host remnants, black bands, or accidental edge crops.
-- Replace the tracked final PNG only after inspection. Keep only the needed image and source/template changes; do not add temporary captures or progress notes to either repository.
+- Replace the tracked final PNG only after inspection, then copy it unchanged to the package's `.github/readme/newdebugbar-og.png`. Keep the README's single OG image; do not restore the old standalone inspector screenshot. Keep only the needed image and source/template changes; do not add temporary captures or progress notes to either repository.
 - For routine OG refreshes, **do not run application tests, formatters, or builds**. If current package assets, a new source path, or stale preview CSS makes a build necessary, explain the concrete dependency and ask before running it; do not substitute stale evidence.
 - Commit the refresh locally with its matching source changes. Do not push or deploy until the user approves that refresh.
 - Show the final image and briefly state what was refreshed, any shared consumers affected, and whether builds were skipped. Distinguish the local result from anything published.
