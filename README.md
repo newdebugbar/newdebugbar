@@ -1,6 +1,6 @@
 # The New Debug Bar for Laravel
 
-![The New Debug Bar request inspector open over a Laravel application](.github/readme/newdebugbar-request-inspector.png)
+![Debug Laravel without the guesswork, with the New Debug Bar request inspector](.github/readme/newdebugbar-og.png)
 
 The New Debug Bar is a modern debugging tool for Laravel, built for developers and coding agents. It helps you understand each request and find problems without cluttering your local app.
 
