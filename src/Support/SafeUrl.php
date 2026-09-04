@@ -7,7 +7,7 @@ final class SafeUrl
 {
     public function __construct(private readonly Redactor $redactor) {}
 
-    public function clean(string $url): string
+    public function clean(string $url, string $path = ''): string
     {
         $parts = parse_url($url);
 
@@ -19,7 +19,7 @@ final class SafeUrl
 
         if (isset($parts['query'])) {
             parse_str($parts['query'], $query);
-            $query = $this->redactor->clean($query);
+            $query = $this->redactor->clean($query, key: $path === '' ? 'query' : $path.'.query');
         }
 
         $safe = strtolower((string) $parts['scheme']).'://'.(string) $parts['host'];
