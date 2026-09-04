@@ -4,9 +4,10 @@ namespace NewDebugBar\Http\Controllers;
 
 use Illuminate\Http\Response;
 use NewDebugBar\Storage\ProfileStore;
+use NewDebugBar\Support\ProfileAccess;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 
-/** Serves retained mail previews and attachments from local profile storage. */
+/** Checks current HTTP access before serving retained mail previews and attachments. */
 final class MailPreviewController
 {
     public function __invoke(string $profile, int $index, string $format, ProfileStore $store): Response
@@ -77,11 +78,8 @@ final class MailPreviewController
     /** @return array<string, mixed> */
     private function preview(string $profile, int $index, ProfileStore $store): array
     {
-        $environments = config('newdebugbar.environments', ['local']);
-
-        if (! is_array($environments) || ! app()->environment($environments)) {
-            abort(404);
-        }
+        request()->attributes->set('newdebugbar.profile-data', true);
+        app(ProfileAccess::class)->authorize(request());
 
         $stored = $store->get($profile);
         $preview = $stored['sections']['mail']['payload']['items'][$index]['preview'] ?? null;

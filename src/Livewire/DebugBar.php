@@ -11,9 +11,10 @@ use Livewire\Component;
 use NewDebugBar\Presentation\ProfilePresenter;
 use NewDebugBar\Presentation\ProfileSummaryPresenter;
 use NewDebugBar\Storage\ProfileStore;
+use NewDebugBar\Support\ProfileAccess;
 use NewDebugBar\Support\QueryExplainer;
 
-/** Loads a request summary first and renders one inspector section at a time. */
+/** Rechecks HTTP access on each request and loads one saved inspector section at a time. */
 final class DebugBar extends Component
 {
     private const DEFAULT_SECTION = 'request';
@@ -67,6 +68,15 @@ final class DebugBar extends Component
     /** @var array<int, string> */
     #[Locked]
     public array $queryExplainErrors = [];
+
+    public function boot(ProfileAccess $access): void
+    {
+        if (request()->headers->has('X-Livewire')) {
+            request()->attributes->set('newdebugbar.profile-data', true);
+        }
+
+        $access->authorize(request());
+    }
 
     public function mount(
         string $profileId,

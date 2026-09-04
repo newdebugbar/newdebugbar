@@ -6,8 +6,10 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Tool;
+use NewDebugBar\Support\ProfileAccess;
 use Throwable;
 
+/** Rechecks local package access and returns visible errors when an MCP read fails. */
 abstract class DebugTool extends Tool
 {
     protected const DESCRIPTION = '';
@@ -36,6 +38,10 @@ abstract class DebugTool extends Tool
     /** @param callable(): array<string, mixed> $content */
     protected function safeResponse(callable $content): ResponseFactory
     {
+        if (! app(ProfileAccess::class)->enabled()) {
+            return Response::make(Response::error('New Debug Bar is not enabled in this environment.'));
+        }
+
         try {
             return $this->response($content());
         } catch (Throwable) {

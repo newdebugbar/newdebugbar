@@ -138,3 +138,18 @@ it('does not let a nested runtime event finish its parent profile', function () 
         ->and(app(ProfileManager::class)->isCollecting())->toBeFalse()
         ->and(app(ProfileStore::class)->get($id))->profile_type->toBe('queue');
 });
+
+it('rechecks enabled state before starting or saving runtime profiles', function () {
+    $runtime = app(RuntimeProfiler::class);
+    config()->set('newdebugbar.enabled', false);
+
+    expect($runtime->start('artisan', 'example:run'))->toBeFalse();
+
+    config()->set('newdebugbar.enabled', true);
+    expect($runtime->start('artisan', 'example:run'))->toBeTrue();
+    config()->set('newdebugbar.environments', ['local']);
+
+    expect($runtime->finish())->toBeNull()
+        ->and(app(ProfileManager::class)->isCollecting())->toBeFalse()
+        ->and(app(ProfileStore::class)->recent())->toBe([]);
+});

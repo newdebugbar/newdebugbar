@@ -20,6 +20,10 @@ final class ProfileFinalizer
 
     public function handle(RequestHandled $event): void
     {
+        if ($event->request->attributes->get('newdebugbar.profile-data') === true) {
+            $event->response->headers->set('Cache-Control', 'no-store, private');
+        }
+
         if (! $this->manager->isCollecting()) {
             return;
         }

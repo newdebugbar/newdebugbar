@@ -6,7 +6,10 @@ use NewDebugBar\Storage\BackgroundActivityStore;
 use NewDebugBar\Storage\ProfileStore;
 use Throwable;
 
-/** Connects stored request and worker profiles through bounded queue facts. */
+/**
+ * Connects stored request and worker profiles through bounded queue facts.
+ * Keeps masks from either file in every correlated copy without changing stored files.
+ */
 final class BackgroundActivityPresenter
 {
     public function __construct(private readonly BackgroundActivityStore $activities) {}
@@ -39,6 +42,31 @@ final class BackgroundActivityPresenter
             $activities = collect();
         }
 
+        $originKeys = $activities->filter(
+            fn (array $activity): bool => ($activity['origin_profile_id'] ?? null) === $profileId,
+        )->keys()->all();
+
+        // File-level rules may select only one profile path. Carry its masks into
+        // the shared facts before any section or root activity copy is presented.
+        foreach (['queue', 'mail', 'notifications'] as $section) {
+            foreach ((array) ($profile['sections'][$section]['payload']['items'] ?? []) as $item) {
+                $key = is_array($item) ? ($item['correlation_key'] ?? null) : null;
+                $activity = is_string($key) ? $activities->get($key) : null;
+
+                if (! is_array($activity)) {
+                    continue;
+                }
+
+                $activity = $this->preserveRedactions($activity, $item);
+
+                if (array_key_exists('activity_attempt', $item)) {
+                    $activity['attempt'] = $this->preserveRedactions($activity['attempt'] ?? null, $item['activity_attempt']);
+                }
+
+                $activities->put($key, $activity);
+            }
+        }
+
         foreach (['queue', 'mail', 'notifications'] as $section) {
             if (! isset($profile['sections'][$section]) || ! is_array($profile['sections'][$section])) {
                 continue;
@@ -51,7 +79,7 @@ final class BackgroundActivityPresenter
             }
 
             $profile['sections'][$section]['payload']['items'] = array_map(
-                function (mixed $item) use ($activities, $profileId): mixed {
+                function (mixed $item) use ($activities, $originKeys): mixed {
                     if (! is_array($item) || ! is_string($item['correlation_key'] ?? null)) {
                         return $item;
                     }
@@ -62,7 +90,8 @@ final class BackgroundActivityPresenter
                         return $item;
                     }
 
-                    $isOrigin = ($activity['origin_profile_id'] ?? null) === $profileId;
+                    $isOrigin = in_array($item['correlation_key'], $originKeys, true);
+                    $item = $this->preserveRedactions($item, $activity);
 
                     return [
                         ...$item,
@@ -117,5 +146,20 @@ final class BackgroundActivityPresenter
         ];
 
         return $profile;
+    }
+
+    private function preserveRedactions(mixed $value, mixed $other): mixed
+    {
+        if ($value === '[redacted]' || $other === '[redacted]') {
+            return '[redacted]';
+        }
+
+        if (is_array($value) && is_array($other)) {
+            foreach (array_intersect_key($value, $other) as $key => $child) {
+                $value[$key] = $this->preserveRedactions($child, $other[$key]);
+            }
+        }
+
+        return $value;
     }
 }

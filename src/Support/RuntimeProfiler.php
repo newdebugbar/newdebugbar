@@ -21,7 +21,7 @@ final class RuntimeProfiler
     /** @param array<string, mixed> $context */
     public function start(string $type, string $name, array $context = [], ?string $ownerKey = null): bool
     {
-        if ($this->ownsProfile || $this->manager->isCollecting()) {
+        if (! app(ProfileAccess::class)->enabled() || $this->ownsProfile || $this->manager->isCollecting()) {
             return false;
         }
 
@@ -39,6 +39,12 @@ final class RuntimeProfiler
         }
 
         try {
+            if (! app(ProfileAccess::class)->enabled()) {
+                $this->manager->discard();
+
+                return null;
+            }
+
             return $this->store->put($this->manager->finishRuntime($exitCode));
         } catch (Throwable) {
             $this->manager->discard();

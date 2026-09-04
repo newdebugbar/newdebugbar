@@ -28,6 +28,16 @@ return [
 
     'environments' => ['local'],
 
+    // Optional HTTP access check: an invokable class or callable receiving the request.
+    // Null keeps the full local experience available. This does not restrict local MCP.
+    'access' => null,
+
+    // Request paths to skip, such as 'billing/*'. The default captures every app path.
+    'except' => [],
+
+    // Additional sensitive dotted paths; * matches any characters. Built-in rules remain.
+    'redact' => [],
+
     /*
     |--------------------------------------------------------------------------
     | Default Theme
@@ -72,10 +82,14 @@ return [
     | without letting one message dominate a profile. Metadata remains visible
     | for files beyond that budget. Applications send different mail, so both
     | limits remain configurable.
+    | "capture_eml" and "capture_attachment_bodies" default to true for useful
+    | local previews. Set either to false when that content should not be saved.
     |
     */
 
     'mail_preview' => [
+        'capture_eml' => true,
+        'capture_attachment_bodies' => true,
         'max_body_bytes' => 50_000,
         'max_attachment_bytes' => 2_000_000,
     ],

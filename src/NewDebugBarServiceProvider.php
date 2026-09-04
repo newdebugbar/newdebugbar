@@ -52,7 +52,9 @@ use NewDebugBar\Support\LivewireRegistrar;
 use NewDebugBar\Support\LogChannelTap;
 use NewDebugBar\Support\LogChannelTracker;
 use NewDebugBar\Support\MailPreview;
+use NewDebugBar\Support\ProfileAccess;
 use NewDebugBar\Support\ProfileFinalizer;
+use NewDebugBar\Support\ProfileSanitizer;
 use NewDebugBar\Support\QueryExplainer;
 use NewDebugBar\Support\QueuedCommunicationInspector;
 use NewDebugBar\Support\Redactor;
@@ -75,6 +77,7 @@ final class NewDebugBarServiceProvider extends ServiceProvider
             maxDepth: (int) config('newdebugbar.collection.max_depth', 5),
             maxStringLength: (int) config('newdebugbar.collection.max_string_length', 2_000),
             maxArrayItems: (int) config('newdebugbar.collection.max_items_per_array', 100),
+            maskedPaths: (array) config('newdebugbar.redact', []),
         ));
 
         $this->app->singleton(QueryAnalyzer::class, fn (): QueryAnalyzer => new QueryAnalyzer(
@@ -122,6 +125,8 @@ final class NewDebugBarServiceProvider extends ServiceProvider
             maxBodyBytes: (int) config('newdebugbar.mail_preview.max_body_bytes', 50_000),
             maxRecipients: (int) config('newdebugbar.collection.max_items_per_array', 100),
             maxAttachmentBytes: (int) config('newdebugbar.mail_preview.max_attachment_bytes', 2_000_000),
+            captureEml: (bool) config('newdebugbar.mail_preview.capture_eml', true),
+            captureAttachmentBodies: (bool) config('newdebugbar.mail_preview.capture_attachment_bodies', true),
         ));
         $this->app->scoped(RuntimeProfiler::class);
         $this->app->singleton(RuntimeContext::class);
@@ -164,6 +169,7 @@ final class NewDebugBarServiceProvider extends ServiceProvider
             path: config('newdebugbar.storage.path') ?: storage_path('framework/newdebugbar'),
             maxProfiles: (int) config('newdebugbar.storage.max_profiles', 20),
             maxAgeMinutes: (int) config('newdebugbar.storage.max_age_minutes', 60),
+            sanitizer: $app->make(ProfileSanitizer::class),
         ));
         $this->app->singleton(BackgroundActivityStore::class, function ($app): BackgroundActivityStore {
             $profilePath = config('newdebugbar.storage.path') ?: storage_path('framework/newdebugbar');
@@ -174,6 +180,7 @@ final class NewDebugBarServiceProvider extends ServiceProvider
                 path: rtrim($profilePath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'background',
                 maxActivities: max(20, $maxProfiles * 5),
                 maxAgeMinutes: (int) config('newdebugbar.storage.max_age_minutes', 60),
+                redactor: $app->make(Redactor::class),
             );
         });
         $this->app->singleton(QueuedCommunicationInspector::class, fn (): QueuedCommunicationInspector => new QueuedCommunicationInspector(
@@ -246,6 +253,7 @@ final class NewDebugBarServiceProvider extends ServiceProvider
             ->where('path', '.*')
             ->name('newdebugbar.asset');
         $router->get('/__newdebugbar/mail/{profile}/{index}/{format}', MailPreviewController::class)
+            ->middleware('web')
             ->where('profile', ProfileStore::ID_PATTERN)
             ->whereNumber('index')
             ->whereIn('format', ['html', 'text', 'eml'])
@@ -254,6 +262,7 @@ final class NewDebugBarServiceProvider extends ServiceProvider
             '/__newdebugbar/mail/{profile}/{index}/attachment/{attachment}',
             [MailPreviewController::class, 'attachment'],
         )
+            ->middleware('web')
             ->where('profile', ProfileStore::ID_PATTERN)
             ->whereNumber('index')
             ->whereNumber('attachment')
@@ -267,11 +276,7 @@ final class NewDebugBarServiceProvider extends ServiceProvider
 
     private function isEnabledEnvironment(): bool
     {
-        $environments = config('newdebugbar.environments', ['local']);
-
-        return config('newdebugbar.enabled', true)
-            && is_array($environments)
-            && $this->app->environment($environments);
+        return $this->app->make(ProfileAccess::class)->enabled();
     }
 
     private function registerLogChannelTracking(): void

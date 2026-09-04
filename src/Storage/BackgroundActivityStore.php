@@ -4,6 +4,7 @@ namespace NewDebugBar\Storage;
 
 use Illuminate\Filesystem\Filesystem;
 use JsonException;
+use NewDebugBar\Support\Redactor;
 use RuntimeException;
 use Throwable;
 
@@ -19,6 +20,7 @@ final class BackgroundActivityStore
         private readonly string $path,
         private readonly int $maxActivities = 100,
         private readonly int $maxAgeMinutes = 60,
+        private readonly ?Redactor $redactor = null,
     ) {}
 
     public function key(string $connection, ?string $queue, mixed $jobId): ?string
@@ -190,6 +192,7 @@ final class BackgroundActivityStore
         $this->files->ensureDirectoryExists($this->path, 0700);
 
         try {
+            $activity = ($this->redactor ?? new Redactor)->clean($activity, key: 'background_activity');
             $json = json_encode($activity, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
             throw new RuntimeException('The background activity could not be encoded.', previous: $exception);

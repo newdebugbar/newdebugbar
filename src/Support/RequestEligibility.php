@@ -10,8 +10,16 @@ final class RequestEligibility
 {
     public function allows(Request $request): bool
     {
-        if (! config('newdebugbar.enabled', true)) {
+        if (! app(ProfileAccess::class)->enabled()) {
             return false;
+        }
+
+        $excluded = config('newdebugbar.except', []);
+
+        foreach (is_array($excluded) ? $excluded : [] as $pattern) {
+            if (is_string($pattern) && $pattern !== '' && $request->is(ltrim($pattern, '/') ?: '/')) {
+                return false;
+            }
         }
 
         if ($request->is('__newdebugbar/*') || $this->isLivewireAsset($request)) {

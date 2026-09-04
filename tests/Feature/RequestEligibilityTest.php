@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+use NewDebugBar\Storage\ProfileStore;
 use NewDebugBar\Support\RequestEligibility;
 
 $livewireEligibilityMessage = function (string $name): array {
@@ -68,4 +69,47 @@ it('stops profiling when the package is disabled', function () {
     $request = Request::create('/dashboard', server: ['HTTP_ACCEPT' => 'text/html']);
 
     expect(app(RequestEligibility::class)->allows($request))->toBeFalse();
+});
+
+it('excludes only configured request path patterns', function (string $path, bool $allowed) {
+    config()->set('newdebugbar.except', ['account/reset/*', '/billing/private', '/', '', null]);
+
+    expect(app(RequestEligibility::class)->allows(Request::create($path)))->toBe($allowed);
+})->with([
+    'wildcard' => ['/account/reset/private-value', false],
+    'root' => ['/', false],
+    'leading slash' => ['/billing/private', false],
+    'similar route remains captured' => ['/billing/private-preview', true],
+    'unrelated route' => ['/dashboard', true],
+]);
+
+it('does not save or identify an excluded request', function () {
+    config()->set('newdebugbar.except', ['plain-json']);
+
+    $this->getJson('/plain-json')->assertOk()->assertExactJson(['ready' => true])
+        ->assertHeaderMissing('X-NewDebugBar-Profile');
+
+    expect(app(ProfileStore::class)->recent())->toBe([]);
+});
+
+it('stops collection when the allowed environment changes', function () {
+    config()->set('newdebugbar.environments', ['local']);
+
+    expect(app(RequestEligibility::class)->allows(Request::create('/dashboard')))->toBeFalse();
+});
+
+it('leaves excluded HTML untouched while profiling an allowed sibling', function () {
+    config()->set('newdebugbar.except', ['profiled']);
+
+    $this->get('/profiled', ['Accept' => 'text/html'])->assertOk()
+        ->assertHeaderMissing('X-NewDebugBar-Profile')
+        ->assertDontSee('id="newdebugbar"', false);
+    expect(app(ProfileStore::class)->recent())->toBe([]);
+
+    $id = $this->get('/profiled-next', ['Accept' => 'text/html'])->assertOk()
+        ->assertHeader('X-NewDebugBar-Profile')
+        ->assertSee('id="newdebugbar"', false)
+        ->headers->get('X-NewDebugBar-Profile');
+
+    expect(app(ProfileStore::class)->get($id)['sections']['request']['payload']['path'])->toBe('/profiled-next');
 });

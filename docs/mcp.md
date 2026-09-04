@@ -135,6 +135,59 @@ Agents should start with findings and one small section. When they need detail t
 
 For complete Eloquent evidence, follow `/sections/models/payload/model_groups`. The path includes logical write folding, record identifiers, capture-redacted changed attributes, sources, timings, exact-source query correlation, and guidance while the focused Models response stays concise.
 
+## Capture, redaction, and access
+
+Every retained profile value can be read through `get-debug-profile-data`, including mail bodies and attachment data. A focused tool may leave those values out to keep its response small; that does not make them private from the agent.
+
+Recognized credentials are replaced with `[redacted]` during capture and checked again before every profile write. Background correlation records use the same redaction rules. This is not a promise that arbitrary secrets inside SQL values, logs, HTML, mail text, or files can be detected. Normal local diagnostics stay enabled by default.
+
+To change capture rules, publish the configuration once:
+
+```bash
+php artisan vendor:publish --tag=newdebugbar-config
+```
+
+In `config/newdebugbar.php`, `redact` adds sensitive field names or dotted paths:
+
+```php
+'redact' => [
+    'request.query.patient',
+    'mail.items.*.preview.subject',
+],
+```
+
+Rules match a complete path or its suffix at any depth. `*` matches any characters, including dots. Names are normalized, so `patientId`, `patient-id`, and `patient_id` match the same name. Both logical paths such as `request.query.patient` and stored paths such as `sections.request.payload.query.patient` work. An empty list does not turn off the built-in credential rules.
+
+Rules select fields, not every occurrence of the same text. Known query/input, mail, Livewire, and linked background copies keep their masks when presented. A whole-record mask retains a `redacted: true` marker; a whole collection becomes an empty list with an accompanying `*_redacted` flag, so other evidence remains readable.
+
+Other capture and access settings are:
+
+- `except`: request paths to skip, such as `['billing/*']`. The default is `[]`. This stops capture for matching HTTP requests; it is not an access rule for saved profiles or a filter for background work.
+- `access`: an optional callable or invokable class receiving `Illuminate\Http\Request`. Only the boolean `true` allows access. The default `null` allows local HTTP access. The check runs when the bar loads or hydrates and before each mail preview or attachment read. It does not restrict the local MCP process, which uses the package's enabled and environment checks.
+- `mail_preview.capture_eml`: set to `false` to skip raw MIME construction and storage. Normal HTML and text previews remain. The default is `true`.
+- `mail_preview.capture_attachment_bodies`: set to `false` to avoid reading or retaining attachment bodies, including their copy inside EML. File metadata remains, but size is unavailable when the body was not read. The default is `true`.
+
+For an access rule that works with Laravel's config cache, set `access` to your invokable class name rather than a closure. Keep `environments` limited to local development. Capture settings affect future writes, not files already saved. Restart the client's local MCP server after changing its app configuration.
+
+### Missing mail content
+
+Read `/sections/mail/payload/items/{index}/preview` to inspect retained mail content. A `null` `eml` or attachment `body_base64` means that download is unavailable.
+
+- `eml_omitted_reason` is `capture_disabled` when raw MIME capture is off, `redacted_fields` when a redacted preview field required removing its raw MIME copy, or `profile_budget` when it did not fit the total profile limit.
+- Each attachment's `body_omitted_reason` is `capture_disabled`, `attachment_budget`, `unreadable`, `redacted`, or `profile_budget`. A retained body has a `null` reason.
+- HTML or text removed by the total profile limit has a `null` value and an `html_omitted_reason` or `text_omitted_reason` of `profile_budget`.
+- `attachments_omitted` counts bodies not retained; `attachment_metadata_omitted` counts files whose metadata did not fit the item limit.
+
+### Missing evidence from large profiles
+
+Each saved profile has a fixed 10,000,000-byte ceiling, separate from the configurable MCP response limits. Inspect `/storage` with `get-debug-profile-data` for size-limit metadata when present:
+
+- `max_bytes`, `original_bytes`, and `truncated` describe the size limit and whether it removed evidence.
+- `omitted_value_count`, `omitted_item_count`, and `omitted_section_count` give totals.
+- `omitted_values` lists value paths, `omitted_items` maps list paths to omitted counts, and `omitted_sections` lists sections whose payloads were omitted. These detail lists are bounded; a positive `omitted_paths_truncated` count means they do not list every omission.
+
+Treat missing evidence as missing, not proof that the work did not happen. Paging or increasing the MCP response limit cannot recover data omitted before storage.
+
 ## Fix common problems
 
 - **The server is missing:** Make sure the package is installed, the app uses the `local` environment, and `NEWDEBUGBAR_ENABLED` is not `false`.

@@ -4,6 +4,21 @@ use Livewire\Livewire;
 use NewDebugBar\Livewire\DebugBar;
 use NewDebugBar\Storage\ProfileStore;
 
+uses(ConfiguresMailPreviewCapture::class);
+
+/** Boots the real mail event listeners with each tested capture policy. */
+trait ConfiguresMailPreviewCapture
+{
+    protected array $mailPreviewCaptureOptions = [];
+
+    protected function defineEnvironment($app): void
+    {
+        parent::defineEnvironment($app);
+
+        $app['config']->set($this->mailPreviewCaptureOptions);
+    }
+}
+
 it('stores and serves bounded local previews with downloadable attachments', function () {
     $response = $this->get('/profiled-messages', ['Accept' => 'text/html'])->assertOk();
     $profileId = $response->headers->get('X-NewDebugBar-Profile');
@@ -24,6 +39,7 @@ it('stores and serves bounded local previews with downloadable attachments', fun
             'content_id' => null,
             'size_bytes' => 18,
             'body_base64' => base64_encode('private attachment'),
+            'body_omitted_reason' => null,
         ]])
         ->and($preview['eml'])->toContain('private.txt', base64_encode('private attachment'));
 
@@ -97,3 +113,62 @@ it('rejects profile identifiers that storage cannot read', function () {
     $this->get('/__newdebugbar/mail/550e8400-e29b-11d4-a716-446655440000/0/text')
         ->assertNotFound();
 });
+
+it('applies mail capture opt outs before profiles are stored and served', function (bool $captureEml, bool $captureAttachmentBodies) {
+    $this->mailPreviewCaptureOptions = [
+        'newdebugbar.mail_preview.capture_eml' => $captureEml,
+        'newdebugbar.mail_preview.capture_attachment_bodies' => $captureAttachmentBodies,
+    ];
+    $this->refreshApplication();
+
+    $response = $this->get('/profiled-messages', ['Accept' => 'text/html'])->assertOk();
+    $profileId = $response->headers->get('X-NewDebugBar-Profile');
+    $profile = app(ProfileStore::class)->get($profileId);
+    $preview = $profile['sections']['mail']['payload']['items'][0]['preview'];
+
+    expect($preview)
+        ->subject->toBe('private subject')
+        ->from->toBe(['private-sender@example.test'])
+        ->to->toBe(['private-recipient@example.test'])
+        ->text->toBe('private body')
+        ->eml_omitted_reason->toBe($captureEml ? null : 'capture_disabled')
+        ->attachments_omitted->toBe($captureAttachmentBodies ? 0 : 1)
+        ->attachment_metadata_omitted->toBe(0)
+        ->and($preview['attachments'][0])
+        ->name->toBe('private.txt')
+        ->body_base64->toBe($captureAttachmentBodies ? base64_encode('private attachment') : null)
+        ->body_omitted_reason->toBe($captureAttachmentBodies ? null : 'capture_disabled');
+
+    $this->get(route('newdebugbar.mail-preview', [
+        'profile' => $profileId,
+        'index' => 0,
+        'format' => 'text',
+    ]))->assertOk();
+
+    $this->get(route('newdebugbar.mail-preview', [
+        'profile' => $profileId,
+        'index' => 0,
+        'format' => 'eml',
+    ]))->assertStatus($captureEml ? 200 : 404);
+
+    $this->get(route('newdebugbar.mail-attachment', [
+        'profile' => $profileId,
+        'index' => 0,
+        'attachment' => 0,
+    ]))->assertStatus($captureAttachmentBodies ? 200 : 404);
+
+    if (! $captureEml) {
+        expect($preview['eml'])->toBeNull();
+    }
+
+    if (! $captureAttachmentBodies) {
+        $storedJson = file_get_contents(config('newdebugbar.storage.path').'/'.$profileId.'.json');
+
+        expect($storedJson)
+            ->not->toContain('private attachment', base64_encode('private attachment'));
+    }
+})->with([
+    'raw MIME disabled' => [false, true],
+    'attachment bodies disabled' => [true, false],
+    'both disabled' => [false, false],
+]);
