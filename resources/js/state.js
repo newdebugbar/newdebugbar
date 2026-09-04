@@ -1968,8 +1968,10 @@ export function createNewDebugBar(
       if (reset) this.cancelActivityRefresh(true);
       if (!this.inspectorOpen || this.activityRefreshPending) return;
 
-      // A renderless poll must not share the pending message that renders a section island.
-      const action = this.$wire?.refreshRelatedActivity;
+      // Keep summary and section responses in the same serialized component scope.
+      const island = this.$wire?.$island;
+      const scopedWire = typeof island === 'function' ? island.call(this.$wire, 'section-details') : this.$wire;
+      const action = scopedWire?.refreshRelatedActivity;
       if (typeof action !== 'function') return;
       if (!reset && (!this.hasPendingActivity() || this.activityPollAttempts >= ACTIVITY_POLL_LIMIT)) return;
 
@@ -1977,7 +1979,7 @@ export function createNewDebugBar(
       this.activityPollAttempts++;
       this.activityRefreshPending = true;
 
-      Promise.resolve(action.call(this.$wire))
+      Promise.resolve(action.call(scopedWire))
         .then(() => {
           if (profileId !== this.summary.id) return;
 

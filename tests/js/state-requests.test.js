@@ -233,6 +233,7 @@ test('background refresh is useful-only, bounded, and preserves related navigati
   state.$root = { querySelector: () => null, querySelectorAll: () => [] };
   const sectionWire = {
     loadSection: async () => {},
+    refreshRelatedActivity: async () => refreshes++,
   };
   state.$wire = {
     $island(name) {
@@ -240,7 +241,6 @@ test('background refresh is useful-only, bounded, and preserves related navigati
 
       return sectionWire;
     },
-    refreshRelatedActivity: async () => refreshes++,
     switchProfile: async (id) => {
       switched = id;
     },
@@ -251,7 +251,7 @@ test('background refresh is useful-only, bounded, and preserves related navigati
   browser.runTimers();
   await Promise.resolve();
   assert.equal(refreshes, 1);
-  assert.deepEqual(islandCalls, ['section-details']);
+  assert.deepEqual(islandCalls, ['section-details', 'section-details']);
 
   for (let attempt = 0; attempt < 35; attempt++) {
     browser.runTimers();
@@ -259,7 +259,7 @@ test('background refresh is useful-only, bounded, and preserves related navigati
   }
 
   assert.equal(refreshes, 30);
-  assert.deepEqual(islandCalls, ['section-details']);
+  assert.equal(islandCalls.every((name) => name === 'section-details'), true);
   assert.equal(state.activityPollTimer, null);
 
   state.receiveActivityRefresh({ ...origin, background_pending: false }, [worker]);

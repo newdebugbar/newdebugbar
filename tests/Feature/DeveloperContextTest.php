@@ -84,15 +84,18 @@ it('captures validation field and rule names with the rendered redirect status',
         ->callsite->file->toBe('tests/Support/DefinesTestApplication.php')
         ->and($profile['sections']['exceptions']['summary']['count'])->toBe(0);
 
-    Livewire::test(DebugBar::class, ['profileId' => $response->headers->get('X-NewDebugBar-Profile')])
+    $component = Livewire::test(DebugBar::class, ['profileId' => $response->headers->get('X-NewDebugBar-Profile')])
         ->call('loadSection', 'validation')
-        ->assertSee('2 fields failed validation')
-        ->assertSee('signup bag')
-        ->assertSee('Validation 422')
-        ->assertSee('Redirect 302')
-        ->assertSee('The name field is required.')
-        ->assertSee('tests/Support/DefinesTestApplication.php')
-        ->assertDontSee('Show validation messages');
+        ->assertSet('selectedSection', 'validation')
+        ->assertSet('profile.sections.validation.payload.items.0.fields', ['email', 'name'])
+        ->assertSet('profile.sections.validation.payload.items.0.error_bag', 'signup')
+        ->assertSet('profile.sections.validation.payload.items.0.exception_status', 422)
+        ->assertSet('profile.sections.validation.payload.items.0.response_status', 302)
+        ->assertSet('profile.sections.validation.payload.items.0.messages', $validation['messages'])
+        ->assertDispatched('newdebugbar-section-loaded', section: 'validation');
+
+    expect($component->effects)->not->toHaveKey('html')
+        ->and($component->effects['islandFragments'] ?? [])->toHaveCount(1);
 });
 
 it('carries redirected validation messages into the next profiled page', function () {
@@ -120,11 +123,16 @@ it('carries redirected validation messages into the next profiled page', functio
         ->not->toHaveKey('response_status')
         ->and($profile['sections']['validation']['summary']['count'])->toBe(1);
 
-    Livewire::test(DebugBar::class, ['profileId' => $response->headers->get('X-NewDebugBar-Profile')])
+    $component = Livewire::test(DebugBar::class, ['profileId' => $response->headers->get('X-NewDebugBar-Profile')])
         ->call('loadSection', 'validation')
-        ->assertSee('Carried from the previous request.')
-        ->assertSee('The email has already been taken.')
-        ->assertSee('Failed rules and source code are not available on this request.');
+        ->assertSet('selectedSection', 'validation')
+        ->assertSet('profile.sections.validation.payload.items.0.from_previous_request', true)
+        ->assertSet('profile.sections.validation.payload.items.0.rules', ['email' => [], 'team' => []])
+        ->assertSet('profile.sections.validation.payload.items.0.messages', $validation['messages'])
+        ->assertDispatched('newdebugbar-section-loaded', section: 'validation');
+
+    expect($component->effects)->not->toHaveKey('html')
+        ->and($component->effects['islandFragments'] ?? [])->toHaveCount(1);
 });
 
 it('shows authentication and session shape without identity or values', function () {

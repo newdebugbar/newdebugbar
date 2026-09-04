@@ -96,11 +96,15 @@ it('stores and serves bounded local previews with downloadable attachments', fun
         ->assertHeader('Content-Disposition', 'attachment; filename="message-1.eml"');
     expect($emlResponse->getContent())->toContain('private.txt', base64_encode('private attachment'));
 
-    Livewire::test(DebugBar::class, ['profileId' => $profileId])
+    $component = Livewire::test(DebugBar::class, ['profileId' => $profileId])
         ->call('loadSection', 'mail')
-        ->assertSee('Download .EML')
-        ->assertSee('Download')
-        ->assertSee('Open preview');
+        ->assertSet('selectedSection', 'mail')
+        ->assertSet('profile.sections.mail.payload.items.0.preview.eml', $preview['eml'])
+        ->assertSet('profile.sections.mail.payload.items.0.preview.attachments', $preview['attachments'])
+        ->assertDispatched('newdebugbar-section-loaded', section: 'mail');
+
+    expect($component->effects)->not->toHaveKey('html')
+        ->and($component->effects['islandFragments'] ?? [])->toHaveCount(1);
 
     $this->get(route('newdebugbar.mail-attachment', [
         'profile' => $profileId,

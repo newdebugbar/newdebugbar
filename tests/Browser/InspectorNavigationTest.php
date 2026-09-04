@@ -32,6 +32,64 @@ it('renders a selected section when a background refresh starts in the same turn
         ->assertNoJavaScriptErrors();
 })->with(['refresh before selection' => true, 'selection before refresh' => false]);
 
+it('keeps view data loadable after a delayed background response', function () {
+    $page = visit('/profiled-views')
+        ->click('[data-ndb-toolbar="request"]');
+
+    DebugBarBrowser::waitForDetails($page);
+
+    $page->script(<<<'JS'
+        (() => {
+            const originalFetch = window.fetch;
+            const heldResponse = new Promise(resolve => window.newdebugbarReleaseActivity = resolve);
+            let activeRequests = 0;
+            window.newdebugbarActivityResponseHeld = false;
+            window.newdebugbarMaxSectionRequests = 0;
+
+            window.fetch = async function (input, options) {
+                const payload = typeof options?.body === 'string' ? JSON.parse(options.body) : {};
+                const refresh = payload.components?.some(component =>
+                    component.calls?.some(call => call.method === 'refreshRelatedActivity'));
+                const sectionRequest = refresh || payload.components?.some(component =>
+                    component.calls?.some(call => call.method === 'loadSection'));
+
+                if (sectionRequest) {
+                    activeRequests++;
+                    window.newdebugbarMaxSectionRequests = Math.max(window.newdebugbarMaxSectionRequests, activeRequests);
+                }
+
+                const response = await originalFetch.apply(this, arguments);
+
+                if (refresh) {
+                    window.newdebugbarActivityResponseHeld = true;
+                    await heldResponse;
+                }
+
+                if (sectionRequest) activeRequests--;
+
+                return response;
+            };
+
+            const state = Alpine.$data(document.getElementById('newdebugbar'));
+            state.refreshBackgroundActivity(true);
+            state.selectSection('views');
+        })()
+        JS);
+
+    $page
+        ->assertScript('window.newdebugbarActivityResponseHeld === true')
+        ->script('window.newdebugbarReleaseActivity()');
+    DebugBarBrowser::waitForDetails($page);
+
+    $page
+        ->assertScript('window.newdebugbarMaxSectionRequests', 1)
+        ->assertScript("Alpine.\$data(document.getElementById('newdebugbar')).activityRefreshPending === false")
+        ->assertScript("Alpine.\$data(document.getElementById('newdebugbar')).\$wire.selectedSection", 'views')
+        ->click('[data-ndb-view-group="view-2"]')
+        ->assertVisible('[data-ndb-view-data]')
+        ->assertNoJavaScriptErrors();
+});
+
 it('switches every section after Livewire navigation with one active state', function () {
     $page = visit('/profiled')
         ->click('[data-testid="host-navigation"]')
