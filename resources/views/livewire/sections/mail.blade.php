@@ -77,7 +77,6 @@
                 : ($source === null ? '(No subject)' : class_basename($source));
             $hasHtml = is_string($preview['html'] ?? null);
             $hasText = is_string($preview['text'] ?? null);
-            $hasPreview = $hasHtml || $hasText;
             $execution = $index + 1;
             $callsiteLabel = $callsite === null ? 'Source unavailable' : $callsite['file'].':'.$callsite['line'];
             $callsiteShortLabel = $callsite === null
@@ -166,7 +165,7 @@
                 'text_url' => $hasText
                     ? route('newdebugbar.mail-preview', ['profile' => $profileId, 'index' => $index, 'format' => 'text'])
                     : null,
-                'eml_url' => $hasPreview
+                'eml_url' => is_string($preview['eml'] ?? null)
                     ? route('newdebugbar.mail-preview', ['profile' => $profileId, 'index' => $index, 'format' => 'eml'])
                     : null,
                 'search' => mb_strtolower(implode(' ', array_filter([

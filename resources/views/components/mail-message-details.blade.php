@@ -81,7 +81,7 @@
             >
                 <span x-text="selectedMailMessage.attachment_bodies_omitted"></span>
                 <span x-text="selectedMailMessage.attachment_bodies_omitted === 1 ? 'attachment was' : 'attachments were'"></span>
-                not retained because the message exceeded the capture budget or the file could not be read.
+                not retained because of capture settings, size limits, redaction, or unreadable files.
             </p>
         </section>
 
