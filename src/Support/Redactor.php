@@ -4,10 +4,12 @@ namespace NewDebugBar\Support;
 
 use BackedEnum;
 use DateTimeInterface;
+use Illuminate\Contracts\Support\Renderable;
+use Illuminate\View\InvokableComponentVariable;
 use Stringable;
 use UnitEnum;
 
-/** Converts captured values into bounded, JSON-safe, redacted data. */
+/** Converts captured values into bounded, JSON-safe data without rendering lazy view values. */
 final class Redactor
 {
     private const REDACTED = '[redacted]';
@@ -79,7 +81,10 @@ final class Redactor
             return $value->name;
         }
 
-        if ($value instanceof Stringable) {
+        if ($value instanceof Stringable
+            && ! ($value instanceof Renderable)
+            && ! ($value instanceof InvokableComponentVariable)
+        ) {
             return $this->clean((string) $value, $depth, $key);
         }
 

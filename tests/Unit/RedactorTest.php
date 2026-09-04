@@ -1,5 +1,10 @@
 <?php
 
+use Illuminate\Contracts\Support\Renderable;
+use Illuminate\Support\HtmlString;
+use Illuminate\View\Component;
+use Illuminate\View\ComponentSlot;
+use Illuminate\View\InvokableComponentVariable;
 use NewDebugBar\Support\Redactor;
 
 enum RedactorBackedValue: string
@@ -79,6 +84,65 @@ it('normalizes common debug values without leaking object internals', function (
     } finally {
         fclose($resource);
     }
+});
+
+it('describes lazy view values without invoking or rendering them', function () {
+    $invocations = 0;
+    $variable = new InvokableComponentVariable(function () use (&$invocations): string {
+        $invocations++;
+
+        return 'unexpected invocation';
+    });
+    $view = new class implements Renderable, Stringable
+    {
+        public int $renders = 0;
+
+        public function render(): string
+        {
+            $this->renders++;
+
+            return 'unexpected render';
+        }
+
+        public function __toString(): string
+        {
+            return $this->render();
+        }
+    };
+    $component = new class extends Component
+    {
+        public function render(): string
+        {
+            throw new RuntimeException('Captured components must not render.');
+        }
+    };
+
+    expect((new Redactor)->clean([
+        'nested' => ['blade' => $variable, 'view' => $view, 'component' => $component],
+    ]))->toBe([
+        'nested' => [
+            'blade' => '['.InvokableComponentVariable::class.']',
+            'view' => '['.$view::class.']',
+            'component' => '['.$component::class.']',
+        ],
+    ])->and($invocations)->toBe(0)
+        ->and($view->renders)->toBe(0);
+});
+
+it('keeps already rendered slots and inert stringables bounded and redacted', function () {
+    $redactor = new Redactor(maxStringLength: 4);
+
+    expect($redactor->clean([
+        'slot' => new ComponentSlot('ready'),
+        'html' => new HtmlString('safe'),
+        'label' => new Illuminate\Support\Stringable('visible'),
+        'token' => new HtmlString('secret'),
+    ]))->toBe([
+        'slot' => 'read…',
+        'html' => 'safe',
+        'label' => 'visi…',
+        'token' => '[redacted]',
+    ]);
 });
 
 it('uses an explicit safety policy for positional query bindings', function () {

@@ -133,6 +133,8 @@ When the agent can read the page's response headers, `X-NewDebugBar-Profile` poi
 
 Agents should start with findings and one small section. When they need detail that a focused tool leaves out, `get-debug-profile-data` can read every retained profile value. It starts at `/sections` and returns paths the agent can follow into objects, lists, and exact values. Lists are paged and large strings are split into bounded chunks, so the agent never needs the full profile in one response.
 
+For retained view data, follow `/sections/views/payload/items/{index}/data`. Renderable views and lazy component methods appear as class labels, such as `[Illuminate\View\InvokableComponentVariable]`. Capturing them does not run or render them. Ordinary string values and already rendered slots keep their captured content, subject to redaction and size limits.
+
 For complete Eloquent evidence, follow `/sections/models/payload/model_groups`. The path includes logical write folding, record identifiers, capture-redacted changed attributes, sources, timings, exact-source query correlation, and guidance while the focused Models response stays concise.
 
 ## Fix common problems
