@@ -7,13 +7,15 @@ use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Part\DataPart;
 use Throwable;
 
-/** Builds bounded local mail previews with downloadable attachment data. */
+/** Builds bounded local mail previews with optional raw MIME and attachment body capture. */
 final class MailPreview
 {
     public function __construct(
         private readonly int $maxBodyBytes,
         private readonly int $maxRecipients,
         private readonly int $maxAttachmentBytes = 2_000_000,
+        private readonly bool $captureEml = true,
+        private readonly bool $captureAttachmentBodies = true,
     ) {}
 
     /** @return array<string, mixed>|null */
@@ -28,7 +30,6 @@ final class MailPreview
         [$text, $textTruncated] = $this->bounded($message->getTextBody());
         $addressesOmitted = $this->addressesOmitted($message);
         [$attachments, $attachmentsOmitted] = $this->attachments($message->getAttachments());
-        $copy = $this->boundedCopy($message, $subject, $html, $text, $attachments, $attachmentsOmitted);
 
         return [
             'subject' => $subject,
@@ -46,7 +47,10 @@ final class MailPreview
             'text' => $text,
             // The inputs are bounded before serialization so the MIME document
             // stays valid instead of being cut through a header or body part.
-            'eml' => $copy->toString(),
+            'eml' => $this->captureEml
+                ? $this->boundedCopy($message, $subject, $html, $text, $attachments, $attachmentsOmitted)->toString()
+                : null,
+            'eml_omitted_reason' => $this->captureEml ? null : 'capture_disabled',
             'truncated' => $subjectTruncated || $htmlTruncated || $textTruncated || $addressesOmitted > 0,
             'attachments_omitted' => $attachmentsOmitted,
             'attachment_metadata_omitted' => max(0, count($message->getAttachments()) - count($attachments)),
@@ -56,7 +60,7 @@ final class MailPreview
 
     /**
      * @param  list<DataPart>  $attachments
-     * @return array{0: list<array{name: string, content_type: string, disposition: string, content_id: ?string, size_bytes: ?int, body_base64: ?string}>, 1: int}
+     * @return array{0: list<array{name: string, content_type: string, disposition: string, content_id: ?string, size_bytes: ?int, body_base64: ?string, body_omitted_reason: ?string}>, 1: int}
      */
     private function attachments(array $attachments): array
     {
@@ -67,18 +71,24 @@ final class MailPreview
         foreach (array_slice($attachments, 0, $this->maxRecipients) as $attachment) {
             $body = null;
             $sizeBytes = null;
+            $omittedReason = 'capture_disabled';
 
-            try {
-                $candidate = $attachment->getBody();
-                $sizeBytes = strlen($candidate);
+            if ($this->captureAttachmentBodies) {
+                try {
+                    $candidate = $attachment->getBody();
+                    $sizeBytes = strlen($candidate);
+                    $omittedReason = 'attachment_budget';
 
-                if ($sizeBytes <= $remainingBytes) {
-                    $body = $candidate;
-                    $remainingBytes -= $sizeBytes;
-                    $capturedBodies++;
+                    if ($sizeBytes <= $remainingBytes) {
+                        $body = $candidate;
+                        $remainingBytes -= $sizeBytes;
+                        $capturedBodies++;
+                        $omittedReason = null;
+                    }
+                } catch (Throwable) {
+                    // Keep useful metadata when Symfony cannot read the attachment body.
+                    $omittedReason = 'unreadable';
                 }
-            } catch (Throwable) {
-                // Keep useful metadata when Symfony cannot read the attachment body.
             }
 
             $capturedAttachments[] = [
@@ -88,6 +98,7 @@ final class MailPreview
                 'content_id' => $attachment->hasContentId() ? $attachment->getContentId() : null,
                 'size_bytes' => $sizeBytes,
                 'body_base64' => $body === null ? null : base64_encode($body),
+                'body_omitted_reason' => $omittedReason,
             ];
         }
 
@@ -95,7 +106,7 @@ final class MailPreview
     }
 
     /**
-     * @param  list<array{name: string, content_type: string, disposition: string, content_id: ?string, size_bytes: ?int, body_base64: ?string}>  $attachments
+     * @param  list<array{name: string, content_type: string, disposition: string, content_id: ?string, size_bytes: ?int, body_base64: ?string, body_omitted_reason: ?string}>  $attachments
      */
     private function boundedCopy(
         Email $message,
@@ -164,6 +175,10 @@ final class MailPreview
                 'X-NewDebugBar-Attachments-Omitted',
                 (string) $attachmentsOmitted,
             );
+        }
+
+        if ($text === null && $html === null && $copy->getAttachments() === []) {
+            $copy->text('');
         }
 
         return $copy;
