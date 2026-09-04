@@ -1,5 +1,100 @@
 <?php
 
+use NewDebugBar\Tests\Support\DebugBarBrowser;
+
+it('keeps expanded request evidence reachable through one scroll owner', function (int $width, int $height, string $theme) {
+    $query = [];
+
+    foreach (range(1, 24) as $index) {
+        $query['filter_'.$index] = str_repeat('long-request-value-', 6).$index;
+    }
+
+    $page = visit('/profiled?'.http_build_query($query));
+    $page->script("localStorage.setItem('newdebugbar.preferences.v1', JSON.stringify({theme: '$theme'}))");
+    $page->refresh()->resize($width, $height);
+
+    if ($width < 640) {
+        $page->click('[data-ndb-mobile-toolbar-trigger="actions"]')
+            ->click('[data-ndb-mobile-toolbar-action="inspector"]');
+    } else {
+        $page->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
+    }
+
+    DebugBarBrowser::waitForDetails($page);
+
+    $page->assertAttribute('#newdebugbar', 'data-ndb-theme', $theme)
+        ->assertVisible('[data-ndb-request-details]')
+        ->assertScript(<<<'JS'
+            (() => {
+                const details = document.querySelector('[data-ndb-request-details]');
+
+                return details.clientHeight >= details.querySelector('summary').offsetHeight;
+            })()
+            JS)
+        ->click('[data-ndb-request-details] > summary')
+        ->assertScript(<<<'JS'
+            (() => {
+                const details = document.querySelector('[data-ndb-request-details]');
+
+                return details.open
+                    && details.clientHeight >= details.scrollHeight - 1;
+            })()
+            JS)
+        ->click('[data-ndb-request-detail="query"]')
+        ->assertAttribute('[data-ndb-request-detail="query"]', 'aria-pressed', 'true')
+        ->assertVisible('[data-ndb-request-detail-panel="query"]')
+        ->assertCount('[data-ndb-request-detail-panel="query"] tbody tr', 24)
+        ->assertScript(<<<'JS'
+            (() => {
+                const content = document.querySelector('[data-ndb-inspector-content]');
+                const details = document.querySelector('[data-ndb-request-details]');
+                const scrollOwners = [content, ...content.querySelectorAll('*')].filter((element) => {
+                    return element.clientHeight > 0
+                        && element.scrollHeight > element.clientHeight + 1
+                        && ['auto', 'scroll'].includes(getComputedStyle(element).overflowY);
+                });
+
+                return scrollOwners.length === 1
+                    && scrollOwners[0] === content
+                    && details.clientHeight >= details.scrollHeight - 1
+                    && content.scrollWidth <= content.clientWidth + 1;
+            })()
+            JS);
+
+    $page->script('document.querySelector("[data-ndb-inspector-content]").scrollTop = 100000');
+    $page->assertScript(<<<'JS'
+        (() => {
+            const content = document.querySelector('[data-ndb-inspector-content]');
+            const lastRow = document.querySelector('[data-ndb-request-detail-panel="query"] tbody tr:last-child');
+            const bounds = content.getBoundingClientRect();
+            const rowBounds = lastRow.getBoundingClientRect();
+
+            return content.scrollTop > 0
+                && rowBounds.top >= bounds.top
+                && rowBounds.bottom <= bounds.bottom;
+        })()
+        JS);
+
+    $page->click('[data-ndb-request-details] > summary')
+        ->assertScript('document.querySelector("[data-ndb-request-details]").open === false')
+        ->click('[data-ndb-request-details] > summary')
+        ->assertScript(<<<'JS'
+            (() => {
+                const details = document.querySelector('[data-ndb-request-details]');
+
+                return details.open && details.clientHeight >= details.scrollHeight - 1;
+            })()
+            JS)
+        ->assertNoJavaScriptErrors();
+})->with([
+    'short desktop light' => [1280, 720, 'light'],
+    'short desktop dark' => [1280, 720, 'dark'],
+    'tall desktop light' => [1440, 1000, 'light'],
+    'tall desktop dark' => [1440, 1000, 'dark'],
+    'mobile light' => [390, 844, 'light'],
+    'mobile dark' => [390, 844, 'dark'],
+]);
+
 it('shows an aligned request trace and switches request detail groups', function () {
     $page = visit('/profiled')
         ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]')

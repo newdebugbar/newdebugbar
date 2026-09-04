@@ -5,7 +5,11 @@
         wire:key="profile-section-{{ $profileId }}-{{ $sectionKey }}"
         x-cloak
         x-show.important="loadedSection === @js($sectionKey) || requestedSection === @js($sectionKey)"
-        class="ndb:px-3 ndb:py-3 ndb:sm:px-0 ndb:sm:py-6 ndb:lg:min-h-0 ndb:lg:flex-1"
+        @class([
+            'ndb:px-3 ndb:py-3 ndb:sm:px-0 ndb:sm:py-6 ndb:lg:min-h-0',
+            'ndb:lg:shrink-0' => $sectionKey === 'request',
+            'ndb:lg:flex-1' => $sectionKey !== 'request',
+        ])
     >
         <section
             data-ndb-section-panel="{{ $sectionKey }}"

@@ -617,26 +617,6 @@ it('keeps Requests as the lifecycle trace exception', function () {
         ->not->toContain('requestDetailTab');
 });
 
-it('gives every inspector section the same full-height workspace chain', function () {
-    $root = dirname(__DIR__, 2);
-    $debugBar = file_get_contents($root.'/src/Livewire/DebugBar.php');
-    $inspector = file_get_contents($root.'/resources/views/livewire/inspector.blade.php');
-    $sectionPanel = file_get_contents($root.'/resources/views/livewire/section-panel.blade.php');
-
-    expect($debugBar)
-        ->toContain("'layout' => 'workspace'")
-        ->not->toContain('WORKSPACE_SECTIONS');
-
-    expect($inspector)
-        ->toContain('ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col')
-        ->not->toContain('selectedSection.layout');
-
-    expect($sectionPanel)
-        ->toContain('ndb:sm:px-0 ndb:sm:py-6 ndb:lg:min-h-0 ndb:lg:flex-1')
-        ->not->toContain('$usesWorkspace')
-        ->not->toContain('selectedSection.layout');
-});
-
 it('composes Authorization from the shared inspector workspace anatomy', function () {
     $views = dirname(__DIR__, 2).'/resources/views';
     $section = file_get_contents($views.'/livewire/sections/authorization.blade.php');
