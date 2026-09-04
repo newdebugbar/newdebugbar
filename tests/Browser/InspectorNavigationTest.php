@@ -2,6 +2,36 @@
 
 use NewDebugBar\Tests\Support\DebugBarBrowser;
 
+it('renders a selected section when a background refresh starts in the same turn', function (bool $refreshFirst) {
+    $page = visit('/hostile-styles')
+        ->click('[data-ndb-toolbar="request"]');
+
+    DebugBarBrowser::waitForDetails($page);
+    $refreshFirst = json_encode($refreshFirst, JSON_THROW_ON_ERROR);
+
+    $page->script(<<<JS
+        (() => {
+            const state = Alpine.\$data(document.getElementById('newdebugbar'));
+
+            if ({$refreshFirst}) {
+                state.refreshBackgroundActivity(true);
+                state.selectSection('mail');
+            } else {
+                state.selectSection('mail');
+                state.refreshBackgroundActivity(true);
+            }
+        })()
+        JS);
+
+    DebugBarBrowser::waitForDetails($page);
+    DebugBarBrowser::assertSectionSelected($page, 'mail');
+
+    $page
+        ->assertVisible('[data-ndb-mail-item="1"]')
+        ->assertAttribute('[data-ndb-section-stage]', 'aria-busy', 'false')
+        ->assertNoJavaScriptErrors();
+})->with(['refresh before selection' => true, 'selection before refresh' => false]);
+
 it('switches every section after Livewire navigation with one active state', function () {
     $page = visit('/profiled')
         ->click('[data-testid="host-navigation"]')
