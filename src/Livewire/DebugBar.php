@@ -100,6 +100,7 @@ final class DebugBar extends Component
 
         $this->selectedSection = $section;
         $this->sectionLoaded = true;
+        $this->renderIsland('section-details');
         $this->dispatch('newdebugbar-section-loaded', section: $section);
         $this->dispatch('newdebugbar-content-updated');
     }
@@ -115,6 +116,7 @@ final class DebugBar extends Component
         $profile = $presenter->present($stored);
         $items = (array) ($profile['sections']['timeline']['payload']['items'] ?? []);
         $this->timelineLimit = min(count($items), $this->timelineLimit + self::TIMELINE_PAGE_SIZE);
+        $this->renderIsland('section-details');
         $this->dispatch('newdebugbar-section-loaded', section: 'timeline');
         $this->dispatch('newdebugbar-content-updated');
     }

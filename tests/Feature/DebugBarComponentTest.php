@@ -529,6 +529,81 @@ it('refreshes bounded background activity and announces completed worker profile
     expect($component->effects)->not->toHaveKey('html');
 });
 
+it('returns the selected section when an activity refresh shares its message', function (string $path, string $section, bool $refreshFirst) {
+    $profileId = $this->get($path, ['Accept' => 'text/html'])
+        ->assertOk()
+        ->headers->get('X-NewDebugBar-Profile');
+    $metadata = ['island' => ['name' => 'section-details', 'mode' => 'morph']];
+    $load = ['method' => 'loadSection', 'params' => [$section], 'metadata' => $metadata];
+    $refresh = ['method' => 'refreshRelatedActivity', 'params' => [], 'metadata' => $metadata];
+
+    $component = Livewire::test(DebugBar::class, ['profileId' => $profileId])
+        ->update(calls: $refreshFirst ? [$refresh, $load] : [$load, $refresh])
+        ->assertSet('selectedSection', $section)
+        ->assertSet('sectionLoaded', true)
+        ->assertDispatched('newdebugbar-section-loaded', section: $section)
+        ->assertDispatched('newdebugbar-profile-refreshed');
+
+    expect($component->effects)->not->toHaveKey('html')
+        ->and($component->effects['islandFragments'] ?? [])->toHaveCount(1);
+
+    $document = new DOMDocument;
+    $document->loadHTML($component->effects['islandFragments'][0], LIBXML_NOERROR | LIBXML_NOWARNING);
+    $fragment = new DOMXPath($document);
+
+    expect($fragment->query('//*[@data-ndb-section-panel]')->length)->toBe(1)
+        ->and($fragment->evaluate('string(//*[@data-ndb-section-panel]/@data-ndb-section-panel)'))->toBe($section)
+        ->and($fragment->query('//*[@id="newdebugbar"]')->length)->toBe(0);
+
+    $component->update(calls: [$refresh])
+        ->assertSet('selectedSection', $section)
+        ->assertSet('sectionLoaded', true)
+        ->assertDispatched('newdebugbar-profile-refreshed')
+        ->assertNotDispatched('newdebugbar-section-loaded');
+
+    expect($component->effects)->not->toHaveKey('html')
+        ->not->toHaveKey('islandFragments');
+})->with([
+    'request' => ['/profiled', 'request'],
+    'queue' => ['/profiled-queue-attempts', 'queue'],
+    'redis' => ['/profiled-redis', 'redis'],
+])->with([
+    'refresh first' => true,
+    'refresh last' => false,
+]);
+
+it('returns the next timeline page when an activity refresh shares its message', function (bool $refreshFirst) {
+    $profileId = $this->get('/profiled-timeline-long', ['Accept' => 'text/html'])
+        ->assertOk()
+        ->headers->get('X-NewDebugBar-Profile');
+    $metadata = ['island' => ['name' => 'section-details', 'mode' => 'morph']];
+    $load = ['method' => 'loadMoreTimeline', 'params' => [], 'metadata' => $metadata];
+    $refresh = ['method' => 'refreshRelatedActivity', 'params' => [], 'metadata' => $metadata];
+    $component = Livewire::test(DebugBar::class, ['profileId' => $profileId])
+        ->update(calls: [['method' => 'loadSection', 'params' => ['timeline'], 'metadata' => $metadata]])
+        ->assertSet('timelineLimit', 50);
+
+    $component->update(calls: $refreshFirst ? [$refresh, $load] : [$load, $refresh])
+        ->assertSet('selectedSection', 'timeline')
+        ->assertSet('timelineLimit', 100)
+        ->assertDispatched('newdebugbar-section-loaded', section: 'timeline')
+        ->assertDispatched('newdebugbar-profile-refreshed');
+
+    expect($component->effects)->not->toHaveKey('html')
+        ->and($component->effects['islandFragments'] ?? [])->toHaveCount(1);
+
+    $document = new DOMDocument;
+    $document->loadHTML($component->effects['islandFragments'][0], LIBXML_NOERROR | LIBXML_NOWARNING);
+    $fragment = new DOMXPath($document);
+
+    expect($fragment->query('//*[@data-ndb-timeline-item]')->length)->toBe(100)
+        ->and($fragment->query('//*[@data-ndb-section-panel]')->length)->toBe(1)
+        ->and($fragment->evaluate('string(//*[@data-ndb-section-panel]/@data-ndb-section-panel)'))->toBe('timeline');
+})->with([
+    'refresh first' => true,
+    'refresh last' => false,
+]);
+
 it('rejects unavailable request summaries', function () {
     $id = $this->get('/profiled', ['Accept' => 'text/html'])
         ->assertOk()
