@@ -223,3 +223,29 @@ it('excludes debug toolbar updates from profiling and storage', function () {
 
     expect(count(File::files(config('newdebugbar.storage.path'))))->toBe($storedBefore);
 });
+
+it('keeps host work profiled when its update shares a request with the toolbar', function () use ($hostCounterMessage, $hostCounterSnapshot) {
+    $host = $this->get('/profiled')->assertOk()->assertHeader('X-NewDebugBar-Profile');
+    $toolbar = (string) app('livewire')->mount('newdebugbar.toolbar', [
+        'profileId' => $host->headers->get('X-NewDebugBar-Profile'),
+    ]);
+    $snapshot = Utils::extractAttributeDataFromHtml($toolbar, 'wire:snapshot');
+
+    $response = $this->postJson(app('livewire')->getUpdateUri(), [
+        'components' => [
+            $hostCounterMessage($hostCounterSnapshot()),
+            [
+                'snapshot' => json_encode($snapshot, JSON_THROW_ON_ERROR),
+                'updates' => [],
+                'calls' => [['method' => 'loadSection', 'params' => ['request']]],
+            ],
+        ],
+    ], ['X-Livewire' => '1'])->assertOk()->assertHeader('X-NewDebugBar-Profile');
+    $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
+    $hostSnapshot = json_decode($response->json('components.0.snapshot'), true, flags: JSON_THROW_ON_ERROR);
+
+    expect($hostSnapshot['data']['count'])->toBe(1)
+        ->and($response->json('components'))->toHaveCount(2)
+        ->and(array_column($profile['sections']['livewire']['payload']['components'], 'name'))->toBe(['host-counter'])
+        ->and($profile['sections']['request']['payload']['request_type'])->toBe('livewire');
+});

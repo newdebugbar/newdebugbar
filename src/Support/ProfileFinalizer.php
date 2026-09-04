@@ -8,7 +8,10 @@ use NewDebugBar\ProfileManager;
 use NewDebugBar\Storage\ProfileStore;
 use Throwable;
 
-/** Stores and injects a profile after Laravel has rendered the final response. */
+/**
+ * Stores and injects a profile after Laravel has rendered the final response.
+ * Skips Laravel Debugbar routes so the two debug bars cannot trigger each other.
+ */
 final class ProfileFinalizer
 {
     public function __construct(
@@ -21,6 +24,12 @@ final class ProfileFinalizer
     public function handle(RequestHandled $event): void
     {
         if (! $this->manager->isCollecting()) {
+            return;
+        }
+
+        if ($event->request->routeIs('debugbar.*')) {
+            $this->manager->discard();
+
             return;
         }
 
