@@ -52,7 +52,7 @@ jobs:
       - run: composer config platform.php ${{ matrix.php }}.0
       - if: matrix.laravel == '10' || matrix.laravel == '11'
         run: composer config policy.advisories.block false
-      - run: composer require --no-update "laravel/framework:${{ matrix.framework }}" "laravel/mcp:${{ matrix.mcp }}" "livewire/livewire:^4.1"
+      - run: composer require --no-update "laravel/framework:${{ matrix.framework }}" "laravel/mcp:${{ matrix.mcp }}"
       - run: composer require --dev --no-update "orchestra/testbench:${{ matrix.testbench }}" "pestphp/pest:${{ matrix.pest }}"
       - run: composer update --with-all-dependencies --prefer-dist --no-interaction --no-progress
       - if: matrix.laravel == '13'
