@@ -97,7 +97,8 @@ final class TimelineBuilder
         $omitted = [];
 
         foreach ($profile['sections'] ?? [] as $section => $data) {
-            $dropped = (int) ($data['summary']['dropped_count'] ?? 0);
+            $dropped = (int) ($data['summary']['dropped_count'] ?? 0)
+                + (int) ($data['summary']['storage_omitted_items'] ?? 0);
 
             if ($dropped > 0) {
                 $omitted[(string) $section] = $dropped;
@@ -108,6 +109,10 @@ final class TimelineBuilder
             if ($transactionDropped > 0) {
                 $omitted['query_transactions'] = $transactionDropped;
             }
+        }
+
+        foreach ($profile['storage']['omitted_sections'] ?? [] as $section) {
+            $omitted[$section] ??= max(1, (int) ($profile['sections'][$section]['summary']['retained_count'] ?? 0));
         }
 
         return $omitted;

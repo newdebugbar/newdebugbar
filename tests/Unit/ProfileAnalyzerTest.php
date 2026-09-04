@@ -3,6 +3,16 @@
 use NewDebugBar\Analysis\ProfileAnalyzer;
 use NewDebugBar\Analysis\QueryAnalyzer;
 
+it('reports one profile storage limit with its omission evidence', function () {
+    $storage = ['truncated' => true, 'max_bytes' => 10_000_000, 'omitted_item_count' => 15];
+    $findings = (new ProfileAnalyzer(new QueryAnalyzer))->analyze(['storage' => $storage]);
+
+    expect($findings)->toHaveCount(1)
+        ->and($findings[0]['rule_id'])->toBe('profile.truncated')
+        ->and($findings[0]['evidence'])->toBe($storage)
+        ->and($findings[0]['next'])->toContain('/storage');
+});
+
 it('produces stable bounded findings with supporting evidence', function () {
     $analyzer = new ProfileAnalyzer(
         queries: new QueryAnalyzer(slowQueryMs: 50),

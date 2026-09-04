@@ -2,6 +2,17 @@
 
 use NewDebugBar\Analysis\TimelineBuilder;
 
+it('marks the timeline incomplete when the storage budget removes records or a payload', function () {
+    $profile = [
+        'sections' => [
+            'logs' => ['summary' => ['storage_omitted_items' => 118, 'dropped_count' => 2]],
+            'events' => ['summary' => ['retained_count' => 3]],
+        ],
+        'storage' => ['truncated' => true, 'omitted_sections' => ['events']],
+    ];
+    expect((new TimelineBuilder)->omittedSources($profile))->toBe(['logs' => 120, 'events' => 3]);
+});
+
 it('keeps point events distinct and visualizes recorded durations', function () {
     $timeline = (new TimelineBuilder)->build([
         'metrics' => ['duration_ms' => 50],

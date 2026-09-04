@@ -273,6 +273,20 @@ final class ProfileAnalyzer
             );
         }
 
+        if (($profile['storage']['truncated'] ?? false) === true) {
+            $findings[] = $this->finding(
+                'profile.truncated',
+                'info',
+                'request',
+                'Some debug data was omitted to keep this profile within its storage limit.',
+                $profile['storage'],
+                [
+                    'why' => 'The complete captured profile exceeded the fixed 10 MB file limit.',
+                    'next' => 'Inspect the retained sample or reproduce a smaller operation. MCP exposes omission details at /storage.',
+                ],
+            );
+        }
+
         foreach ($sections as $key => $section) {
             $dropped = (int) ($section['summary']['dropped_count'] ?? 0);
 

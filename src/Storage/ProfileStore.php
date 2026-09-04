@@ -5,6 +5,9 @@ namespace NewDebugBar\Storage;
 use Illuminate\Filesystem\Filesystem;
 use InvalidArgumentException;
 use JsonException;
+use NewDebugBar\Support\ProfileSanitizer;
+use NewDebugBar\Support\ProfileSizeLimiter;
+use NewDebugBar\Support\Redactor;
 use RuntimeException;
 use Throwable;
 
@@ -20,6 +23,7 @@ final class ProfileStore
         private readonly string $path,
         private readonly int $maxProfiles = 20,
         private readonly int $maxAgeMinutes = 60,
+        private readonly ?ProfileSanitizer $sanitizer = null,
     ) {}
 
     /** @param array<string, mixed> $profile */
@@ -30,7 +34,8 @@ final class ProfileStore
         $this->ensureStorageDirectory();
 
         try {
-            $json = json_encode($profile, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+            $profile = ($this->sanitizer ?? new ProfileSanitizer(new Redactor))->clean($profile);
+            $json = (new ProfileSizeLimiter)->encode($profile);
         } catch (JsonException $exception) {
             throw new RuntimeException('The debug profile could not be encoded.', previous: $exception);
         }
