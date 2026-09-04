@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 
+beforeEach(function (): void {
+    config(['session.driver' => 'array']);
+});
+
 it('hands back the token the session currently holds', function (): void {
     $this->startSession();
 
