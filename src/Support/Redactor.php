@@ -4,6 +4,8 @@ namespace NewDebugBar\Support;
 
 use BackedEnum;
 use DateTimeInterface;
+use Illuminate\Contracts\Support\Renderable;
+use Illuminate\View\InvokableComponentVariable;
 use Stringable;
 use UnitEnum;
 
@@ -80,6 +82,10 @@ final class Redactor
         }
 
         if ($value instanceof Stringable) {
+            if ($this->rendersWhenStringified($value)) {
+                return '['.$value::class.']';
+            }
+
             return $this->clean((string) $value, $depth, $key);
         }
 
@@ -166,6 +172,12 @@ final class Redactor
         ) ?? $value;
 
         return mb_strlen($value) > 250 ? mb_substr($value, 0, 249).'…' : $value;
+    }
+
+    private function rendersWhenStringified(object $value): bool
+    {
+        return $value instanceof Renderable
+            || $value instanceof InvokableComponentVariable;
     }
 
     private function isSensitive(string $key): bool
