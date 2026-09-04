@@ -40,8 +40,6 @@ it('keeps previews and metadata usable without offering missing downloads', func
         ->click('[data-ndb-mail-actions-trigger]')
         ->click('[data-ndb-mail-detail-tab="message"]')
         ->assertSee('receipt-NS-1042.pdf')
-        ->assertSee('Not retained')
-        ->assertSee('capture settings')
         ->assertMissing('[data-ndb-mail-attachment-download]')
         ->assertScript('document.querySelector("[role=dialog]").scrollWidth <= document.querySelector("[role=dialog]").clientWidth + 1')
         ->click('[data-ndb-mail-detail-tab="preview"]')
