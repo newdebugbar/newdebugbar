@@ -3,6 +3,7 @@
 use Illuminate\Support\Str;
 use NewDebugBar\Mcp\NewDebugBarServer;
 use NewDebugBar\Mcp\Tools\GetDebugProfileData;
+use NewDebugBar\Mcp\Tools\GetDebugProfileSection;
 use NewDebugBar\Presentation\BackgroundActivityPresenter;
 use NewDebugBar\Storage\BackgroundActivityStore;
 use NewDebugBar\Storage\ProfileStore;
@@ -204,3 +205,91 @@ it('preserves status precedence when origin identity is masked and maps attempt 
     expect($presented['background_activity']['items'][0]['origin_profile_id'])->toBe('[redacted]')
         ->and($presented['background_activity']['items'][0]['attempt'])->toBe('[redacted]');
 });
+
+it('shares masks with runtime context without replacing its captured worker facts', function (array $rules, mixed $channels) {
+    $this->backgroundRedactionPaths = $rules;
+    $this->refreshApplication();
+    $fixture = $this->storedBackgroundFixture();
+    $store = app(ProfileStore::class);
+    $origin = $store->get($fixture['id']);
+    $profile = $origin;
+    $profile['id'] = $fixture['worker'];
+    $profile['profile_type'] = 'queue';
+    $profile['sections']['request'] = [
+        'summary' => ['method' => 'CLI', 'status' => 0],
+        'payload' => [
+            'method' => 'CLI',
+            'path' => 'queue:App\\Jobs\\CorrelatedJob',
+            'runtime_type' => 'queue',
+            'context' => [
+                'correlation_key' => $fixture['key'],
+                'origin_profile_id' => $fixture['id'],
+                'connection' => 'redis',
+                'queue' => 'default',
+                'job_id' => 'first-job',
+                'attempt' => 1,
+                'communication_type' => 'notification',
+                'communication_class' => 'App\\Notifications\\CorrelatedNotice',
+                'channels' => ['private-channel-sentinel', 'public-channel'],
+                'notifiable_types' => ['App\\Models\\User', 'private-type-sentinel'],
+            ],
+        ],
+    ];
+
+    foreach (['queue', 'mail', 'notifications'] as $section) {
+        $profile['sections'][$section]['payload']['items'][0]['status'] = 'waiting';
+    }
+
+    $store->put($profile);
+    $stored = $store->get($profile['id']);
+    $presented = app(BackgroundActivityPresenter::class)->present($stored);
+
+    $paths = [
+        '/sections/request/payload/context/channels',
+        '/background_activity/items/0/channels',
+    ];
+
+    foreach (['queue', 'mail', 'notifications'] as $section) {
+        $paths[] = '/sections/'.$section.'/payload/items/0/channels';
+        $item = $presented['sections'][$section]['payload']['items'][0];
+
+        expect($item['channels'])->toBe($channels)
+            ->and($item['status'])->toBe('waiting')
+            ->and($item['activity_attempt'])->toBe(2)
+            ->and($item['worker_profile_id'])->toBe($fixture['worker'])
+            ->and($presented['sections'][$section]['payload']['items'][1]['channels'])
+            ->toBe(in_array('background_activity.channels.0', $rules, true) ? ['[redacted]', 'public-channel'] : ['private-channel-sentinel', 'public-channel']);
+    }
+
+    foreach ($paths as $pointer) {
+        $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
+            'profile_id' => $profile['id'], 'path' => $pointer,
+        ])->assertOk());
+        $data = $content['data'];
+
+        expect($data['type'] === 'list' ? array_column($data['entries'], 'value') : $data['value'])->toBe($channels);
+    }
+
+    $request = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileSection::class, [
+        'profile_id' => $profile['id'], 'section' => 'request',
+    ])->assertOk());
+
+    expect($request['data']['payload']['runtime_context']['channels'])->toBe($channels)
+        ->and($request['data']['payload']['runtime_context']['attempt'])->toBe(1)
+        ->and($presented['sections']['request']['payload']['context']['channels'])->toBe($channels)
+        ->and($presented['sections']['request']['payload']['context']['attempt'])->toBe(1)
+        ->and($presented['background_activity']['items'][0]['channels'])->toBe($channels)
+        ->and($presented['background_activity']['items'][0]['status'])->toBe('completed')
+        ->and($presented['sections']['logs']['payload']['items'][0]['message'])->toBe('private-channel-sentinel')
+        ->and($store->get($fixture['id']))->toBe($origin)
+        ->and($store->get($profile['id']))->toBe($stored);
+})->with([
+    'whole runtime field' => [['request.context.channels'], '[redacted]'],
+    'nested runtime field' => [['sections.request.payload.context.channels.0'], ['[redacted]', 'public-channel']],
+    'queue field' => [['queue.items.0.channels'], '[redacted]'],
+    'mail field' => [['mail.items.0.channels'], '[redacted]'],
+    'notification field' => [['notifications.items.0.channels'], '[redacted]'],
+    'background field' => [['background_activity.channels.0'], ['[redacted]', 'public-channel']],
+    'combined peer masks' => [['request.context.channels.0', 'queue.items.0.channels.1'], ['[redacted]', '[redacted]']],
+    'ordinary worker' => [[], ['private-channel-sentinel', 'public-channel']],
+]);

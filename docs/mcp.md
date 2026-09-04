@@ -160,6 +160,8 @@ Rules match a complete path or its suffix at any depth. `*` matches any characte
 
 Rules select fields, not every occurrence of the same text. Known query/input, mail, Livewire, and linked background copies keep their masks when presented. A whole-record mask retains a `redacted: true` marker; a whole collection becomes an empty list with an accompanying `*_redacted` flag, so other evidence remains readable.
 
+When the correlation key and matching background record are available, shared fields in the worker request context and linked queue, mail, and notification items preserve masks in both directions. Unmasked worker context stays as captured, even when the latest job status or attempt changes. Differently named fields still need their own rules.
+
 Other capture and access settings are:
 
 - `except`: request paths to skip, such as `['billing/*']`. The default is `[]`. This stops capture for matching HTTP requests; it is not an access rule for saved profiles or a filter for background work.

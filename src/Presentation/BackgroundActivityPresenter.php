@@ -8,7 +8,7 @@ use Throwable;
 
 /**
  * Connects stored request and worker profiles through bounded queue facts.
- * Keeps masks from either file in every correlated copy without changing stored files.
+ * Keeps shared-field masks in correlated copies without changing stored files.
  */
 final class BackgroundActivityPresenter
 {
@@ -30,7 +30,8 @@ final class BackgroundActivityPresenter
             }
         }
 
-        $runtimeKey = $profile['sections']['request']['payload']['context']['correlation_key'] ?? null;
+        $runtimeContext = $profile['sections']['request']['payload']['context'] ?? [];
+        $runtimeKey = $runtimeContext['correlation_key'] ?? null;
 
         if (is_string($runtimeKey)) {
             $keys[] = $runtimeKey;
@@ -48,6 +49,10 @@ final class BackgroundActivityPresenter
 
         // File-level rules may select only one profile path. Carry its masks into
         // the shared facts before any section or root activity copy is presented.
+        if (is_array($runtimeContext) && is_string($runtimeKey) && $activities->has($runtimeKey)) {
+            $activities->put($runtimeKey, $this->preserveRedactions($activities->get($runtimeKey), $runtimeContext));
+        }
+
         foreach (['queue', 'mail', 'notifications'] as $section) {
             foreach ((array) ($profile['sections'][$section]['payload']['items'] ?? []) as $item) {
                 $key = is_array($item) ? ($item['correlation_key'] ?? null) : null;
@@ -65,6 +70,10 @@ final class BackgroundActivityPresenter
 
                 $activities->put($key, $activity);
             }
+        }
+
+        if (is_array($runtimeContext) && is_string($runtimeKey) && $activities->has($runtimeKey)) {
+            $profile['sections']['request']['payload']['context'] = $this->preserveRedactions($runtimeContext, $activities->get($runtimeKey));
         }
 
         foreach (['queue', 'mail', 'notifications'] as $section) {
