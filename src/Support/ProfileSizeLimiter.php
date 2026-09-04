@@ -7,6 +7,7 @@ use RuntimeException;
 /**
  * Keeps stored profiles within one fixed JSON byte budget without damaging downloads.
  * It drops bulky mail values, then record tails and payloads, while preserving capture totals.
+ * Retained counts describe the records still stored; capture drops and storage omissions stay separate.
  */
 final class ProfileSizeLimiter
 {
@@ -262,6 +263,17 @@ final class ProfileSizeLimiter
         if (is_array($summary)) {
             $summary['storage_truncated'] = true;
             $summary['storage_omitted_items'] = (int) ($summary['storage_omitted_items'] ?? 0) + $items;
+            $payload = $profile['sections'][$section]['payload'] ?? [];
+
+            if (array_key_exists('retained_count', $summary) && $summary['retained_count'] !== '[redacted]') {
+                $summary['retained_count'] = $section === 'livewire'
+                    ? count($payload['components'] ?? []) + count($payload['activity'] ?? $payload['items'] ?? [])
+                    : count($payload['items'] ?? []);
+            }
+
+            if ($section === 'queries' && array_key_exists('transaction_retained_count', $summary) && $summary['transaction_retained_count'] !== '[redacted]') {
+                $summary['transaction_retained_count'] = count($payload['transactions'] ?? []);
+            }
         }
     }
 

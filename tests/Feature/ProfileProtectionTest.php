@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use NewDebugBar\Mcp\NewDebugBarServer;
 use NewDebugBar\Mcp\Tools\GetDebugProfileData;
+use NewDebugBar\Mcp\Tools\GetDebugProfileSection;
 use NewDebugBar\Presentation\ProfilePresenter;
 use NewDebugBar\ProfileManager;
 use NewDebugBar\Storage\BackgroundActivityStore;
@@ -173,3 +174,53 @@ it('enforces actual stored profile bytes and makes omitted data discoverable thr
         expect($content['data']['value'])->toBe($expected);
     }
 });
+
+it('exposes matching retained counts and capture totals in stored profiles and bounded MCP responses', function (int $dropped) {
+    $id = (string) Str::uuid();
+    $rows = array_map(fn (int $index): array => [
+        'message' => 'Stored log '.$index,
+        'level' => 'info',
+        'context' => ['details' => str_repeat('é', 2_000)],
+    ], range(0, 999));
+    app(ProfileStore::class)->put([
+        'id' => $id,
+        'sections' => ['logs' => [
+            'label' => 'Logs',
+            'summary' => ['count' => 1_000 + $dropped, 'retained_count' => 1_000, 'dropped_count' => $dropped],
+            'payload' => ['items' => $rows],
+        ]],
+    ]);
+    $stored = app(ProfileStore::class)->get($id);
+    $retained = count($stored['sections']['logs']['payload']['items']);
+    $summary = [
+        'count' => 1_000 + $dropped, 'retained_count' => $retained, 'dropped_count' => $dropped,
+        'storage_omitted_items' => 1_000 - $retained,
+    ];
+    expect($retained)->toBeGreaterThan(0)->toBeLessThan(1_000)
+        ->and($stored['sections']['logs']['summary'])->toMatchArray($summary);
+
+    $focused = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileSection::class, [
+        'profile_id' => $id, 'section' => 'logs', 'limit' => 1,
+    ])->assertOk());
+    expect($focused['data']['summary'])->toMatchArray($summary)
+        ->and($focused['data']['pagination']['total'])->toBe($retained);
+
+    foreach ($summary as $key => $expected) {
+        $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
+            'profile_id' => $id, 'path' => '/sections/logs/summary/'.$key,
+        ])->assertOk());
+        expect($content['data']['value'])->toBe($expected);
+    }
+
+    $presented = app(ProfilePresenter::class)->present($stored);
+    $findings = array_filter($presented['findings'], fn (array $finding): bool => $finding['rule_id'] === 'collector.truncated');
+    expect($findings)->toHaveCount($dropped > 0 ? 1 : 0);
+
+    foreach ($findings as $index => $finding) {
+        expect($finding['evidence'])->toBe(['collector' => 'logs', 'retained' => $retained, 'total' => 1_000 + $dropped, 'dropped' => $dropped]);
+        $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
+            'profile_id' => $id, 'path' => '/findings/'.$index.'/evidence/retained',
+        ])->assertOk());
+        expect($content['data']['value'])->toBe($retained);
+    }
+})->with(['storage only' => 0, 'capture and storage' => 100]);

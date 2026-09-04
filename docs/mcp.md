@@ -186,6 +186,8 @@ Each saved profile has a fixed 10,000,000-byte ceiling, separate from the config
 - `omitted_value_count`, `omitted_item_count`, and `omitted_section_count` give totals.
 - `omitted_values` lists value paths, `omitted_items` maps list paths to omitted counts, and `omitted_sections` lists sections whose payloads were omitted. These detail lists are bounded; a positive `omitted_paths_truncated` count means they do not list every omission.
 
+Unless explicitly redacted, section `summary.retained_count` counts records still present after storage trimming. It counts `payload.items` for ordinary collectors, or components plus activity for Livewire, counting the `items` and `activity` aliases once. Query `transaction_retained_count` separately counts retained transaction events. Capture totals and aggregate timings stay unchanged. `dropped_count` and `transaction_dropped_count` still describe capture limits; `storage_omitted_items` separately counts records removed by the file limit. Removing only mail bodies does not reduce retained message counts.
+
 Treat missing evidence as missing, not proof that the work did not happen. Paging or increasing the MCP response limit cannot recover data omitted before storage.
 
 ## Fix common problems
