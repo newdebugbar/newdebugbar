@@ -132,6 +132,39 @@ it('keeps host styles and package styles isolated', function () {
             JS)
         ->assertScript(<<<'JS'
             (() => {
+                const trace = document.querySelector('[data-ndb-request-trace]');
+                const primary = trace.querySelector('[data-ndb-request-primary]');
+                const path = trace.querySelector('[data-ndb-request-path]');
+                const method = trace.querySelector('[data-ndb-request-method]');
+                const copy = trace.querySelector('[data-ndb-request-copy]');
+                const controller = trace.querySelector('[data-ndb-request-controller]');
+                const middleware = trace.querySelector('[data-ndb-request-middleware]');
+                const nodes = [...trace.querySelectorAll('[data-ndb-request-dot]')];
+
+                return [primary, path, method, copy, controller, middleware].every(Boolean)
+                    && [primary, path, controller].every((element) => {
+                        const style = getComputedStyle(element);
+
+                        return style.backgroundColor !== 'rgb(255, 0, 0)'
+                            && style.color !== 'rgb(0, 128, 0)'
+                            && parseFloat(style.fontSize) < 42
+                            && parseFloat(style.paddingLeft) < 50;
+                    })
+                    && ! getComputedStyle(path).fontFamily.includes('Mono')
+                    && getComputedStyle(method).borderWidth === '0px'
+                    && getComputedStyle(method).boxShadow === 'none'
+                    && copy.getBoundingClientRect().height === 28
+                    && getComputedStyle(middleware).borderWidth === '0px'
+                    && nodes.every((node) => {
+                        const icon = node.querySelector('svg');
+
+                        return icon.getBoundingClientRect().width <= 24
+                            && icon.querySelector('path[opacity="0.2"]') !== null;
+                    });
+            })()
+            JS)
+        ->assertScript(<<<'JS'
+            (() => {
                 const code = Array.from(document.querySelectorAll('[data-ndb-section-panel="request"] code'));
 
                 return code.length >= 1 && code.every((element) => {

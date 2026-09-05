@@ -24,8 +24,66 @@ it('loads only the selected profile section after the inspector asks', function 
         ->assertDispatched('newdebugbar-content-updated')
         ->assertSeeHtml('data-ndb-section-panel="request"')
         ->assertDontSeeHtml('data-ndb-section-panel="queries"')
-        ->assertSeeHtml('data-ndb-section-description');
+        ->assertSeeHtml('data-ndb-request-trace');
 });
+
+it('presents captured request and response evidence in their lifecycle stages', function (int $size, int $status, string $statusLabel) {
+    $id = (string) Str::uuid();
+    $middleware = ['App\\Http\\Middleware\\Authenticate', 'Illuminate\\Routing\\Middleware\\SubstituteBindings'];
+
+    app(ProfileStore::class)->put([
+        'id' => $id,
+        'profile_type' => 'http',
+        'environment' => 'testing',
+        'metrics' => ['duration_ms' => 12.5, 'peak_memory_mb' => 8],
+        'sections' => [
+            'request' => [
+                'label' => 'Request',
+                'summary' => ['method' => 'POST', 'status' => $status],
+                'payload' => [
+                    'method' => 'POST',
+                    'status' => $status,
+                    'url' => 'https://example.test/trips/kyoto?season=autumn',
+                    'path' => '/trips/kyoto',
+                    'route' => 'trips.show',
+                    'action' => 'App\\Http\\Controllers\\TripWorkspaceController@show',
+                    'middleware' => $middleware,
+                    'headers' => ['content-type' => ['application/x-www-form-urlencoded']],
+                    'content_type' => 'application/json; charset=utf-8',
+                    'request_size_bytes' => $size,
+                    'response_size_bytes' => 4096,
+                    'query' => ['season' => 'autumn'],
+                ],
+            ],
+        ],
+    ]);
+
+    $component = Livewire::test(DebugBar::class, ['profileId' => $id])->call('loadSection', 'request');
+    $document = new DOMDocument;
+    $previousLibxmlState = libxml_use_internal_errors(true);
+    $document->loadHTML('<?xml encoding="utf-8" ?>'.$component->html());
+    libxml_clear_errors();
+    libxml_use_internal_errors($previousLibxmlState);
+    $xpath = new DOMXPath($document);
+    $text = static fn (string $expression): string => trim(preg_replace('/\s+/', ' ', (string) $xpath->evaluate('string('.$expression.')')));
+
+    expect($xpath->query('//*[@data-ndb-request-step]')->length)->toBe(3)
+        ->and($text('//*[@data-ndb-request-path]'))->toBe('/trips/kyoto')
+        ->and($text('//*[@data-ndb-request-step="responded"]//*[@data-ndb-request-status]'))->toBe($statusLabel)
+        ->and($xpath->query('//*[@data-ndb-request-step="received"]//*[@data-ndb-request-size]')->length)->toBe($size > 0 ? 1 : 0)
+        ->and($text('//*[@data-ndb-request-step="responded"]'))->toContain('application/json; charset=utf-8')
+        ->and($text('//*[@data-ndb-request-step="received"]'))->not->toContain('application/json; charset=utf-8')
+        ->and($text('//*[@data-ndb-request-detail-panel="headers"]'))->toContain('application/x-www-form-urlencoded')
+        ->and($text('//*[@data-ndb-request-middleware]'))->toContain(...$middleware)
+        ->and($xpath->query('//*[@data-ndb-request-middleware and @open]')->length)->toBe(0)
+        ->and($xpath->query('//*[@data-ndb-request-details and @open]')->length)->toBe(0)
+        ->and($xpath->query('//*[@data-ndb-request-copy]')->length)->toBe(1);
+})->with([
+    'empty successful request' => [0, 200, '200 OK'],
+    'populated validation response' => [2048, 422, '422 Unprocessable Content'],
+    'populated redirect response' => [321, 302, '302 Found'],
+    'custom response status' => [0, 599, '599'],
+]);
 
 it('keeps a data-heavy profile out of the initial Livewire shell', function () {
     $id = (string) Str::uuid();

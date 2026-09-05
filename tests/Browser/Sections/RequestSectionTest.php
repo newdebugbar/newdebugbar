@@ -1,5 +1,6 @@
 <?php
 
+use NewDebugBar\Storage\ProfileStore;
 use NewDebugBar\Tests\Support\DebugBarBrowser;
 
 it('keeps expanded request evidence reachable through one scroll owner', function (int $width, int $height, string $theme) {
@@ -95,147 +96,175 @@ it('keeps expanded request evidence reachable through one scroll owner', functio
     'mobile dark' => [390, 844, 'dark'],
 ]);
 
-it('shows an aligned request trace and switches request detail groups', function () {
-    $page = visit('/profiled')
-        ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]')
-        ->click('[data-ndb-select-section="request"]')
+it('aligns the request lifecycle and wraps long evidence across viewports', function (int $width, int $height, string $theme) {
+    $page = visit('/profiled');
+    $page->script("localStorage.setItem('newdebugbar.preferences.v1', JSON.stringify({theme: '$theme'}))");
+    $page->refresh()->resize($width, $height);
+    $id = $page->script("document.getElementById('newdebugbar')._x_dataStack[0].summary.id");
+    $store = app(ProfileStore::class);
+    $profile = $store->get($id);
+    $profile['sections']['request']['payload']['path'] = '/trips/'.str_repeat('very-long-journey-reference-', 8);
+    $profile['sections']['request']['payload']['url'] = 'http://newdebugbar.test'.$profile['sections']['request']['payload']['path'];
+    $profile['sections']['request']['payload']['action'] = 'App\\Http\\Controllers\\'.str_repeat('LongJourneyWorkspace', 6).'Controller@show';
+    $store->put($profile);
+
+    if ($width < 640) {
+        $page->click('[data-ndb-mobile-toolbar-trigger="actions"]')
+            ->click('[data-ndb-mobile-toolbar-action="inspector"]');
+    } else {
+        $page->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
+    }
+
+    DebugBarBrowser::waitForDetails($page);
+
+    $page->assertAttribute('#newdebugbar', 'data-ndb-theme', $theme)
         ->assertVisible('[data-ndb-request-trace]')
         ->assertScript(<<<'JS'
             (() => {
-                const description = document.querySelector('[data-ndb-section-description]').getBoundingClientRect();
-                const trace = document.querySelector('[data-ndb-request-trace]').getBoundingClientRect();
+                const steps = [...document.querySelectorAll('[data-ndb-request-step]')];
+                const near = (left, right) => Math.abs(left - right) <= 1;
+                const center = (element) => {
+                    const bounds = element.getBoundingClientRect();
 
-                return trace.top - description.bottom <= 32;
-            })()
-            JS)
-        ->assertScript('document.querySelector("[data-ndb-request-status]").textContent.trim() === "200"')
-        ->assertScript('/^Completed in (?:<1|\\d+(?:\\.\\d+)?) (?:µs|ms|s)$/.test(document.querySelector("[data-ndb-request-completion]").textContent.replace(/\\s+/g, " ").trim())')
-        ->assertScript('!["Success", "Failed", "Completed successfully", "Completed with an error"].some((meaning) => document.querySelector("[data-ndb-request-trace]").textContent.includes(meaning))')
-        ->assertScript('!["Laravel received the request.", "Laravel matched the route and middleware.", "Laravel sent the response to the client."].some((copy) => document.querySelector("[data-ndb-request-trace]").textContent.includes(copy))')
-        ->assertVisible('[data-ndb-request-details]')
-        ->assertScript('document.querySelector("[data-ndb-request-details]").open === false')
-        ->click('[data-ndb-request-details] > summary')
-        ->assertScript('document.querySelector("[data-ndb-request-details]").open === true')
-        ->assertScript('document.querySelectorAll("[data-ndb-request-step]").length', 3)
-        ->assertScript('document.querySelectorAll("[data-ndb-request-line]").length', 2)
-        ->assertScript(<<<'JS'
-            (() => {
-                const panelBounds = document.querySelector('[data-ndb-section-panel="request"]').getBoundingClientRect();
-                const summaryElement = document.querySelector('[data-ndb-request-summary]');
-                const summaryBounds = summaryElement.getBoundingClientRect();
-                const summary = getComputedStyle(summaryElement);
-                const timelineElement = document.querySelector('[data-ndb-request-timeline]');
-                const timeline = getComputedStyle(timelineElement);
-                const firstStepBounds = timelineElement.querySelector('[data-ndb-request-step]').getBoundingClientRect();
-                const detailsBounds = document.querySelector('[data-ndb-request-details]').getBoundingClientRect();
-                const inset = innerWidth >= 640 ? 24 : 16;
-                const near = (actual, expected) => Math.abs(actual - expected) < 1;
+                    return bounds.top + bounds.height / 2;
+                };
+                const firstLineCenter = (element) => element.getBoundingClientRect().top
+                    + parseFloat(getComputedStyle(element).paddingTop)
+                    + parseFloat(getComputedStyle(element).lineHeight) / 2;
 
-                return summary.borderTopWidth === '1px'
-                    && summary.borderRightWidth === '0px'
-                    && summary.borderBottomWidth === '1px'
-                    && summary.borderLeftWidth === '0px'
-                    && summary.borderRadius === '0px'
-                    && summary.paddingLeft === '0px'
-                    && summary.paddingRight === '0px'
-                    && timeline.paddingLeft === `${inset}px`
-                    && timeline.paddingRight === `${inset}px`
-                    && near(summaryBounds.left, panelBounds.left + inset)
-                    && near(summaryBounds.right, panelBounds.right - inset)
-                    && near(firstStepBounds.left, summaryBounds.left)
-                    && near(detailsBounds.left, panelBounds.left + inset)
-                    && near(detailsBounds.right, panelBounds.right - inset);
+                return steps.map((step) => step.dataset.ndbRequestStep).join(',') === 'received,matched,responded'
+                    && steps.every((step) => {
+                        const dot = step.querySelector('[data-ndb-request-dot]');
+                        const heading = step.querySelector('h3');
+                        const primary = step.querySelector('[data-ndb-request-primary]');
+
+                        return near(center(dot), center(heading))
+                            && (window.innerWidth >= 1024
+                                ? near(center(dot), firstLineCenter(primary))
+                                : primary.getBoundingClientRect().top >= heading.getBoundingClientRect().bottom);
+                    });
             })()
             JS)
         ->assertScript(<<<'JS'
-            Array.from(document.querySelectorAll('[data-ndb-request-step]')).every((step) => {
-                const dot = step.querySelector('[data-ndb-request-dot]').getBoundingClientRect();
-                const heading = step.querySelector('h3').getBoundingClientRect();
-
-                return Math.abs((dot.top + dot.height / 2) - (heading.top + heading.height / 2)) < 1;
-            })
-            JS)
-        ->assertScript(<<<'JS'
-            Array.from(document.querySelectorAll('[data-ndb-request-line]')).every((line, index) => {
-                const nextDot = document.querySelectorAll('[data-ndb-request-dot]')[index + 1].getBoundingClientRect();
-                const bounds = line.getBoundingClientRect();
-
-                return Math.abs(bounds.bottom - nextDot.top) < 1
-                    && Math.abs(bounds.width - 2) < 0.1;
-            })
-            JS)
-        ->assertScript(<<<'JS'
-            Array.from(document.querySelectorAll('[data-ndb-request-detail]')).every((button) => {
-                const parent = button.parentElement;
-                const styles = getComputedStyle(parent);
-                const availableWidth = parent.clientWidth
-                    - parseFloat(styles.paddingLeft)
-                    - parseFloat(styles.paddingRight);
-
-                return Math.abs(button.getBoundingClientRect().width - availableWidth) < 1;
-            })
-            JS)
-        ->assertScript(<<<'JS'
-            Array.from(document.querySelectorAll('[data-ndb-request-detail-count], [data-ndb-request-detail-panel-count]'))
-                .every((count) => /^\d+$/.test(count.textContent.trim()))
-            JS)
-        ->assertAttribute('[data-ndb-request-detail="headers"]', 'aria-pressed', 'true')
-        ->click('[data-ndb-request-detail="session"]')
-        ->assertAttribute('[data-ndb-request-detail="session"]', 'aria-pressed', 'true')
-        ->assertVisible('[data-ndb-request-detail-panel="session"]')
-        ->assertNoJavaScriptErrors();
-});
-
-it('uses the mobile request width for evidence instead of nested side gaps', function () {
-    $page = visit('/profiled')
-        ->resize(402, 874)
-        ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
-        ->click('[data-ndb-mobile-toolbar-action="inspector"]');
-
-    $page
-        ->assertVisible('[data-ndb-request-trace]')
-        ->assertScript(<<<'JS'
             (() => {
-                const panel = document.querySelector('[data-ndb-section-panel="request"]');
-                const loaded = document.querySelector('[data-ndb-loaded-section="request"]');
-                const description = document.querySelector('[data-ndb-section-description]');
-                const summary = document.querySelector('[data-ndb-request-summary]');
-                const method = summary.querySelector('span');
-                const path = summary.querySelector('.ndb\\:truncate');
-                const status = summary.querySelector('[data-ndb-request-status]');
-                const completion = summary.querySelector('[data-ndb-request-completion]');
-                const timeline = document.querySelector('[data-ndb-request-timeline]');
-                const firstStep = timeline.querySelector('[data-ndb-request-step]');
-                const details = document.querySelector('[data-ndb-request-details]');
-                const panelBox = panel.getBoundingClientRect();
-                const descriptionBox = description.getBoundingClientRect();
-                const summaryBox = summary.getBoundingClientRect();
+                const received = document.querySelector('[data-ndb-request-step="received"]');
+                const method = received.querySelector('[data-ndb-request-method]');
+                const path = received.querySelector('[data-ndb-request-path]');
                 const methodBox = method.getBoundingClientRect();
-                const pathBox = path.getBoundingClientRect();
-                const statusBox = status.getBoundingClientRect();
-                const completionBox = completion.getBoundingClientRect();
-                const timelineBox = timeline.getBoundingClientRect();
-                const near = (actual, expected) => Math.abs(actual - expected) <= 1;
-                const headerGap = summaryBox.top - descriptionBox.bottom;
-                const textGap = completionBox.top - pathBox.bottom;
+                const methodStyle = getComputedStyle(method);
+                const pathFirstLineCenter = path.getBoundingClientRect().top
+                    + parseFloat(getComputedStyle(path).lineHeight) / 2;
 
-                return getComputedStyle(loaded).paddingLeft === '12px'
-                    && getComputedStyle(summary).display === 'grid'
-                    && headerGap >= 8
-                    && headerGap <= 16
-                    && near(summaryBox.left, panelBox.left)
-                    && near(summaryBox.right, panelBox.right)
-                    && near(firstStep.getBoundingClientRect().left, panelBox.left)
-                    && near(details.getBoundingClientRect().left, panelBox.left)
-                    && near(details.getBoundingClientRect().right, panelBox.right)
-                    && near(pathBox.left, completionBox.left)
-                    && textGap >= 0
-                    && textGap <= 4
-                    && near(methodBox.top + methodBox.height / 2, statusBox.top + statusBox.height / 2)
-                    && timelineBox.top - summaryBox.bottom >= 8
-                    && timelineBox.top - summaryBox.bottom <= 16
-                    && panel.scrollWidth <= panel.clientWidth + 1;
+                return Math.abs(methodBox.top + methodBox.height / 2 - pathFirstLineCenter) <= 1
+                    && ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth']
+                        .every((property) => methodStyle[property] === '0px')
+                    && methodStyle.boxShadow === 'none';
             })()
             JS)
+        ->assertScript(<<<'JS'
+            (() => {
+                const dots = [...document.querySelectorAll('[data-ndb-request-dot]')];
+                const lines = [...document.querySelectorAll('[data-ndb-request-line]')];
+                const near = (left, right) => Math.abs(left - right) <= 1;
+
+                return lines.length === dots.length - 1 && lines.every((line, index) => {
+                    const current = dots[index].getBoundingClientRect();
+                    const next = dots[index + 1].getBoundingClientRect();
+                    const bounds = line.getBoundingClientRect();
+
+                    return near(bounds.top, current.top + current.height / 2)
+                        && near(bounds.bottom, next.top + next.height / 2)
+                        && near(bounds.left + bounds.width / 2, current.left + current.width / 2)
+                        && Math.abs(bounds.width - 1) < 0.1;
+                });
+            })()
+            JS)
+        ->assertScript(<<<'JS'
+            (() => {
+                const content = document.querySelector('[data-ndb-inspector-content]');
+                const path = document.querySelector('[data-ndb-request-path]');
+                const controller = document.querySelector('[data-ndb-request-controller]');
+                const longValues = [path, controller];
+
+                return content.scrollWidth <= content.clientWidth + 1
+                    && longValues.every((element) => {
+                        const style = getComputedStyle(element);
+
+                        return element.getBoundingClientRect().height > parseFloat(style.lineHeight)
+                            && style.whiteSpace !== 'nowrap'
+                            && style.textOverflow !== 'ellipsis';
+                    });
+            })()
+            JS)
+        ->assertScript('document.querySelector("[data-ndb-request-details]").open === false')
+        ->assertNoJavaScriptErrors();
+})->with([
+    'short desktop light' => [1280, 720, 'light'],
+    'short desktop dark' => [1280, 720, 'dark'],
+    'tall desktop light' => [1440, 1000, 'light'],
+    'tall desktop dark' => [1440, 1000, 'dark'],
+    'tablet light' => [900, 900, 'light'],
+    'tablet dark' => [900, 900, 'dark'],
+    'mobile light' => [390, 844, 'light'],
+    'mobile dark' => [390, 844, 'dark'],
+]);
+
+it('opens captured middleware and copies the complete request URL with feedback', function () {
+    $page = visit('/profiled?destination=kyoto&season=autumn')
+        ->resize(1440, 1000)
+        ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
+
+    DebugBarBrowser::waitForDetails($page);
+
+    $page->assertScript('document.querySelector("[data-ndb-request-middleware]").open === false')
+        ->click('[data-ndb-request-middleware] > summary')
+        ->assertScript('document.querySelector("[data-ndb-request-middleware]").open === true')
+        ->assertSeeIn('[data-ndb-request-middleware]', 'NewDebugBar\\Http\\Middleware\\ProfileRequest')
+        ->assertScript(<<<'JS'
+            (() => {
+                window.newdebugbarClipboardWrites = [];
+                window.newdebugbarRequestCopyWidth = document.querySelector('[data-ndb-request-copy]').getBoundingClientRect().width;
+                Object.defineProperty(window.navigator, 'clipboard', {
+                    configurable: true,
+                    value: {
+                        writeText: async (value) => window.newdebugbarClipboardWrites.push(value),
+                    },
+                });
+
+                return true;
+            })()
+            JS)
+        ->click('[data-ndb-request-copy]')
+        ->assertSeeIn('[data-ndb-request-copy]', 'Copied')
+        ->assertScript(<<<'JS'
+            (() => {
+                const [copied] = window.newdebugbarClipboardWrites;
+                const copy = document.querySelector('[data-ndb-request-copy]');
+                const url = new URL(copied);
+
+                return window.newdebugbarClipboardWrites.length === 1
+                    && url.pathname === '/profiled'
+                    && url.searchParams.get('destination') === 'kyoto'
+                    && url.searchParams.get('season') === 'autumn'
+                    && Math.abs(copy.getBoundingClientRect().width - window.newdebugbarRequestCopyWidth) <= 1;
+            })()
+            JS)
+        ->assertScript(<<<'JS'
+            (() => {
+                window.navigator.clipboard.writeText = async () => {
+                    throw new Error('Clipboard unavailable');
+                };
+                document.execCommand = () => false;
+
+                return true;
+            })()
+            JS)
+        ->click('[data-ndb-request-copy]')
+        ->assertSeeIn('[data-ndb-request-copy]', 'Copy failed')
+        ->click('[data-ndb-request-details] > summary')
+        ->assertAttribute('[data-ndb-request-detail="headers"]', 'aria-pressed', 'true')
+        ->click('[data-ndb-request-detail="query"]')
+        ->assertVisible('[data-ndb-request-detail-panel="query"]')
+        ->assertSeeIn('[data-ndb-request-detail-panel="query"]', 'kyoto')
         ->assertNoJavaScriptErrors();
 });

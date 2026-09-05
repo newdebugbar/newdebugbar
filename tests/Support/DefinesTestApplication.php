@@ -711,6 +711,8 @@ trait DefinesTestApplication
                             summary { color: rgb(255, 0, 0); font-size: 42px; margin: 23px; }
                             [data-cache], [data-cache-item], [data-cache-result], [data-cache-filter], [data-cache-search], [data-cache-search-text] { background: rgb(255, 0, 0); border-left: 20px solid rgb(255, 0, 0); color: rgb(0, 128, 0); height: 91px; }
                             [data-http-client], [data-http-client-item], [data-method], [data-host], [data-status], [data-duration], [data-source] { background: rgb(255, 0, 0); border-left: 20px solid rgb(255, 0, 0); color: rgb(0, 128, 0); height: 91px; }
+                            [data-request-primary], [data-request-path], [data-request-controller], [data-request-size], .request-step { background: rgb(255, 0, 0); color: rgb(0, 128, 0); font-size: 42px; padding: 50px; }
+                            [data-request-method], [data-request-copy], [data-request-middleware] { border: 8px solid red; height: 91px; }
                             [data-ndb-http-client-list-heading], [data-ndb-http-client-sort-heading] { background: rgb(255, 0, 0); color: rgb(0, 128, 0); height: 91px; }
                             [data-mail] { border-left: 20px solid rgb(255, 0, 0); }
                             [data-ndb-queue-item], [data-ndb-notification-item], [data-ndb-event-item] { border-left: 20px solid rgb(255, 0, 0); }

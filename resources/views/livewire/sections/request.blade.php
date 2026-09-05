@@ -2,9 +2,11 @@
 @php($requestPayload = $section['payload'])
 @php($isHttpRequest = ($profile['profile_type'] ?? 'http') === 'http')
 @php($requestStatus = (int) ($requestPayload['status'] ?? 0))
-@php($requestSucceeded = $requestStatus > 0 && $requestStatus < 400)
+@php($requestSucceeded = $requestStatus >= 200 && $requestStatus < 300)
+@php($requestFailed = $requestStatus >= 400)
+@php($requestStatusText = \Symfony\Component\HttpFoundation\Response::$statusTexts[$requestStatus] ?? '')
+@php($requestResponseTone = $requestFailed ? 'error' : ($requestSucceeded ? 'success' : 'neutral'))
 @php($requestDuration = \NewDebugBar\Support\DurationFormatter::format($profile['metrics']['duration_ms'] ?? 0))
-@php($requestQueryCount = (int) ($profile['sections']['queries']['summary']['total_count'] ?? $profile['sections']['queries']['summary']['count'] ?? 0))
 @php($requestHeaders = is_array($requestPayload['headers'] ?? null) ? $requestPayload['headers'] : [])
 @php($requestInput = is_array($requestPayload['input'] ?? null) ? $requestPayload['input'] : [])
 @php($requestQuery = is_array($requestPayload['query'] ?? null) ? $requestPayload['query'] : [])
@@ -12,7 +14,14 @@
 @php($requestAuthentication = is_array($requestPayload['authentication'] ?? null) ? $requestPayload['authentication'] : [])
 @php($requestMiddleware = is_array($requestPayload['middleware'] ?? null) ? $requestPayload['middleware'] : [])
 @php($requestPath = ($requestPayload['path'] ?? null) ?: ($requestPayload['url'] ?? null) ?: '—')
-@php($requestHost = parse_url((string) ($requestPayload['url'] ?? ''), PHP_URL_HOST) ?: '—')
+@php($requestUrl = (string) ($requestPayload['url'] ?? ''))
+@php($requestUrlParts = parse_url($requestUrl) ?: [])
+@php($requestOrigin = isset($requestUrlParts['host']) ? ($requestUrlParts['scheme'] ?? 'http').'://'.$requestUrlParts['host'].(isset($requestUrlParts['port']) ? ':'.$requestUrlParts['port'] : '') : '')
+@php($requestSize = (int) ($requestPayload['request_size_bytes'] ?? 0))
+@php($requestAction = ($requestPayload['action'] ?? null) ?: 'Closure')
+@php($requestActionSeparator = strrpos($requestAction, '\\'))
+@php($requestActionName = $requestActionSeparator === false ? $requestAction : substr($requestAction, $requestActionSeparator + 1))
+@php($requestActionNamespace = $requestActionSeparator === false ? '' : substr($requestAction, 0, $requestActionSeparator))
 @php(
     $formatRequestBytes = static fn (int $bytes): string => $bytes >= 1024
         ? number_format($bytes / 1024, 2).' KB'
@@ -68,166 +77,176 @@
 
 @if ($isHttpRequest)
     <div data-ndb-request-trace>
-        <div
-            data-ndb-request-summary
-            class="ndb:grid ndb:grid-cols-[auto_minmax(0,1fr)_auto] ndb:items-center ndb:gap-x-3 ndb:gap-y-0.5 ndb:border-y ndb:border-zinc-200/90 ndb:bg-white/55 ndb:py-2.5 ndb:sm:mx-6 ndb:sm:flex ndb:sm:gap-3 ndb:sm:py-3 ndb:dark:border-zinc-800 ndb:dark:bg-zinc-900/35"
-        >
-            <div class="ndb:contents ndb:sm:flex ndb:sm:min-w-0 ndb:sm:items-center ndb:sm:gap-3">
-                <span class="ndb:row-span-2 ndb:shrink-0 ndb:rounded-md ndb:bg-emerald-50 ndb:px-2 ndb:py-1 ndb:text-[11px] ndb:font-bold ndb:uppercase ndb:tracking-wide ndb:text-emerald-700 ndb:ring-1 ndb:ring-inset ndb:ring-emerald-200 ndb:sm:row-span-1 ndb:dark:bg-emerald-950/60 ndb:dark:text-emerald-300 ndb:dark:ring-emerald-900">
-                    {{ $requestPayload['method'] ?? 'HTTP' }}
-                </span>
-                <span class="ndb:min-w-0 ndb:truncate ndb:text-xs ndb:font-bold">{{ $requestPath }}</span>
-            </div>
-            <span class="ndb:hidden ndb:h-5 ndb:w-px ndb:shrink-0 ndb:bg-zinc-200 ndb:sm:block ndb:dark:bg-zinc-800"></span>
-            <span
-                data-ndb-request-status
-                class="ndb:row-span-2 ndb:text-xs ndb:font-bold ndb:tabular-nums ndb:sm:row-span-1 {{ $requestSucceeded ? 'ndb:text-emerald-600 ndb:dark:text-emerald-400' : 'ndb:text-red-600 ndb:dark:text-red-400' }}"
-            >
-                {{ $requestStatus ?: '—' }}
-            </span>
-            <span class="ndb:hidden ndb:h-5 ndb:w-px ndb:shrink-0 ndb:bg-zinc-200 ndb:sm:block ndb:dark:bg-zinc-800"></span>
-            <p
-                data-ndb-request-completion
-                class="ndb:col-start-2 ndb:min-w-0 ndb:text-xs ndb:text-zinc-500 ndb:sm:col-auto ndb:dark:text-zinc-400"
-            >
-                Completed in
-                <span class="ndb:whitespace-nowrap ndb:tabular-nums">{{ $requestDuration }}</span>
-            </p>
-        </div>
-
-        <ol
-            data-ndb-request-timeline
-            class="ndb:mt-3 ndb:list-none ndb:p-0 ndb:sm:mt-5 ndb:sm:px-6"
-            aria-label="Request trace"
-        >
-            <li
+        <ol data-ndb-request-timeline class="ndb:list-none ndb:p-0 ndb:sm:px-6" aria-label="Request trace">
+            <x-newdebugbar::request-step
                 data-ndb-request-step="received"
-                class="ndb:grid ndb:grid-cols-[18px_minmax(0,1fr)] ndb:gap-x-3 ndb:sm:gap-x-4"
+                label="Received"
+                icon="received"
+                tone="received"
             >
-                <div aria-hidden="true" class="ndb:relative ndb:flex ndb:justify-center ndb:pt-0.5">
-                    <span
-                        data-ndb-request-line
-                        class="ndb:absolute ndb:top-[18px] ndb:-bottom-0.5 ndb:left-1/2 ndb:w-0.5 ndb:-translate-x-1/2 ndb:bg-indigo-400 ndb:dark:bg-indigo-500"
-                    ></span>
-                    <span
-                        data-ndb-request-dot
-                        class="ndb:relative ndb:z-[1] ndb:size-4 ndb:rounded-full ndb:border-2 ndb:border-indigo-500 ndb:bg-white ndb:dark:border-indigo-400 ndb:dark:bg-zinc-950"
-                    ></span>
-                </div>
-                <div class="ndb:pb-4 ndb:sm:pb-6">
-                    <h3 class="ndb:text-sm ndb:font-bold ndb:leading-5">Received</h3>
-                    <dl class="ndb:mt-2.5 ndb:grid ndb:grid-cols-2 ndb:gap-x-3 ndb:gap-y-2.5 ndb:sm:mt-3 ndb:sm:grid-cols-4 ndb:sm:gap-x-5 ndb:sm:gap-y-3">
-                        @foreach ([
-                            ['URL', ($requestPayload['url'] ?? null) ?: '—'],
-                            ['Host', $requestHost],
-                            ['Content type', ($requestPayload['content_type'] ?? null) ?: '—'],
-                            ['Request size', $formatRequestBytes((int) ($requestPayload['request_size_bytes'] ?? 0))],
-                        ] as [$label, $value])
-                            <div class="ndb:min-w-0">
-                                <dt class="ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400">
-                                    {{ $label }}
-                                </dt>
-                                <dd class="ndb:mt-1 ndb:truncate ndb:text-xs ndb:font-semibold" title="{{ $value }}">
-                                    {{ $value }}
-                                </dd>
-                            </div>
-                        @endforeach
-                    </dl>
-                </div>
-            </li>
+                <x-slot:primary>
+                    <div
+                        x-data="{ copyFeedback: '', requestUrl: @js($requestUrl) }"
+                        class="ndb:flex ndb:min-w-0 ndb:items-start ndb:gap-3"
+                    >
+                        <x-newdebugbar::inspector-operation-badge
+                            data-ndb-request-method
+                            class="ndb:mt-1 ndb:leading-4"
+                        >
+                            {{ $requestPayload['method'] ?? 'HTTP' }}
+                        </x-newdebugbar::inspector-operation-badge>
+                        <span
+                            data-ndb-request-path
+                            class="ndb:min-w-0 ndb:font-semibold ndb:[overflow-wrap:anywhere]"
+                        >{{ $requestPath }}</span>
+                        @if ($requestUrl !== '')
+                            <x-newdebugbar::icon-button
+                                data-ndb-request-copy
+                                :color-only="true"
+                                aria-label="Copy request URL"
+                                x-bind:aria-label="copyFeedback || 'Copy request URL'"
+                                @click="copyFeedback = (await copyText(requestUrl)) ? 'Copied' : 'Copy failed'"
+                                @blur="copyFeedback = ''"
+                                class="ndb:relative ndb:size-7 ndb:shrink-0 ndb:rounded-md"
+                            >
+                                <x-newdebugbar::icon name="copy" class="ndb:size-4" />
+                                <span
+                                    x-cloak
+                                    x-show.important="copyFeedback"
+                                    x-text="copyFeedback"
+                                    role="status"
+                                    aria-live="polite"
+                                    class="ndb:pointer-events-none ndb:absolute ndb:bottom-full ndb:left-1/2 ndb:mb-1 ndb:-translate-x-1/2 ndb:rounded-md ndb:bg-zinc-900 ndb:px-2 ndb:py-1 ndb:text-xs ndb:whitespace-nowrap ndb:text-white ndb:dark:bg-zinc-100 ndb:dark:text-zinc-900"
+                                ></span>
+                            </x-newdebugbar::icon-button>
+                        @endif
+                    </div>
+                </x-slot:primary>
 
-            <li
-                data-ndb-request-step="matched"
-                class="ndb:grid ndb:grid-cols-[18px_minmax(0,1fr)] ndb:gap-x-3 ndb:sm:gap-x-4"
-            >
-                <div aria-hidden="true" class="ndb:relative ndb:flex ndb:justify-center ndb:pt-0.5">
-                    <span
-                        data-ndb-request-line
-                        class="ndb:absolute ndb:top-[18px] ndb:-bottom-0.5 ndb:left-1/2 ndb:w-0.5 ndb:-translate-x-1/2 ndb:bg-indigo-400 ndb:dark:bg-indigo-500"
-                    ></span>
-                    <span
-                        data-ndb-request-dot
-                        class="ndb:relative ndb:z-[1] ndb:size-4 ndb:rounded-full ndb:border-2 ndb:border-indigo-500 ndb:bg-white ndb:dark:border-indigo-400 ndb:dark:bg-zinc-950"
-                    ></span>
-                </div>
-                <div class="ndb:pb-4 ndb:sm:pb-6">
-                    <h3 class="ndb:text-sm ndb:font-bold ndb:leading-5">Matched</h3>
-                    <dl class="ndb:mt-2.5 ndb:grid ndb:grid-cols-2 ndb:gap-x-3 ndb:gap-y-2.5 ndb:sm:mt-3 ndb:sm:grid-cols-4 ndb:sm:gap-x-5 ndb:sm:gap-y-3">
-                        <div class="ndb:min-w-0">
-                            <dt class="ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400">
-                                Route
-                            </dt>
-                            <dd class="ndb:mt-1 ndb:truncate ndb:text-xs ndb:font-semibold">
-                                {{ ($requestPayload['route'] ?? null) ?: 'Unnamed route' }}
-                            </dd>
-                        </div>
-                        <div class="ndb:col-span-2 ndb:min-w-0">
-                            <dt class="ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400">
-                                Controller
-                            </dt>
-                            <dd class="ndb:mt-1 ndb:min-w-0">
-                                <code class="ndb:block ndb:min-w-0 ndb:truncate ndb:text-xs ndb:font-semibold">{{ ($requestPayload['action'] ?? null) ?: 'Closure' }}</code>
-                            </dd>
-                        </div>
-                        <div class="ndb:min-w-0">
-                            <dt class="ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400">
-                                Middleware
-                            </dt>
-                            <dd class="ndb:mt-1 ndb:truncate ndb:text-xs ndb:font-semibold">
-                                {{ count($requestMiddleware) }} {{ str('step')->plural(count($requestMiddleware)) }}
-                            </dd>
-                        </div>
-                        <div class="ndb:min-w-0">
-                            <dt class="ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400">
-                                Guard
-                            </dt>
-                            <dd class="ndb:mt-1 ndb:truncate ndb:text-xs ndb:font-semibold">
-                                {{ $requestAuthentication['guard'] ?? 'unknown' }}
-                            </dd>
-                        </div>
-                        <div class="ndb:col-span-2 ndb:min-w-0">
-                            <dt class="ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400">
-                                Authentication
-                            </dt>
-                            <dd class="ndb:mt-1 ndb:truncate ndb:text-xs ndb:font-semibold">
-                                {{ ($requestPayload['authenticated'] ?? false) ? ($requestAuthentication['model'] ?? 'Authenticated') : 'Guest' }}
-                            </dd>
-                        </div>
+                @if ($requestOrigin !== '')
+                    <p class="ndb:text-sm ndb:leading-5 ndb:text-zinc-500 ndb:[overflow-wrap:anywhere] ndb:dark:text-zinc-400">
+                        {{ $requestOrigin }}
+                    </p>
+                @endif
+                @if ($requestSize > 0)
+                    <dl data-ndb-request-size class="ndb:mt-3 ndb:flex ndb:gap-3 ndb:text-sm ndb:leading-5">
+                        <dt class="ndb:text-zinc-500 ndb:dark:text-zinc-400">Request size</dt>
+                        <dd class="ndb:tabular-nums">{{ $formatRequestBytes($requestSize) }}</dd>
                     </dl>
-                </div>
-            </li>
+                @endif
+            </x-newdebugbar::request-step>
 
-            <li
+            <x-newdebugbar::request-step data-ndb-request-step="matched" label="Matched" icon="matched" tone="matched">
+                <x-slot:primary>
+                    <code
+                        data-ndb-request-controller
+                        data-ndb-language="php"
+                        class="ndb:font-medium ndb:[overflow-wrap:anywhere]"
+                    >{{ $requestActionName }}</code>
+                </x-slot:primary>
+
+                @if ($requestActionNamespace !== '')
+                    <code
+                        data-ndb-language="php"
+                        class="ndb:block ndb:text-sm ndb:leading-5 ndb:text-zinc-500 ndb:[overflow-wrap:anywhere] ndb:dark:text-zinc-400"
+                    >{{ $requestActionNamespace }}</code>
+                @endif
+                <dl class="ndb:mt-4 ndb:grid ndb:max-w-3xl ndb:grid-cols-2 ndb:gap-x-5 ndb:gap-y-4 ndb:text-sm ndb:leading-5 ndb:lg:grid-cols-3">
+                    <div class="ndb:min-w-0">
+                        <dt class="ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">Route</dt>
+                        <dd class="ndb:mt-1 ndb:[overflow-wrap:anywhere]">
+                            {{ ($requestPayload['route'] ?? null) ?: 'Unnamed route' }}
+                        </dd>
+                    </div>
+                    <div class="ndb:min-w-0">
+                        <dt class="ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">Middleware</dt>
+                        <dd class="ndb:mt-1">
+                            @if ($requestMiddleware !== [])
+                                <details data-ndb-request-middleware class="ndb:group">
+                                    <summary class="ndb:flex ndb:w-fit ndb:cursor-pointer ndb:list-none ndb:items-center ndb:gap-2 ndb:rounded-sm ndb:focus-visible:outline-2 ndb:focus-visible:outline-offset-4 ndb:focus-visible:outline-indigo-500">
+                                        <span>{{ count($requestMiddleware) }} middleware</span>
+                                        <x-newdebugbar::icon
+                                            name="chevron-down"
+                                            class="ndb:size-3.5 ndb:text-zinc-400 ndb:transition ndb:group-open:rotate-180"
+                                        />
+                                    </summary>
+                                    <ol class="ndb:mt-3 ndb:space-y-2">
+                                        @foreach ($requestMiddleware as $middleware)
+                                            <li>
+                                                <code
+                                                    data-ndb-language="php"
+                                                    class="ndb:text-xs ndb:[overflow-wrap:anywhere]"
+                                                >{{ $middleware }}</code>
+                                            </li>
+                                        @endforeach
+                                    </ol>
+                                </details>
+                            @else
+                                None
+                            @endif
+                        </dd>
+                    </div>
+                    <div class="ndb:min-w-0">
+                        <dt class="ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">Guard</dt>
+                        <dd class="ndb:mt-1 ndb:[overflow-wrap:anywhere]">
+                            {{ $requestAuthentication['guard'] ?? 'unknown' }}
+                        </dd>
+                    </div>
+                    <div class="ndb:col-span-full ndb:min-w-0">
+                        <dt class="ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">Authentication</dt>
+                        <dd class="ndb:mt-1 ndb:[overflow-wrap:anywhere]">
+                            @if (($requestPayload['authenticated'] ?? false) && ! empty($requestAuthentication['model']))
+                                <code
+                                    data-ndb-language="php"
+                                    class="ndb:text-sm"
+                                >{{ $requestAuthentication['model'] }}</code>
+                            @else
+                                {{ ($requestPayload['authenticated'] ?? false) ? 'Authenticated' : 'Guest' }}
+                            @endif
+                        </dd>
+                    </div>
+                </dl>
+            </x-newdebugbar::request-step>
+
+            <x-newdebugbar::request-step
                 data-ndb-request-step="responded"
-                class="ndb:grid ndb:grid-cols-[18px_minmax(0,1fr)] ndb:gap-x-3 ndb:sm:gap-x-4"
+                label="Responded"
+                :icon="$requestResponseTone"
+                :tone="$requestResponseTone"
+                :last="true"
             >
-                <div aria-hidden="true" class="ndb:relative ndb:flex ndb:justify-center ndb:pt-0.5">
-                    <span
-                        data-ndb-request-dot
-                        class="ndb:relative ndb:z-[1] ndb:size-4 ndb:rounded-full ndb:border-2 ndb:border-indigo-500 ndb:bg-white ndb:dark:border-indigo-400 ndb:dark:bg-zinc-950"
-                    ></span>
-                </div>
-                <div>
-                    <h3 class="ndb:text-sm ndb:font-bold ndb:leading-5">Responded</h3>
-                    <dl class="ndb:mt-2.5 ndb:grid ndb:grid-cols-2 ndb:gap-x-3 ndb:gap-y-2.5 ndb:sm:mt-3 ndb:sm:grid-cols-4 ndb:sm:gap-x-5 ndb:sm:gap-y-3">
-                        @foreach ([
-                            ['Status', $requestStatus ?: '—'],
-                            ['Response size', $formatRequestBytes((int) ($requestPayload['response_size_bytes'] ?? 0))],
-                            ['Duration', $requestDuration],
-                            ['Queries', $requestQueryCount],
-                        ] as [$label, $value])
-                            <div class="ndb:min-w-0">
-                                <dt class="ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400">
-                                    {{ $label }}
-                                </dt>
-                                <dd class="ndb:mt-1 ndb:truncate ndb:text-xs ndb:font-bold ndb:tabular-nums {{ $label === 'Status' ? ($requestSucceeded ? 'ndb:text-emerald-600 ndb:dark:text-emerald-400' : 'ndb:text-red-600 ndb:dark:text-red-400') : '' }}">
-                                    {{ $value }}
-                                </dd>
-                            </div>
-                        @endforeach
-                    </dl>
-                </div>
-            </li>
+                <x-slot:primary>
+                    <p
+                        data-ndb-request-status
+                        @class([
+                            'ndb:text-xl ndb:font-medium ndb:leading-7 ndb:tabular-nums ndb:[overflow-wrap:anywhere] ndb:lg:text-2xl',
+                            'ndb:text-emerald-600 ndb:dark:text-emerald-400' => $requestSucceeded,
+                            'ndb:text-red-600 ndb:dark:text-red-400' => $requestFailed,
+                        ])
+                    >
+                        {{ trim(($requestStatus ?: '—').' '.$requestStatusText) }}
+                    </p>
+                </x-slot:primary>
+
+                <dl class="ndb:mt-2 ndb:grid ndb:max-w-3xl ndb:grid-cols-2 ndb:gap-x-5 ndb:gap-y-4 ndb:text-sm ndb:leading-5 ndb:lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)]">
+                    <div class="ndb:col-span-full ndb:min-w-0 ndb:lg:col-span-1">
+                        <dt class="ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">Content type</dt>
+                        <dd class="ndb:mt-1 ndb:[overflow-wrap:anywhere]">
+                            {{ ($requestPayload['content_type'] ?? null) ?: '—' }}
+                        </dd>
+                    </div>
+                    <div class="ndb:min-w-0">
+                        <dt class="ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">Response size</dt>
+                        <dd class="ndb:mt-1 ndb:tabular-nums">
+                            {{ $formatRequestBytes((int) ($requestPayload['response_size_bytes'] ?? 0)) }}
+                        </dd>
+                    </div>
+                    <div class="ndb:min-w-0">
+                        <dt class="ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">Total duration</dt>
+                        <dd class="ndb:mt-1 ndb:tabular-nums">{{ $requestDuration }}</dd>
+                    </div>
+                </dl>
+            </x-newdebugbar::request-step>
         </ol>
     </div>
 
@@ -237,8 +256,8 @@
     >
         <summary class="ndb:flex ndb:cursor-pointer ndb:list-none ndb:items-center ndb:gap-3 ndb:px-3 ndb:py-3 ndb:focus-visible:outline-2 ndb:focus-visible:outline-inset ndb:focus-visible:outline-indigo-500 ndb:sm:px-4">
             <span class="ndb:min-w-0 ndb:flex-1">
-                <span class="ndb:block ndb:text-xs ndb:font-bold">Request details</span>
-                <span class="ndb:mt-0.5 ndb:block ndb:text-[11px] ndb:text-zinc-400">Headers, input, query parameters, and session shape</span>
+                <span class="ndb:block ndb:text-sm ndb:font-semibold">Request details</span>
+                <span class="ndb:mt-0.5 ndb:block ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">Headers, input, query parameters, and session</span>
             </span>
             <x-newdebugbar::icon
                 name="chevron-down"

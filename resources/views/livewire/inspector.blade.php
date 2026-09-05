@@ -178,13 +178,14 @@
                         data-ndb-section-heading
                         x-ref="sectionHeading"
                         tabindex="-1"
-                        aria-describedby="newdebugbar-section-description"
+                        x-bind:aria-describedby="selected === 'request' ? null : 'newdebugbar-section-description'"
                         x-text="selectedSection.label"
                     ></x-slot:heading>
                     <x-slot:description
                         id="newdebugbar-section-description"
                         data-ndb-section-description
                         x-ref="sectionDescription"
+                        x-show.important="selected !== 'request'"
                         x-text="selectedSection.description"
                     ></x-slot:description>
                 </x-newdebugbar::section-heading>
