@@ -1,6 +1,6 @@
 <template x-if="mailDetailTab === 'message'">
     <div data-ndb-mail-detail-panel="message" class="ndb:p-3 ndb:sm:p-4">
-        <dl class="ndb:divide-y ndb:divide-zinc-200/90 ndb:dark:divide-zinc-800">
+        <x-newdebugbar::inspector-definition-list>
             <template
                 x-for="
                     field in
@@ -16,13 +16,10 @@
             >
                 <x-newdebugbar::inspector-definition-row>
                     <x-slot:term x-text="field[0]"></x-slot:term>
-                    <x-slot:value
-                        class="ndb:break-all ndb:text-xs ndb:leading-5 ndb:text-zinc-600 ndb:dark:text-zinc-300"
-                        x-text="formatMailAddresses(field[1])"
-                    ></x-slot:value>
+                    <x-slot:value class="ndb:break-all" x-text="formatMailAddresses(field[1])"></x-slot:value>
                 </x-newdebugbar::inspector-definition-row>
             </template>
-        </dl>
+        </x-newdebugbar::inspector-definition-list>
 
         <section
             x-show="selectedMailMessage.attachments.length > 0"
@@ -44,12 +41,12 @@
                                         class="ndb:block ndb:truncate ndb:text-xs ndb:font-semibold"
                                         x-text="attachment.name"
                                     ></span>
-                                    <span class="ndb:mt-0.5 ndb:flex ndb:min-w-0 ndb:flex-wrap ndb:gap-x-2 ndb:text-[11px] ndb:text-zinc-400">
+                                    <span class="ndb:mt-0.5 ndb:flex ndb:min-w-0 ndb:flex-wrap ndb:gap-x-2 ndb:text-xs ndb:text-zinc-400">
                                         <span class="ndb:truncate" x-text="attachment.content_type"></span>
                                         <span class="ndb:tabular-nums" x-text="attachment.size_label"></span>
                                     </span>
                                 </span>
-                                <span class="ndb:flex ndb:shrink-0 ndb:items-center ndb:gap-1.5 ndb:text-[11px] ndb:font-bold ndb:text-indigo-600 ndb:dark:text-indigo-300">
+                                <span class="ndb:flex ndb:shrink-0 ndb:items-center ndb:gap-1.5 ndb:text-xs ndb:font-bold ndb:text-indigo-600 ndb:dark:text-indigo-300">
                                     Download
                                     <x-newdebugbar::icon name="download" size="3.5" />
                                 </span>
@@ -62,12 +59,12 @@
                                         class="ndb:block ndb:truncate ndb:text-xs ndb:font-semibold"
                                         x-text="attachment.name"
                                     ></span>
-                                    <span class="ndb:mt-0.5 ndb:flex ndb:min-w-0 ndb:flex-wrap ndb:gap-x-2 ndb:text-[11px] ndb:text-zinc-400">
+                                    <span class="ndb:mt-0.5 ndb:flex ndb:min-w-0 ndb:flex-wrap ndb:gap-x-2 ndb:text-xs ndb:text-zinc-400">
                                         <span class="ndb:truncate" x-text="attachment.content_type"></span>
                                         <span class="ndb:tabular-nums" x-text="attachment.size_label"></span>
                                     </span>
                                 </span>
-                                <span class="ndb:shrink-0 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400">
+                                <span class="ndb:shrink-0 ndb:text-xs ndb:font-semibold ndb:text-zinc-400">
                                     Not retained
                                 </span>
                             </div>
@@ -77,7 +74,7 @@
             </div>
             <p
                 x-show="selectedMailMessage.attachment_bodies_omitted > 0"
-                class="ndb:mt-2 ndb:text-[11px] ndb:leading-5 ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                class="ndb:mt-2 ndb:text-xs ndb:leading-5 ndb:text-zinc-500 ndb:dark:text-zinc-400"
             >
                 <span x-text="selectedMailMessage.attachment_bodies_omitted"></span>
                 <span x-text="selectedMailMessage.attachment_bodies_omitted === 1 ? 'attachment was' : 'attachments were'"></span>
@@ -87,7 +84,7 @@
 
         <section class="ndb:mt-4 ndb:border-t ndb:border-zinc-200/90 ndb:pt-3 ndb:sm:mt-5 ndb:sm:pt-4 ndb:dark:border-zinc-800">
             <h4 class="ndb:text-xs ndb:font-bold">Delivery details</h4>
-            <dl class="ndb:mt-2 ndb:divide-y ndb:divide-zinc-200/90 ndb:dark:divide-zinc-800">
+            <x-newdebugbar::inspector-definition-list class="ndb:mt-2">
                 <template
                     x-for="
                         field in
@@ -108,13 +105,10 @@
                 >
                     <x-newdebugbar::inspector-definition-row>
                         <x-slot:term x-text="field[0]"></x-slot:term>
-                        <x-slot:value
-                            class="ndb:break-all ndb:text-xs ndb:leading-5 ndb:text-zinc-600 ndb:dark:text-zinc-300"
-                            x-text="field[1]"
-                        ></x-slot:value>
+                        <x-slot:value class="ndb:break-all" x-text="field[1]"></x-slot:value>
                     </x-newdebugbar::inspector-definition-row>
                 </template>
-            </dl>
+            </x-newdebugbar::inspector-definition-list>
         </section>
 
         <p
@@ -124,7 +118,7 @@
                 selectedMailMessage.attachment_bodies_omitted > 0 ||
                 selectedMailMessage.attachment_metadata_omitted > 0
             "
-            class="ndb:mt-3 ndb:rounded-lg ndb:bg-amber-50 ndb:px-3 ndb:py-2 ndb:text-[11px] ndb:font-semibold ndb:leading-5 ndb:text-amber-700 ndb:sm:mt-4 ndb:dark:bg-amber-950/35 ndb:dark:text-amber-300"
+            class="ndb:mt-3 ndb:rounded-lg ndb:bg-amber-50 ndb:px-3 ndb:py-2 ndb:text-xs ndb:font-semibold ndb:leading-5 ndb:text-amber-700 ndb:sm:mt-4 ndb:dark:bg-amber-950/35 ndb:dark:text-amber-300"
         >
             Some message data was bounded to keep this profile responsive.
         </p>

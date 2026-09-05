@@ -7,7 +7,7 @@
 @endphp
 
 <div role="group" aria-label="Color theme" {{ $attributes->class('ndb:py-1') }}>
-    <p class="ndb:px-3 ndb:pb-1 ndb:pt-1 ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400">
+    <p class="ndb:px-3 ndb:pb-1 ndb:pt-1 ndb:text-xs ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400">
         Color theme
     </p>
     @foreach ($themes as $theme => [$label, $icon])

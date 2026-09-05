@@ -417,7 +417,8 @@ test('HTTP client filters failures and slow requests while keeping one selected'
   state.setHttpClientDetailTab('request');
   assert.equal(detailResets, 1);
   state.setHttpClientDetailTab('source');
-  assert.equal(state.httpClientDetailTab, 'source');
+  assert.equal(state.httpClientDetailTab, 'request');
+  assert.equal(detailResets, 1);
   state.setHttpClientDetailTab('request');
   state.setHttpClientDetailTab('invalid');
   state.setHttpClientFilter('invalid');

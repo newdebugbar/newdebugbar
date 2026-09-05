@@ -178,7 +178,7 @@ it('keeps repeated execution evidence in one bounded workspace record', function
         ->toContain('data-ndb-query-workspace')
         ->toContain('data-ndb-query-group="group-')
         ->toContain('data-ndb-query-detail')
-        ->not->toContain('<details')
+        ->toContain('data-ndb-inspector-disclosure')
         ->not->toContain('data-ndb-query-group-executions');
 });
 

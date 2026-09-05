@@ -43,6 +43,7 @@ it('filters, selects, and inspects outbound HTTP evidence', function () {
                 const urlAction = header.querySelector('[data-ndb-http-client-copy-url]');
                 const urlIcon = urlAction.querySelector('svg');
                 const headerMethod = header.querySelector('[data-ndb-http-client-detail-method]');
+                const headerHost = header.querySelector('[data-ndb-http-client-detail-host]');
                 const headerPath = header.querySelector('[data-ndb-http-client-detail-path]');
                 const successStatus = document.querySelector('[data-ndb-http-client-item="2"] [data-ndb-http-client-list-status]');
                 const failedStatus = document.querySelector('[data-ndb-http-client-item="6"] [data-ndb-http-client-list-status]');
@@ -121,21 +122,24 @@ it('filters, selects, and inspects outbound HTTP evidence', function () {
                     && !header.textContent.includes('200 OK')
                     && !header.textContent.includes('ms')
                     && responseFacts && !header.contains(responseFacts)
-                    && responseFacts.textContent.includes('Status')
-                    && responseFacts.textContent.includes('Runtime')
-                    && responseFacts.textContent.includes('Response body')
+                    && responseFacts.querySelector('[data-ndb-http-client-detail-status]').getAttribute('aria-label') === 'Status'
+                    && responseFacts.textContent.includes('Duration')
+                    && responseFacts.textContent.includes('Response size')
                     && !responseFacts.textContent.includes('Host')
                     && !responseFacts.textContent.includes('Source')
                     && requestFacts === null
-                    && sourceFacts === null
+                    && sourceFacts !== null
+                    && (sourceFacts.compareDocumentPosition(responseFacts) & Node.DOCUMENT_POSITION_PRECEDING) !== 0
                     && header.querySelectorAll('button').length === 1
+                    && headerHost.textContent.trim() === 'api.recommendations.test'
                     && !getComputedStyle(headerPath).fontFamily.includes('JetBrains Mono')
-                    && verticallyAligned([headerMethod, headerPath, urlAction])
+                    && verticallyAligned([headerMethod, headerHost])
+                    && headerPath.getBoundingClientRect().top >= headerHost.getBoundingClientRect().bottom
                     && urlAction.textContent.trim() === 'Copy URL'
                     && urlIcon.querySelectorAll('path').length === 2
                     && urlIcon.querySelector('rect') === null
                     && document.querySelectorAll('[data-ndb-http-client-copy-curl]').length === 0
-                    && detailTabs.map((tab) => tab.textContent.trim()).join('|') === 'Response|Request|Source'
+                    && detailTabs.map((tab) => tab.textContent.trim()).join('|') === 'Response|Request'
                     && detailTabs.every((tab) => tab.matches('[data-ndb-filter-tab]'))
                     && detailTabs.every((tab) => tab.dataset.ndbFilterTabVariant === 'segmented')
                     && detailTabGroup.dataset.ndbFilterTabsVariant === 'segmented'
@@ -155,6 +159,25 @@ it('filters, selects, and inspects outbound HTTP evidence', function () {
                     && rows.every((row) => ! /#\d+/.test(row.textContent));
             })()
             JS)
+        ->assertScript(<<<'JS'
+            (() => {
+                const body = document.querySelector('[data-ndb-http-client-body="response"]');
+                const headers = document.querySelector('[data-ndb-http-client-headers="response"]');
+                const source = document.querySelector('[data-ndb-http-client-source-facts]');
+
+                return body !== null
+                    && headers !== null
+                    && (body.compareDocumentPosition(headers) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
+                    && headers.open === false
+                    && headers.querySelector('pre') === null
+                    && document.querySelector('[data-ndb-http-client-capture-limit="response"]').getClientRects().length === 0
+                    && source.querySelector('details').open === false
+                    && source.querySelector('[data-ndb-inspector-stack]') === null;
+            })()
+            JS)
+        ->click('[data-ndb-http-client-headers="response"] > summary')
+        ->assertScript('document.querySelector("[data-ndb-http-client-headers=\"response\"]").open === true')
+        ->assertScript('document.querySelector("[data-ndb-http-client-headers=\"response\"] code[data-highlighted]") !== null')
         ->assertScript(<<<'JS'
             (() => {
                 const heading = document.querySelector('[data-ndb-http-client-sort-heading="duration"]');
@@ -245,6 +268,7 @@ it('filters, selects, and inspects outbound HTTP evidence', function () {
                 window.newdebugbarExpectedClipboard = {
                     curl: state?.selectedHttpClientRequest?.curl,
                     url: state?.selectedHttpClientRequest?.url,
+                    responseBody: state?.formatHttpClientEvidence(state?.selectedHttpClientRequest?.response?.body),
                     urlWidth: document.querySelector('[data-ndb-http-client-copy-url]').getBoundingClientRect().width,
                 };
                 window.newdebugbarClipboardWrites = [];
@@ -259,25 +283,29 @@ it('filters, selects, and inspects outbound HTTP evidence', function () {
             })()
             JS)
         ->click('[data-ndb-http-client-copy-url]')
+        ->click('[data-ndb-http-client-copy-body="response"]')
         ->wait(0.05)
         ->click('[data-ndb-http-client-detail-tab="request"]')
         ->assertVisible('[data-ndb-http-client-detail-panel="request"]')
         ->assertScript('document.querySelectorAll("[data-ndb-http-client-detail-panel]").length', 1)
         ->assertMissing('[data-ndb-http-client-detail-panel="response"]')
         ->assertMissing('[data-ndb-http-client-detail-panel="source"]')
-        ->assertSee('Request body')
-        ->assertSeeIn('[data-ndb-http-client-request-facts]', 'Host')
-        ->assertSeeIn('[data-ndb-http-client-request-facts]', 'Request body')
+        ->assertSee('Request size')
+        ->assertSeeIn('[data-ndb-http-client-request-facts]', 'Request size')
         ->assertScript('document.querySelector("[data-ndb-http-client-detail-host]").textContent.trim() === "api.error.test"')
+        ->assertScript('document.querySelector("[data-ndb-http-client-headers=\"request\"]").open === false')
+        ->click('[data-ndb-http-client-headers="request"] > summary')
         ->assertScript('document.querySelector("[data-ndb-http-client-detail-panel=\"request\"] code[data-ndb-language=\"json\"][data-highlighted]") !== null')
         ->click('[data-ndb-http-client-copy-curl]')
         ->wait(0.05)
         ->assertScript(<<<'JS'
             (() => {
-                const [url, curl] = window.newdebugbarClipboardWrites;
+                const [url, body, curl] = window.newdebugbarClipboardWrites;
                 const currentUrlWidth = document.querySelector('[data-ndb-http-client-copy-url]').getBoundingClientRect().width;
 
                 return url === window.newdebugbarExpectedClipboard.url
+                    && body === window.newdebugbarExpectedClipboard.responseBody
+                    && body.includes('Service unavailable.')
                     && curl === window.newdebugbarExpectedClipboard.curl
                     && Math.abs(currentUrlWidth - window.newdebugbarExpectedClipboard.urlWidth) <= 1
                     && curl.includes("--request 'DELETE'")
@@ -311,21 +339,19 @@ it('filters, selects, and inspects outbound HTTP evidence', function () {
         ->assertSee('Response body')
         ->assertSee('Service unavailable.')
         ->assertScript('document.querySelector("[data-ndb-http-client-detail-panel=\"response\"] code[data-ndb-language=\"json\"][data-highlighted]") !== null')
-        ->click('[data-ndb-http-client-detail-tab="source"]')
-        ->assertVisible('[data-ndb-http-client-detail-panel="source"]')
-        ->assertScript('document.querySelectorAll("[data-ndb-http-client-detail-panel]").length', 1)
-        ->assertMissing('[data-ndb-http-client-detail-panel="request"]')
-        ->assertMissing('[data-ndb-http-client-detail-panel="response"]')
-        ->assertSeeIn('[data-ndb-http-client-source-facts]', 'Request initiated at')
+        ->assertMissing('[data-ndb-http-client-detail-tab="source"]')
+        ->assertVisible('[data-ndb-http-client-source-facts]')
+        ->assertSeeIn('[data-ndb-http-client-source-facts]', 'Source')
         ->assertScript('document.querySelector("[data-ndb-http-client-detail-source]").textContent.includes("tests/Support/DefinesTestApplication.php")')
         ->assertSee('tests/Support/DefinesTestApplication.php')
+        ->assertScript('document.querySelector("[data-ndb-http-client-source-facts] details").open === false')
+        ->click('[data-ndb-http-client-source-facts] summary')
         ->assertScript(<<<'JS'
             (() => {
                 const source = document.querySelector('[data-ndb-http-client-detail-source]');
                 const sourceGroup = source.closest('[data-ndb-http-client-primary-source]');
                 const sourceLink = source.closest('[data-ndb-inspector-source-link]');
-                const stack = document.querySelector('[data-ndb-http-client-detail-panel="source"] [data-ndb-inspector-stack]');
-                const action = document.querySelector('[data-ndb-http-client-copy-url]');
+                const stack = document.querySelector('[data-ndb-http-client-source-facts] [data-ndb-inspector-stack]');
                 const functionCall = stack.querySelector('li code');
                 const stackPath = stack.querySelector('[data-ndb-inspector-source-link] > span');
                 const sourceGroupStyle = getComputedStyle(sourceGroup);
@@ -335,15 +361,12 @@ it('filters, selects, and inspects outbound HTTP evidence', function () {
                     && sourceLink !== null
                     && stack !== null
                     && sourceLink.querySelector('svg') === null
-                    && sourceGroupStyle.padding === '0px'
-                    && sourceGroupStyle.borderWidth === '0px'
                     && sourceGroupStyle.backgroundColor === 'rgba(0, 0, 0, 0)'
                     && sourceLinkStyle.textDecorationLine.includes('underline')
                     && !getComputedStyle(source).fontFamily.includes('JetBrains Mono Variable')
                     && getComputedStyle(functionCall).fontFamily.includes('JetBrains Mono Variable')
                     && getComputedStyle(functionCall).fontFeatureSettings.includes('"calt"')
-                    && !getComputedStyle(stackPath).fontFamily.includes('JetBrains Mono Variable')
-                    && getComputedStyle(source).color !== getComputedStyle(action).color;
+                    && !getComputedStyle(stackPath).fontFamily.includes('JetBrains Mono Variable');
             })()
             JS)
         ->click('[data-ndb-http-client-detail-source]')
@@ -352,10 +375,26 @@ it('filters, selects, and inspects outbound HTTP evidence', function () {
         ->select('[data-ndb-http-client-filter]', 'all')
         ->click('[data-ndb-http-client-item="3"]')
         ->assertVisible('[data-ndb-http-client-detail-panel="response"]')
+        ->assertScript('document.querySelector("[data-ndb-http-client-source-facts] details").open === false')
+        ->assertScript('document.querySelector("[data-ndb-http-client-headers=\"response\"]").open === false')
         ->assertSee('Redirect to')
         ->assertSee('https://api.redirect.test/v2/current')
         ->click('[data-ndb-http-client-item="4"]')
         ->assertVisible('[data-ndb-http-client-detail-panel="response"]')
+        ->assertSeeIn('[data-ndb-http-client-body="response"]', '[maximum depth reached]')
+        ->assertVisible('[data-ndb-http-client-capture-limit="response"]')
+        ->click('[data-ndb-http-client-detail-tab="request"]')
+        ->assertSeeIn('[data-ndb-http-client-body="request"]', 'not-an-email')
+        ->click('[data-ndb-http-client-copy-body="request"]')
+        ->wait(0.05)
+        ->assertScript(<<<'JS'
+            (() => {
+                const state = document.getElementById('newdebugbar')._x_dataStack?.[0];
+
+                return window.newdebugbarFallbackClipboard
+                    === state.formatHttpClientEvidence(state.selectedHttpClientRequest.request.body);
+            })()
+            JS)
         ->click('[data-ndb-http-client-item="7"]')
         ->assertScript('document.querySelector("[data-ndb-http-client-detail-status]").textContent.trim() === "Connection failed"')
         ->assertSee('No HTTP response was received.')
@@ -408,11 +447,11 @@ it('keeps a sparse HTTP request useful without empty evidence', function () {
             (() => {
                 const search = document.querySelector('[data-ndb-http-client-search]');
                 const filter = document.querySelector('[data-ndb-http-client-filter]');
-                const source = document.querySelector('[data-ndb-http-client-detail-tab="source"]');
+                const source = document.querySelector('[data-ndb-http-client-source-facts]');
                 const response = document.querySelector('[data-ndb-http-client-detail-panel="response"]');
 
                 return Math.abs(search.getBoundingClientRect().top - filter.getBoundingClientRect().top) <= 1
-                    && source.getClientRects().length === 0
+                    && source === null
                     && response.querySelector('[data-ndb-inspector-evidence]') === null
                     && response.querySelector('code') === null
                     && response.textContent.includes('204 No Content')
@@ -421,12 +460,12 @@ it('keeps a sparse HTTP request useful without empty evidence', function () {
             JS)
         ->click('[data-ndb-http-client-detail-tab="request"]')
         ->assertVisible('[data-ndb-http-client-detail-panel="request"]')
-        ->assertSeeIn('[data-ndb-http-client-request-facts]', 'Host')
+        ->assertSeeIn('[data-ndb-http-client-header]', 'api.healthy.test')
         ->assertScript(<<<'JS'
             (() => {
                 const request = document.querySelector('[data-ndb-http-client-detail-panel="request"]');
                 const bodyFact = [...request.querySelectorAll('[data-ndb-inspector-fact]')]
-                    .find((fact) => fact.textContent.includes('Request body'));
+                    .find((fact) => fact.textContent.includes('Request size'));
 
                 return request.querySelector('[data-ndb-inspector-evidence]') === null
                     && request.querySelector('pre') === null
@@ -573,8 +612,8 @@ it('keeps HTTP request details readable on mobile in dark mode', function () {
                     && content.scrollWidth <= content.clientWidth + 1
                     && back.getClientRects().length > 0
                     && back.textContent.trim() === 'Requests'
-                    && tabs.length === 3
-                    && tabs.map((tab) => tab.textContent.trim()).join('|') === 'Response|Request|Source'
+                    && tabs.length === 2
+                    && tabs.map((tab) => tab.textContent.trim()).join('|') === 'Response|Request'
                     && tabs[0].getAttribute('aria-pressed') === 'true'
                     && tabs.every((tab) => tab.getClientRects().length > 0)
                     && tabs.every((tab) => tab.querySelector('svg') === null)

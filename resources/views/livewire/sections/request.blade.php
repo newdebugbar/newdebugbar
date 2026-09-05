@@ -263,7 +263,7 @@
                         <span class="ndb:min-w-0 ndb:flex-1 ndb:truncate ndb:text-xs ndb:font-bold">{{ $requestDetailGroup['label'] }}</span>
                         <span
                             data-ndb-request-detail-count
-                            class="ndb:shrink-0 ndb:text-[11px] ndb:font-semibold ndb:tabular-nums ndb:text-zinc-400"
+                            class="ndb:shrink-0 ndb:text-xs ndb:font-semibold ndb:tabular-nums ndb:text-zinc-400"
                         >{{ $requestDetailGroup['count'] }}</span>
                     </button>
                 @endforeach
@@ -280,13 +280,13 @@
                                 <h3 class="ndb:text-xs ndb:font-bold">{{ $requestDetailGroup['label'] }}</h3>
                                 <span
                                     data-ndb-request-detail-panel-count
-                                    class="ndb:text-[11px] ndb:font-semibold ndb:tabular-nums ndb:text-zinc-400"
+                                    class="ndb:text-xs ndb:font-semibold ndb:tabular-nums ndb:text-zinc-400"
                                 >{{ $requestDetailGroup['count'] }}</span>
                             </div>
                             <button
                                 type="button"
                                 @click="copyText(@js(json_encode($requestDetailGroup['items'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)))"
-                                class="ndb:shrink-0 ndb:text-[11px] ndb:font-bold ndb:text-indigo-600 ndb:focus-visible:outline-2 ndb:focus-visible:outline-offset-2 ndb:focus-visible:outline-indigo-500 ndb:dark:text-indigo-300"
+                                class="ndb:shrink-0 ndb:text-xs ndb:font-bold ndb:text-indigo-600 ndb:focus-visible:outline-2 ndb:focus-visible:outline-offset-2 ndb:focus-visible:outline-indigo-500 ndb:dark:text-indigo-300"
                             >
                                 Copy all
                             </button>
@@ -299,13 +299,13 @@
                                         <tr class="ndb:border-b ndb:border-zinc-200/90 ndb:dark:border-zinc-800">
                                             <th
                                                 scope="col"
-                                                class="ndb:w-2/5 ndb:pb-2 ndb:pr-4 ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400"
+                                                class="ndb:w-2/5 ndb:pb-2 ndb:pr-4 ndb:text-xs ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400"
                                             >
                                                 Name
                                             </th>
                                             <th
                                                 scope="col"
-                                                class="ndb:pb-2 ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400"
+                                                class="ndb:pb-2 ndb:text-xs ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400"
                                             >
                                                 Value
                                             </th>
@@ -316,11 +316,11 @@
                                             <tr class="ndb:border-b ndb:border-zinc-200/70 ndb:last:border-b-0 ndb:dark:border-zinc-800/80">
                                                 <th
                                                     scope="row"
-                                                    class="ndb:py-2 ndb:pr-4 ndb:align-top ndb:text-[11px] ndb:font-medium ndb:text-zinc-600 ndb:dark:text-zinc-300"
+                                                    class="ndb:py-2 ndb:pr-4 ndb:align-top ndb:text-xs ndb:font-medium ndb:text-zinc-600 ndb:dark:text-zinc-300"
                                                 >
                                                     {{ $requestDetailName }}
                                                 </th>
-                                                <td class="ndb:break-words ndb:py-2 ndb:align-top ndb:text-[11px] ndb:text-zinc-800 ndb:dark:text-zinc-200">
+                                                <td class="ndb:break-words ndb:py-2 ndb:align-top ndb:text-xs ndb:text-zinc-800 ndb:dark:text-zinc-200">
                                                     {{ $formatRequestValue($requestDetailValue) }}
                                                 </td>
                                             </tr>
@@ -349,7 +349,7 @@
                 ['Duration', $requestDuration],
             ] as [$label, $value])
                 <div class="ndb:min-w-0">
-                    <dt class="ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400">
+                    <dt class="ndb:text-xs ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400">
                         {{ $label }}
                     </dt>
                     <dd class="ndb:mt-1 ndb:truncate ndb:text-xs ndb:font-semibold">{{ $value }}</dd>

@@ -29,7 +29,7 @@
                             data-ndb-event-qualified-name
                             x-show.important="selectedEvent.name !== selectedEvent.display_name"
                             :title="selectedEvent.name"
-                            class="ndb:mt-1 ndb:block ndb:break-all ndb:bg-transparent ndb:font-mono ndb:text-[11px] ndb:font-medium ndb:leading-4 ndb:text-zinc-400"
+                            class="ndb:mt-1 ndb:block ndb:break-all ndb:bg-transparent ndb:font-mono ndb:text-xs ndb:font-medium ndb:leading-4 ndb:text-zinc-400"
                             x-text="selectedEvent.name"
                         ></code>
                     </div>
@@ -63,7 +63,7 @@
                     <x-newdebugbar::inspector-facts columns="4" data-ndb-event-facts>
                         <x-newdebugbar::inspector-fact label="Origin" data-ndb-event-fact>
                             <x-slot:value
-                                class="ndb:truncate ndb:text-[11px] ndb:font-semibold"
+                                class="ndb:truncate ndb:font-semibold"
                                 x-text="
                                     selectedEvent.source === 'application'
                                         ? selectedEvent.broadcast
@@ -75,7 +75,7 @@
                         </x-newdebugbar::inspector-fact>
                         <x-newdebugbar::inspector-fact label="Sequence" data-ndb-event-fact>
                             <x-slot:value
-                                class="ndb:truncate ndb:text-[11px] ndb:font-semibold ndb:tabular-nums"
+                                class="ndb:truncate ndb:font-semibold ndb:tabular-nums"
                                 x-text="
                                     selectedEvent.first_sequence === selectedEvent.last_sequence
                                         ? '#' + selectedEvent.first_sequence
@@ -85,13 +85,13 @@
                         </x-newdebugbar::inspector-fact>
                         <x-newdebugbar::inspector-fact label="Dispatches" data-ndb-event-fact>
                             <x-slot:value
-                                class="ndb:truncate ndb:text-[11px] ndb:font-semibold ndb:tabular-nums"
+                                class="ndb:truncate ndb:font-semibold ndb:tabular-nums"
                                 x-text="selectedEvent.occurrence_count"
                             ></x-slot:value>
                         </x-newdebugbar::inspector-fact>
                         <x-newdebugbar::inspector-fact label="First seen" data-ndb-event-fact>
                             <x-slot:value
-                                class="ndb:truncate ndb:text-[11px] ndb:font-semibold ndb:tabular-nums"
+                                class="ndb:truncate ndb:font-semibold ndb:tabular-nums"
                                 x-text="formatEventTime(selectedEvent.first_at_ms)"
                             ></x-slot:value>
                         </x-newdebugbar::inspector-fact>
@@ -102,7 +102,7 @@
                             <h4 class="ndb:text-xs ndb:font-bold">Listener handling</h4>
                             <span
                                 data-ndb-event-listener-outcome
-                                class="ndb:bg-transparent ndb:text-[11px] ndb:font-semibold ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                class="ndb:bg-transparent ndb:text-xs ndb:font-semibold ndb:text-zinc-500 ndb:dark:text-zinc-400"
                                 x-text="selectedEvent.listener_outcome_label"
                             ></span>
                         </div>
@@ -112,7 +112,7 @@
                         ></p>
                         <p
                             x-show.important="selectedEvent.duplicate_registration_count > 0"
-                            class="ndb:mt-1 ndb:text-[11px] ndb:font-bold ndb:text-amber-600 ndb:dark:text-amber-300"
+                            class="ndb:mt-1 ndb:text-xs ndb:font-bold ndb:text-amber-600 ndb:dark:text-amber-300"
                             x-text="
                                 selectedEvent.duplicate_registration_count +
                                 (selectedEvent.duplicate_registration_count === 1
@@ -138,16 +138,16 @@
                                     class="ndb:grid ndb:grid-cols-[minmax(0,1fr)_auto] ndb:gap-x-3 ndb:gap-y-1.5 ndb:bg-transparent ndb:px-0 ndb:py-3 ndb:first:pt-0"
                                 >
                                     <code
-                                        class="ndb:col-start-1 ndb:row-start-1 ndb:min-w-0 ndb:break-all ndb:bg-transparent ndb:font-mono ndb:text-[11px] ndb:font-semibold"
+                                        class="ndb:col-start-1 ndb:row-start-1 ndb:min-w-0 ndb:break-all ndb:bg-transparent ndb:font-mono ndb:text-xs ndb:font-semibold"
                                         x-text="listener.name"
                                     ></code>
                                     <span
-                                        class="ndb:col-start-2 ndb:row-start-1 ndb:justify-self-end ndb:text-[11px] ndb:font-semibold ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                        class="ndb:col-start-2 ndb:row-start-1 ndb:justify-self-end ndb:text-xs ndb:font-semibold ndb:text-zinc-500 ndb:dark:text-zinc-400"
                                         x-text="listener.queued ? 'Queued' : 'Completed'"
                                     ></span>
                                     <span
                                         x-show.important="listener.source"
-                                        class="ndb:col-start-1 ndb:row-start-2 ndb:min-w-0 ndb:truncate ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                        class="ndb:col-start-1 ndb:row-start-2 ndb:min-w-0 ndb:truncate ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400"
                                         x-text="
                                             listener.source ? listener.source.file + ':' + listener.source.line : ''
                                         "
@@ -156,7 +156,7 @@
                                         :class="listener.registrations > 1
                                             ? 'ndb:text-amber-600 ndb:dark:text-amber-300'
                                             : 'ndb:text-zinc-400'"
-                                        class="ndb:col-start-2 ndb:row-start-2 ndb:justify-self-end ndb:text-[11px] ndb:font-semibold ndb:tabular-nums"
+                                        class="ndb:col-start-2 ndb:row-start-2 ndb:justify-self-end ndb:text-xs ndb:font-semibold ndb:tabular-nums"
                                         x-text="
                                             listener.registrations +
                                             (listener.registrations === 1 ? ' registration' : ' registrations')
@@ -182,7 +182,7 @@
                         x-show.important="selectedEvent.listeners.length > 0"
                         class="ndb:group ndb:mt-3 ndb:border-0 ndb:bg-transparent ndb:p-0 ndb:sm:mt-4"
                     >
-                        <summary class="ndb:flex ndb:cursor-pointer ndb:list-none ndb:items-center ndb:gap-1.5 ndb:bg-transparent ndb:p-0 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-500 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500 ndb:dark:text-zinc-400">
+                        <summary class="ndb:flex ndb:cursor-pointer ndb:list-none ndb:items-center ndb:gap-1.5 ndb:bg-transparent ndb:p-0 ndb:text-xs ndb:font-semibold ndb:text-zinc-500 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500 ndb:dark:text-zinc-400">
                             How listener outcomes are recorded
                             <x-newdebugbar::icon
                                 name="chevron-down"
@@ -190,7 +190,7 @@
                                 class="ndb:transition ndb:group-open:rotate-180"
                             />
                         </summary>
-                        <p class="ndb:mt-2 ndb:text-[11px] ndb:leading-5 ndb:text-zinc-500 ndb:dark:text-zinc-400">
+                        <p class="ndb:mt-2 ndb:text-xs ndb:leading-5 ndb:text-zinc-500 ndb:dark:text-zinc-400">
                             Completed means Laravel reached this observer after synchronous listener dispatch. Queued
                             means Laravel handed the listener to the queue. Laravel does not expose per-listener
                             duration to this observer.
@@ -220,22 +220,22 @@
                                 </x-slot:term>
                                 <x-slot:value class="ndb:min-w-0 ndb:bg-transparent">
                                     <code
-                                        class="ndb:block ndb:break-all ndb:bg-transparent ndb:font-mono ndb:text-[11px] ndb:font-semibold"
+                                        class="ndb:block ndb:break-all ndb:bg-transparent ndb:font-mono ndb:text-xs ndb:font-semibold"
                                         x-text="entry.type"
                                     ></code>
                                     <div
                                         x-show.important="entry.fields.length > 0"
                                         class="ndb:mt-2 ndb:grid ndb:gap-1 ndb:sm:grid-cols-[4rem_minmax(0,1fr)]"
                                     >
-                                        <span class="ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400">Fields</span>
+                                        <span class="ndb:text-xs ndb:font-semibold ndb:text-zinc-400">Fields</span>
                                         <code
-                                            class="ndb:break-all ndb:bg-transparent ndb:font-mono ndb:text-[11px] ndb:text-zinc-600 ndb:dark:text-zinc-300"
+                                            class="ndb:break-all ndb:bg-transparent ndb:font-mono ndb:text-xs ndb:text-zinc-600 ndb:dark:text-zinc-300"
                                             x-text="entry.fields.join(', ')"
                                         ></code>
                                     </div>
                                     <p
                                         x-show.important="entry.field_count > entry.fields.length"
-                                        class="ndb:mt-1 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400"
+                                        class="ndb:mt-1 ndb:text-xs ndb:font-semibold ndb:text-zinc-400"
                                         x-text="
                                             entry.field_count -
                                             entry.fields.length +
@@ -249,7 +249,7 @@
                         </template>
                     </dl>
 
-                    <p class="ndb:mt-3 ndb:text-[11px] ndb:leading-5 ndb:text-zinc-400">
+                    <p class="ndb:mt-3 ndb:text-xs ndb:leading-5 ndb:text-zinc-400">
                         Field names and types are shown. Payload values are not captured.
                     </p>
                 </div>
@@ -261,7 +261,7 @@
                         <div class="ndb:flex ndb:items-baseline ndb:justify-between ndb:gap-3">
                             <h4 class="ndb:text-xs ndb:font-bold">Dispatch locations</h4>
                             <span
-                                class="ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400"
+                                class="ndb:text-xs ndb:font-semibold ndb:text-zinc-400"
                                 x-text="
                                     selectedEvent.dispatch_source_count === 1
                                         ? '1 application location'
@@ -294,7 +294,7 @@
                                         <x-slot:value x-text="source.file + ':' + source.line"></x-slot:value>
                                     </x-newdebugbar::inspector-source-link>
                                     <span
-                                        class="ndb:text-[11px] ndb:font-semibold ndb:tabular-nums ndb:text-zinc-400"
+                                        class="ndb:text-xs ndb:font-semibold ndb:tabular-nums ndb:text-zinc-400"
                                         x-text="source.count + (source.count === 1 ? ' dispatch' : ' dispatches')"
                                     ></span>
                                 </div>
@@ -304,7 +304,7 @@
                         <p
                             data-ndb-event-dispatch-sources-omitted
                             x-show.important="selectedEvent.dispatch_source_omitted_count > 0"
-                            class="ndb:mt-2 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400"
+                            class="ndb:mt-2 ndb:text-xs ndb:font-semibold ndb:text-zinc-400"
                             x-text="
                                 selectedEvent.dispatch_source_omitted_count +
                                 (selectedEvent.dispatch_source_omitted_count === 1
@@ -321,7 +321,7 @@
                     >
                         <summary class="ndb:flex ndb:cursor-pointer ndb:list-none ndb:items-center ndb:justify-between ndb:gap-3 ndb:bg-transparent ndb:p-0 ndb:text-xs ndb:font-bold ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500">
                             <span>Dispatch timeline</span>
-                            <span class="ndb:flex ndb:items-center ndb:gap-1.5 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400">
+                            <span class="ndb:flex ndb:items-center ndb:gap-1.5 ndb:text-xs ndb:font-semibold ndb:text-zinc-400">
                                 <span
                                     x-text="
                                         selectedEvent.occurrences.length +
@@ -342,12 +342,12 @@
                             <template x-for="occurrence in selectedEvent.occurrences" :key="occurrence.sequence">
                                 <div class="ndb:grid ndb:grid-cols-[auto_minmax(0,1fr)_auto] ndb:items-center ndb:gap-3 ndb:bg-transparent ndb:py-2.5">
                                     <span
-                                        class="ndb:text-[11px] ndb:font-bold ndb:tabular-nums"
+                                        class="ndb:text-xs ndb:font-bold ndb:tabular-nums"
                                         x-text="'#' + occurrence.sequence"
                                     ></span>
                                     <span
                                         x-show.important="occurrence.callsite"
-                                        class="ndb:min-w-0 ndb:truncate ndb:text-[11px] ndb:text-zinc-400"
+                                        class="ndb:min-w-0 ndb:truncate ndb:text-xs ndb:text-zinc-400"
                                         x-text="
                                             occurrence.callsite
                                                 ? occurrence.callsite.file + ':' + occurrence.callsite.line
@@ -357,10 +357,10 @@
                                     <span class="ndb:flex ndb:flex-wrap ndb:items-center ndb:justify-end ndb:gap-2">
                                         <span
                                             x-show.important="occurrence.lifecycle === 'after_response'"
-                                            class="ndb:text-[11px] ndb:font-semibold ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                            class="ndb:text-xs ndb:font-semibold ndb:text-zinc-500 ndb:dark:text-zinc-400"
                                         >After response</span>
                                         <span
-                                            class="ndb:text-[11px] ndb:font-semibold ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                            class="ndb:text-xs ndb:font-semibold ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400"
                                             x-text="formatEventTime(occurrence.at_ms)"
                                         ></span>
                                     </span>
@@ -371,7 +371,7 @@
                         <p
                             data-ndb-event-occurrences-omitted
                             x-show.important="selectedEvent.occurrence_omitted_count > 0"
-                            class="ndb:mt-2 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400"
+                            class="ndb:mt-2 ndb:text-xs ndb:font-semibold ndb:text-zinc-400"
                             x-text="
                                 selectedEvent.occurrence_omitted_count +
                                 (selectedEvent.occurrence_omitted_count === 1

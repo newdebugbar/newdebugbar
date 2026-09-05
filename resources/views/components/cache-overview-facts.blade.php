@@ -5,28 +5,28 @@
                 ? 'ndb:text-red-700 ndb:dark:text-red-300'
                 : selectedCacheOperation.result === 'miss' || selectedCacheOperation.result === 'flushed'
                   ? 'ndb:text-amber-700 ndb:dark:text-amber-300'
-                  : 'ndb:text-zinc-700 ndb:dark:text-zinc-200'"
-            class="ndb:truncate ndb:text-[11px] ndb:font-bold"
+                  : ''"
+            class="ndb:truncate"
             x-text="selectedCacheOperation.result_label"
         ></x-slot:value>
     </x-newdebugbar::inspector-fact>
     <x-newdebugbar::inspector-fact label="Runtime">
         <x-slot:value
-            class="ndb:truncate ndb:text-[11px] ndb:font-semibold ndb:tabular-nums ndb:text-zinc-700 ndb:dark:text-zinc-200"
+            class="ndb:truncate ndb:tabular-nums"
             x-text="selectedCacheOperation.duration_label"
         ></x-slot:value>
     </x-newdebugbar::inspector-fact>
     <x-newdebugbar::inspector-fact label="Store">
         <x-slot:value
             ::title="selectedCacheOperation.store_label"
-            class="ndb:truncate ndb:text-[11px] ndb:font-semibold ndb:text-zinc-700 ndb:dark:text-zinc-200"
+            class="ndb:truncate"
             x-text="selectedCacheOperation.store_label"
         ></x-slot:value>
     </x-newdebugbar::inspector-fact>
     <x-newdebugbar::inspector-fact label="Driver" x-show.important="selectedCacheOperation.driver_label">
         <x-slot:value
             ::title="selectedCacheOperation.driver_label"
-            class="ndb:truncate ndb:text-[11px] ndb:font-semibold ndb:text-zinc-700 ndb:dark:text-zinc-200"
+            class="ndb:truncate"
             x-text="selectedCacheOperation.driver_label"
         ></x-slot:value>
     </x-newdebugbar::inspector-fact>

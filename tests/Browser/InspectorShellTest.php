@@ -86,6 +86,8 @@ it('removes Overview from navigation and opens Requests by default', function ()
 it('uses one non-sticky title and description hierarchy for every section', function () {
     $page = visit('/profiled-context')
         ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]')
+        ->assertScript('document.querySelector("[data-ndb-section-description]").getClientRects().length === 0')
+        ->click('[data-ndb-select-section="views"]')
         ->assertCount('[data-ndb-section-header]', 1)
         ->assertScript(<<<'JS'
             (() => {

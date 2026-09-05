@@ -77,6 +77,28 @@ it('keeps the desktop waterfall useful inside the shared timeline workspace', fu
         ->assertScript('document.querySelectorAll("[data-ndb-timeline-detail-content]").length === 1')
         ->assertScript(<<<'JS'
             (() => {
+                const detail = document.querySelector('[data-ndb-inspector-focus-detail]');
+                const title = detail.querySelector('[data-ndb-timeline-detail-label]');
+                const category = title.previousElementSibling;
+                const facts = detail.querySelector('[data-ndb-inspector-facts]');
+                const checks = {
+                    groupedIdentity: category.matches('p') && category.parentElement === title.parentElement,
+                    leftAlignment: Math.abs(category.getBoundingClientRect().left - title.getBoundingClientRect().left) <= 1,
+                    readingOrder: category.getBoundingClientRect().bottom <= title.getBoundingClientRect().top,
+                    detailContainer: getComputedStyle(detail).containerType === 'inline-size',
+                    detailFit: detail.scrollWidth <= detail.clientWidth + 1,
+                    factsFit: facts.scrollWidth <= facts.clientWidth + 1
+                        && [...facts.children].every((fact) => fact.scrollWidth <= fact.clientWidth + 1),
+                };
+                const failures = Object.entries(checks).filter(([, passed]) => ! passed).map(([name]) => name);
+
+                if (failures.length > 0) throw new Error('Timeline detail layout failed: ' + failures.join(', '));
+
+                return true;
+            })()
+            JS)
+        ->assertScript(<<<'JS'
+            (() => {
                 const detail = document.querySelector('[data-ndb-timeline-detail-content]');
                 const source = detail.querySelector('[data-ndb-inspector-source-link]');
 
@@ -155,12 +177,21 @@ it('turns the timeline into a mobile chronological drill-in without horizontal o
                 const workspace = document.querySelector('[data-ndb-timeline-workspace]');
                 const workspaceBox = workspace.getBoundingClientRect();
                 const detail = document.querySelector('[data-ndb-inspector-focus-detail]');
+                const title = detail.querySelector('[data-ndb-timeline-detail-label]');
+                const category = title.previousElementSibling;
+                const facts = detail.querySelector('[data-ndb-inspector-facts]');
                 const near = (actual, expected) => Math.abs(actual - expected) <= 1;
 
                 return near(workspaceBox.left, stage.left)
                     && near(workspaceBox.right, stage.right)
                     && workspace.scrollWidth <= workspace.clientWidth
                     && detail.scrollWidth <= detail.clientWidth
+                    && getComputedStyle(detail).containerType === 'inline-size'
+                    && category.matches('p')
+                    && near(category.getBoundingClientRect().left, title.getBoundingClientRect().left)
+                    && category.getBoundingClientRect().bottom <= title.getBoundingClientRect().top
+                    && facts.scrollWidth <= facts.clientWidth + 1
+                    && [...facts.children].every((fact) => fact.scrollWidth <= fact.clientWidth + 1)
                     && document.querySelectorAll('[data-ndb-timeline-detail-content]').length === 1;
             })()
             JS)

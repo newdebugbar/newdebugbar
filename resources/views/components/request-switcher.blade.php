@@ -29,7 +29,7 @@
                     <span class="ndb:flex ndb:min-w-0 ndb:items-baseline ndb:gap-1.5">
                         <span
                             data-ndb-request-method="corner"
-                            class="ndb:shrink-0 ndb:text-[11px] ndb:font-bold ndb:uppercase ndb:tracking-wider ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                            class="ndb:shrink-0 ndb:text-xs ndb:font-bold ndb:uppercase ndb:tracking-wider ndb:text-zinc-500 ndb:dark:text-zinc-400"
                             x-text="summary.method"
                         ></span>
                         <span
@@ -39,7 +39,7 @@
                             x-text="summary.path"
                         ></span>
                     </span>
-                    <span class="ndb:flex ndb:items-center ndb:gap-1.5 ndb:whitespace-nowrap ndb:text-[11px] ndb:font-medium ndb:text-zinc-400">
+                    <span class="ndb:flex ndb:items-center ndb:gap-1.5 ndb:whitespace-nowrap ndb:text-xs ndb:font-medium ndb:text-zinc-400">
                         <span
                             data-ndb-corner-request-status
                             :class="requestStatusClass(summary.status)"
@@ -55,7 +55,7 @@
             @else
                 <span
                     data-ndb-request-method="{{ $scope }}"
-                    class="ndb:flex ndb:shrink-0 ndb:items-center ndb:justify-center ndb:rounded-md ndb:bg-indigo-100/60 ndb:px-1.5 ndb:py-0.5 ndb:text-[11px] ndb:font-bold ndb:uppercase ndb:tracking-wide ndb:text-indigo-700 ndb:dark:bg-white/10 ndb:dark:text-white"
+                    class="ndb:flex ndb:shrink-0 ndb:items-center ndb:justify-center ndb:rounded-md ndb:bg-indigo-100/60 ndb:px-1.5 ndb:py-0.5 ndb:text-xs ndb:font-bold ndb:uppercase ndb:tracking-wide ndb:text-indigo-700 ndb:dark:bg-white/10 ndb:dark:text-white"
                     x-text="summary.method"
                 ></span>
                 <span class="ndb:min-w-0">
@@ -67,7 +67,7 @@
                         x-text="summary.path"
                     ></span>
                     <span
-                        class="ndb:flex ndb:items-center ndb:gap-1.5 ndb:whitespace-nowrap ndb:text-[11px] ndb:font-medium ndb:text-zinc-400"
+                        class="ndb:flex ndb:items-center ndb:gap-1.5 ndb:whitespace-nowrap ndb:text-xs ndb:font-medium ndb:text-zinc-400"
                         ><span
                             @if ($scope === 'toolbar') data-ndb-toolbar-status @endif
                             @if ($scope === 'header-mobile') data-ndb-header-mobile-status @endif
@@ -111,7 +111,7 @@
                 x-text="requestBadgeCount"
                 data-ndb-request-badge="{{ $scope }}"
                 aria-hidden="true"
-                class="ndb:absolute ndb:-top-1.5 ndb:-right-1.5 ndb:flex ndb:h-4 ndb:min-w-4 ndb:items-center ndb:justify-center ndb:rounded-full ndb:bg-indigo-600 ndb:px-1 ndb:text-[11px] ndb:font-bold ndb:leading-none ndb:text-white ndb:tabular-nums ndb:dark:bg-indigo-600 ndb:dark:text-white"
+                class="ndb:absolute ndb:-top-1.5 ndb:-right-1.5 ndb:flex ndb:h-4 ndb:min-w-4 ndb:items-center ndb:justify-center ndb:rounded-full ndb:bg-indigo-600 ndb:px-1 ndb:text-xs ndb:font-bold ndb:leading-none ndb:text-white ndb:tabular-nums ndb:dark:bg-indigo-600 ndb:dark:text-white"
             ></span>
         </button>
     </div>
@@ -158,7 +158,7 @@
             >
                 <p
                     id="newdebugbar-current-request-{{ $scope }}"
-                    class="ndb:px-2.5 ndb:pt-1 ndb:pb-1 ndb:text-[11px] ndb:font-bold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400"
+                    class="ndb:px-2.5 ndb:pt-1 ndb:pb-1 ndb:text-xs ndb:font-bold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400"
                 >
                     Current request
                 </p>
@@ -178,7 +178,7 @@
             >
                 <p
                     id="newdebugbar-later-requests-{{ $scope }}"
-                    class="ndb:px-2.5 ndb:py-1 ndb:text-[11px] ndb:font-bold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400"
+                    class="ndb:px-2.5 ndb:py-1 ndb:text-xs ndb:font-bold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400"
                 >
                     Later requests
                 </p>

@@ -43,7 +43,7 @@
                         class="ndb:block ndb:truncate ndb:text-xs ndb:font-bold"
                         x-text="component.title"
                     ></span>
-                    <span class="ndb:mt-0.5 ndb:flex ndb:min-w-0 ndb:flex-wrap ndb:items-baseline ndb:gap-x-2 ndb:text-[11px] ndb:font-medium ndb:text-zinc-400">
+                    <span class="ndb:mt-0.5 ndb:flex ndb:min-w-0 ndb:flex-wrap ndb:items-baseline ndb:gap-x-2 ndb:text-xs ndb:font-medium ndb:text-zinc-400">
                         <span
                             data-ndb-livewire-component-property-count
                             x-text="livewireComponentPropertyCountLabel(component)"
@@ -53,7 +53,7 @@
                 </span>
                 <span
                     x-show.important="component.status !== 'idle'"
-                    class="ndb:text-[11px] ndb:font-bold"
+                    class="ndb:text-xs ndb:font-bold"
                     :class="component.status === 'failed'
                         ? 'ndb:text-red-600 ndb:dark:text-red-300'
                         : component.status === 'updating'

@@ -65,10 +65,10 @@
                 ></span>
                 <span
                     ><span
-                        class="ndb:hidden ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400 ndb:lg:block"
+                        class="ndb:hidden ndb:text-xs ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400 ndb:lg:block"
                         >Environment</span
                     ><span
-                        class="ndb:block ndb:max-w-24 ndb:truncate ndb:text-[11px] ndb:font-bold ndb:sm:text-xs"
+                        class="ndb:block ndb:max-w-24 ndb:truncate ndb:text-xs ndb:font-bold ndb:sm:text-xs"
                         x-text="summary.environment"
                     ></span
                 ></span>
@@ -85,7 +85,7 @@
                 />
                 <span
                     ><span
-                        class="ndb:hidden ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400 ndb:lg:block"
+                        class="ndb:hidden ndb:text-xs ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400 ndb:lg:block"
                         >Duration</span
                     ><span
                         class="ndb:block ndb:whitespace-nowrap ndb:text-xs ndb:font-bold ndb:tabular-nums"
@@ -104,7 +104,7 @@
                 />
                 <span
                     ><span
-                        class="ndb:hidden ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400 ndb:lg:block"
+                        class="ndb:hidden ndb:text-xs ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400 ndb:lg:block"
                         >Peak</span
                     ><span
                         class="ndb:block ndb:whitespace-nowrap ndb:text-xs ndb:font-bold ndb:tabular-nums"
@@ -124,7 +124,7 @@
                 />
                 <span
                     ><span
-                        class="ndb:hidden ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400 ndb:lg:block"
+                        class="ndb:hidden ndb:text-xs ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400 ndb:lg:block"
                         >Queries</span
                     ><span
                         class="ndb:flex ndb:items-center ndb:gap-1.5 ndb:whitespace-nowrap ndb:text-xs ndb:font-bold ndb:tabular-nums"

@@ -1,16 +1,21 @@
 @props(['label'])
+@aware(['layout' => 'grid'])
 
-<div data-ndb-inspector-fact {{ $attributes->class('ndb:min-w-0 ndb:bg-transparent') }}>
-    <dt class="ndb:bg-transparent ndb:text-[11px] ndb:font-bold ndb:uppercase ndb:tracking-wide ndb:text-zinc-400">
+@php
+    $inline = $layout === 'inline';
+    $valueClasses = 'ndb:min-w-0 ndb:break-words ndb:bg-transparent ndb:text-sm ndb:text-zinc-800 ndb:dark:text-zinc-200'.($inline ? '' : ' ndb:mt-1');
+@endphp
+
+<div
+    data-ndb-inspector-fact
+    {{ $attributes->class(['ndb:min-w-0 ndb:bg-transparent', 'ndb:flex ndb:flex-wrap ndb:items-baseline ndb:gap-x-2 ndb:gap-y-1' => $inline]) }}
+>
+    <dt class="ndb:bg-transparent ndb:text-xs ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400">
         {{ $label }}
     </dt>
     @isset($value)
-        <dd {{ $value->attributes->class('ndb:mt-0.5 ndb:min-w-0 ndb:bg-transparent ndb:text-xs ndb:text-zinc-700 ndb:dark:text-zinc-200') }}>
-            {{ $value }}
-        </dd>
+        <dd {{ $value->attributes->class($valueClasses) }}>{{ $value }}</dd>
     @else
-        <dd class="ndb:mt-0.5 ndb:min-w-0 ndb:bg-transparent ndb:text-xs ndb:text-zinc-700 ndb:dark:text-zinc-200">
-            {{ $slot }}
-        </dd>
+        <dd class="{{ $valueClasses }}">{{ $slot }}</dd>
     @endisset
 </div>

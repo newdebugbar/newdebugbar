@@ -53,12 +53,12 @@
         @endif
         <span
             data-ndb-mobile-toolbar-summary="{{ $metric['key'] }}"
-            class="ndb:block ndb:max-w-full ndb:truncate ndb:text-[11px] ndb:font-bold ndb:leading-4 ndb:tabular-nums {{ $metric['key'] === 'duration' ? 'ndb:tracking-[-0.04em] ndb:max-[359px]:tracking-[-0.1em]' : '' }}"
+            class="ndb:block ndb:max-w-full ndb:truncate ndb:text-xs ndb:font-bold ndb:leading-4 ndb:tabular-nums {{ $metric['key'] === 'duration' ? 'ndb:tracking-[-0.04em] ndb:max-[359px]:tracking-[-0.1em]' : '' }}"
             x-text="{{ $metric['value'] }}"
         ></span>
         <span
             data-ndb-mobile-toolbar-metric-label="{{ $metric['key'] }}"
-            class="ndb:block ndb:max-w-full ndb:truncate ndb:text-[11px] ndb:font-semibold ndb:leading-[14px] ndb:uppercase ndb:tracking-normal ndb:text-zinc-400"
+            class="ndb:block ndb:max-w-full ndb:truncate ndb:text-xs ndb:font-semibold ndb:leading-[14px] ndb:uppercase ndb:tracking-normal ndb:text-zinc-400"
         >{{ $metric['shortLabel'] }}</span>
         @if ($metric['section'])
         </button>

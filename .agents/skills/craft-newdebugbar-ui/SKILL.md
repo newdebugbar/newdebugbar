@@ -1,92 +1,30 @@
 ---
 name: craft-newdebugbar-ui
-description: Design, build, refactor, or review the New Debug Bar interface in this repository. Use for inspector sections, debug-bar chrome, shared Blade components, responsive behavior, visual hierarchy, diagnostic copy, or component extraction. This skill encodes the project's established UI decisions and required browser QA.
+description: Design, build, refactor, or review the New Debug Bar interface in this repository. Use for inspector sections, debug-bar chrome, shared Blade components, responsive behavior, visual hierarchy, and diagnostic copy.
 ---
 
 # Craft New Debug Bar UI
 
-Create calm, truthful Laravel debugging interfaces that help a developer decide what happened and what to inspect next.
+Create calm, truthful Laravel debugging interfaces that help a developer understand the captured request and choose what to inspect next.
 
-## Required reading
+## Before changing the interface
 
-Before changing UI:
+Read the repository `AGENTS.md`, then inspect the current populated section in the built-in browser. Use the benchmark route in [verification](references/verification.md) when available. Inspect the retained data and its presenter before deciding what the interface can claim. When the user refers to a prior decision, check the relevant task instead of reconstructing it.
 
-1. Read the repository `AGENTS.md`.
-2. Read [references/design-language.md](references/design-language.md) completely.
-3. Read [references/components.md](references/components.md) when choosing, changing, or adding a component.
-4. Read [references/verification.md](references/verification.md) before verification.
+Read the references that apply:
 
-Treat populated inspector sections as the visual source of truth. The component reference documents shared rules, but it does not replace checking every affected real consumer with realistic profile data.
+- [Design language](references/design-language.md): hierarchy, Tailwind defaults, diagnostic meaning, and established section decisions.
+- [Components](references/components.md): existing APIs, ownership, and migration rules when choosing or changing reusable markup.
+- [Verification](references/verification.md): browser matrix, affected states, and focused code checks before delivery.
 
-## Workflow
+## Apply the shared language
 
-### 1. Inspect the real surface first
+Lead with identity and outcome, follow with compact useful facts, and reveal deeper evidence where it answers a real question. Remove repeated information before adding new containers or copy. Preserve unique diagnostics and their meaning.
 
-- Start with the built-in browser.
-- Use the real benchmark route and current populated profile when available.
-- Record the current desktop, mobile, light, and dark behavior before changing it.
-- Inspect the capture and presentation data before deciding what the interface can truthfully say.
-- If the request refers to an earlier decision, inspect the relevant task history instead of reconstructing it from memory.
-- Find prior work by searching task titles for `New Debug Bar` plus the section name, then read the most relevant task before changing the established contract.
+Let each section's data determine its structure. Share typography, spacing, controls, and evidence treatments through their existing owners. A repeated visual rule belongs in a shared component; section labels, tab choices, and data decisions stay private. Use normal Tailwind scales instead of matching arbitrary mockup measurements.
 
-### 2. Decide what the developer needs
+Do not turn a mockup into an API contract. Document only implemented component behavior, migrate its intended consumers, and remove superseded treatments in the same change.
 
-Answer these questions before choosing a layout:
+## Verify and report
 
-- What happened?
-- Is anything wrong or merely noteworthy?
-- Why does it matter?
-- Where did it begin in application code?
-- What is the smallest useful next inspection?
-
-Lead with identity or result, then compact facts, then deeper evidence. Do not invent a finding, cause, source, or recommendation that the captured data cannot prove.
-
-### 3. Simplify before adding
-
-Delete first when content repeats information, explains an obvious label, exposes framework noise, or adds a second visual treatment for the same fact.
-
-Preserve unique diagnostic evidence. Move raw, internal, or supporting evidence deeper instead of deleting it when it can answer a real debugging question.
-
-### 4. Reuse the interface grammar
-
-- Use list/detail workspaces for multiple items.
-- Use a focused reading view for a single item.
-- Use a separate mobile detail step with a clear Back action.
-- Use the shared field, tab, badge, fact, source, code, explanation, and workspace components.
-- Extract a component when the same visual or interaction rule appears in more than one section.
-- Let each section's data decide its labels, filters, tabs, and evidence. Shared structure does not mean identical content.
-
-Check [references/components.md](references/components.md) before creating a new primitive. When a new reusable Blade component is warranted, document it there, migrate every intended consumer, delete the superseded implementation, and update focused tests in the same change.
-
-### 5. Make state deliberate
-
-- Pick a useful default tab and filter from the data model.
-- Do not make the developer configure a view before it becomes useful.
-- Keep filters in dropdowns. For a table-like list with a meaningful comparable column, use the shared sortable heading instead of a separate sort dropdown; reserve its indicator space so sorting never shifts the label.
-- Keep selection and loading changes from shifting nearby layout.
-- Give the view one vertical scroll owner.
-- Keep actions near the evidence they affect.
-- Render expensive details only for the active item or tab.
-
-### 6. Write only useful interface copy
-
-- Use plain language and concrete nouns.
-- Titles should answer the question the content addresses.
-- Descriptions should explain domain-specific or ambiguous meaning and, when useful, a conditional next check.
-- Do not explain self-evident fields such as Source, URL, Status, or Time.
-- Do not repeat the tab name or table heading in prose.
-- Avoid declaring a problem unless the evidence proves one.
-
-### 7. Verify as product work
-
-Follow [references/verification.md](references/verification.md). At minimum, verify realistic data at short and tall desktop sizes, a mobile viewport, light and dark themes, focus, overflow, and the refresh or reopen flow.
-
-Perform one additional visual and usefulness pass after the implementation appears complete. Inspect fine gaps, alignment, stable columns, scroll ownership, wording, and whether every visible fact helps a developer act.
-
-## Delivery rules
-
-- Keep host-facing identifiers namespaced.
-- Keep package JavaScript bounded and page-safe.
-- Update focused tests with the component or section.
-- Build compiled assets when class extraction or JavaScript changed.
-- State exactly what was observed in the browser. Do not call source inspection proof of rendered behavior.
+Follow the verification reference and the repository's full interface matrix. Check every affected real consumer, then make a final visual and usefulness pass on the current implementation. Report what was observed, which checks passed, and any remaining gaps; source inspection alone does not prove rendered behavior.

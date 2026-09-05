@@ -56,6 +56,8 @@ it('composes Redis from the shared inspector workspace grammar', function () {
         ->toContain('data-ndb-redis-key-evidence')
         ->toContain('data-ndb-redis-copy-keys')
         ->toContain('<template x-if="selectedRedisCommand.callsite">')
+        ->toContain('<x-newdebugbar::inspector-source-panel')
+        ->toContain('data-ndb-redis-source')
         ->toContain('<x-newdebugbar::inspector-source-link')
         ->toContain('copyText(selectedRedisCommand.source_label)')
         ->toContain('Why are these identifiers protected?')

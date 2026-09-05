@@ -50,7 +50,7 @@
                                         <span x-text="visibleTimelineCount"></span>
                                         matching
                                     </strong>
-                                    <span class="ndb:mt-0.5 ndb:block ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400">
+                                    <span class="ndb:mt-0.5 ndb:block ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">
                                         of {{ number_format($timelineLoaded) }} loaded across {{ $formatMilliseconds($timelineDuration) }}
                                     </span>
                                 </p>
@@ -96,7 +96,7 @@
                     >
                         <div
                             data-ndb-timeline-waterfall-header
-                            class="ndb:sticky ndb:top-0 ndb:z-10 ndb:hidden ndb:grid-cols-[minmax(13rem,0.8fr)_minmax(20rem,2fr)_6rem] ndb:border-b ndb:border-zinc-200/90 ndb:bg-white/95 ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400 ndb:backdrop-blur-sm ndb:dark:border-zinc-800 ndb:dark:bg-zinc-950/95 ndb:lg:grid"
+                            class="ndb:sticky ndb:top-0 ndb:z-10 ndb:hidden ndb:grid-cols-[minmax(13rem,0.8fr)_minmax(20rem,2fr)_6rem] ndb:border-b ndb:border-zinc-200/90 ndb:bg-white/95 ndb:text-xs ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400 ndb:backdrop-blur-sm ndb:dark:border-zinc-800 ndb:dark:bg-zinc-950/95 ndb:lg:grid"
                         >
                             <span class="ndb:px-3 ndb:py-2">Activity</span>
                             <span
@@ -169,7 +169,7 @@
                                     <span class="ndb:block ndb:truncate ndb:text-xs ndb:font-bold">{{ $item['label'] }}</span>
                                     <span
                                         data-ndb-timeline-activity-section
-                                        class="ndb:mt-0.5 ndb:block ndb:truncate ndb:text-[11px] ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                        class="ndb:mt-0.5 ndb:block ndb:truncate ndb:text-xs ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
                                     >
                                         {{ $timelineSectionLabel }}
                                         @if ($timelineDurationLabel !== null)
@@ -224,7 +224,7 @@
                             >
                                 <span
                                     x-show.important="! timelineLoadingMore && ! timelinePaginationError"
-                                    class="ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400"
+                                    class="ndb:text-xs ndb:font-semibold ndb:text-zinc-400"
                                 >
                                     Showing {{ number_format($timelineLoaded) }} of {{ number_format($timelineTotal) }} timeline
                                     events. More activity loads as you scroll.
@@ -233,7 +233,7 @@
                                     x-cloak
                                     x-show.important="timelineLoadingMore"
                                     data-ndb-timeline-page-loading
-                                    class="ndb:inline-flex ndb:items-center ndb:gap-2 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-500 ndb:dark:text-zinc-300"
+                                    class="ndb:inline-flex ndb:items-center ndb:gap-2 ndb:text-xs ndb:font-semibold ndb:text-zinc-500 ndb:dark:text-zinc-300"
                                 >
                                     <span
                                         aria-hidden="true"
@@ -246,7 +246,7 @@
                                     x-cloak
                                     x-show.important="timelinePaginationError"
                                     data-ndb-timeline-page-error
-                                    class="ndb:inline-flex ndb:flex-wrap ndb:items-center ndb:justify-center ndb:gap-x-2 ndb:gap-y-1 ndb:text-[11px] ndb:font-semibold ndb:text-rose-700 ndb:dark:text-rose-300"
+                                    class="ndb:inline-flex ndb:flex-wrap ndb:items-center ndb:justify-center ndb:gap-x-2 ndb:gap-y-1 ndb:text-xs ndb:font-semibold ndb:text-rose-700 ndb:dark:text-rose-300"
                                 >
                                     More activity could not be loaded.
                                     <button
@@ -262,7 +262,7 @@
                         @elseif ($timelineTotal > 50)
                             <p
                                 data-ndb-timeline-complete
-                                class="ndb:px-3 ndb:py-3 ndb:text-center ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400"
+                                class="ndb:px-3 ndb:py-3 ndb:text-center ndb:text-xs ndb:font-semibold ndb:text-zinc-400"
                             >
                                 All {{ number_format($timelineTotal) }} timeline events are loaded.
                             </p>
@@ -275,16 +275,18 @@
                 <template x-if="selectedTimelineItem">
                     <div data-ndb-timeline-detail-content class="ndb:flex ndb:flex-col">
                         <x-newdebugbar::inspector-detail-header layout="wrap">
-                            <x-slot:title class="ndb:min-w-0">
-                                <p
-                                    class="ndb:text-[11px] ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400"
-                                    x-text="selectedTimelineItem.sectionLabel"
-                                ></p>
-                                <h3
-                                    data-ndb-timeline-detail-label
-                                    class="ndb:mt-0.5 ndb:break-words ndb:text-base ndb:font-bold ndb:leading-6"
-                                    x-text="selectedTimelineItem.label"
-                                ></h3>
+                            <x-slot:title>
+                                <div class="ndb:min-w-0">
+                                    <p
+                                        class="ndb:text-xs ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400"
+                                        x-text="selectedTimelineItem.sectionLabel"
+                                    ></p>
+                                    <h3
+                                        data-ndb-timeline-detail-label
+                                        class="ndb:mt-0.5 ndb:break-words ndb:text-base ndb:font-bold ndb:leading-6"
+                                        x-text="selectedTimelineItem.label"
+                                    ></h3>
+                                </div>
                             </x-slot:title>
 
                             <x-slot:aside>
@@ -302,25 +304,25 @@
                             <x-newdebugbar::inspector-facts :columns="4">
                                 <x-newdebugbar::inspector-fact label="At">
                                     <x-slot:value
-                                        class="ndb:text-xs ndb:font-semibold ndb:tabular-nums"
+                                        class="ndb:font-semibold ndb:tabular-nums"
                                         x-text="selectedTimelineItem.atLabel"
                                     ></x-slot:value>
                                 </x-newdebugbar::inspector-fact>
                                 <x-newdebugbar::inspector-fact label="Type">
                                     <x-slot:value
-                                        class="ndb:text-xs ndb:font-semibold"
+                                        class="ndb:font-semibold"
                                         x-text="selectedTimelineItem.kind"
                                     ></x-slot:value>
                                 </x-newdebugbar::inspector-fact>
                                 <x-newdebugbar::inspector-fact label="Started">
                                     <x-slot:value
-                                        class="ndb:text-xs ndb:font-semibold ndb:tabular-nums"
+                                        class="ndb:font-semibold ndb:tabular-nums"
                                         x-text="selectedTimelineItem.startLabel ?? 'Not a duration'"
                                     ></x-slot:value>
                                 </x-newdebugbar::inspector-fact>
                                 <x-newdebugbar::inspector-fact label="Duration">
                                     <x-slot:value
-                                        class="ndb:text-xs ndb:font-semibold ndb:tabular-nums"
+                                        class="ndb:font-semibold ndb:tabular-nums"
                                         x-text="selectedTimelineItem.durationLabel ?? 'Point event'"
                                     ></x-slot:value>
                                 </x-newdebugbar::inspector-fact>

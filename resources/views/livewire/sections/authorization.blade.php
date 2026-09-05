@@ -247,7 +247,7 @@
                                 </span>
                                 <span
                                     x-show.important="visibleAuthorizationCount !== authorizationDecisions.length"
-                                    class="ndb:mt-0.5 ndb:block ndb:text-[11px] ndb:font-medium ndb:text-zinc-400"
+                                    class="ndb:mt-0.5 ndb:block ndb:text-xs ndb:font-medium ndb:text-zinc-400"
                                 >
                                     <span x-text="visibleAuthorizationCount"></span> shown
                                 </span>
@@ -305,13 +305,13 @@
                                 <span
                                     data-ndb-authorization-result-label
                                     @class([
-                                        'ndb:shrink-0 ndb:bg-transparent ndb:text-[11px] ndb:font-bold',
+                                        'ndb:shrink-0 ndb:bg-transparent ndb:text-xs ndb:font-bold',
                                         'ndb:text-emerald-700 ndb:dark:text-emerald-300' => $decision['result'] === 'allowed',
                                         'ndb:text-red-700 ndb:dark:text-red-300' => $decision['result'] === 'denied',
                                     ])
                                 >{{ $decision['result_label'] }}</span>
                             </span>
-                            <span class="ndb:col-span-2 ndb:grid ndb:min-w-0 ndb:grid-cols-[4.75rem_minmax(0,1fr)] ndb:gap-x-2 ndb:gap-y-1 ndb:text-[11px] ndb:leading-4">
+                            <span class="ndb:col-span-2 ndb:grid ndb:min-w-0 ndb:grid-cols-[4.75rem_minmax(0,1fr)] ndb:gap-x-2 ndb:gap-y-1 ndb:text-xs ndb:leading-4">
                                 <span class="ndb:font-semibold ndb:text-zinc-400">User</span>
                                 <span data-ndb-authorization-user class="ndb:min-w-0 ndb:bg-transparent ndb:p-0">
                                     <span class="ndb:block ndb:min-w-0 ndb:truncate ndb:font-semibold ndb:text-zinc-600 ndb:dark:text-zinc-300">{{ $decision['user_label'] }}</span>

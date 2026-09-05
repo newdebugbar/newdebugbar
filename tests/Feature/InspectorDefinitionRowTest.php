@@ -18,7 +18,7 @@ it('renders static and Alpine-driven terms with the same definition-row contract
         BLADE);
 
     expect($static)
-        ->toContain('<dt class="ndb:text-xs ndb:font-bold')
+        ->toContain('<dt class="ndb:text-xs ndb:font-medium')
         ->toContain('Status</dt>')
         ->toContain('Allowed</dd>')
         ->and($dynamic)

@@ -22,6 +22,8 @@ it('presents repeated queries as one shared list detail record', function () {
                 const list = root.querySelector('[data-ndb-query-list]');
                 const detail = root.querySelector('[data-ndb-query-detail]');
                 const detailHeader = root.querySelector('[data-ndb-query-detail-header]');
+                const sourcePanel = root.querySelector('[data-ndb-query-detail-panel="overview"] [data-ndb-inspector-source-panel]');
+                const sourceDisclosure = sourcePanel?.querySelector('[data-ndb-inspector-disclosure]');
                 const executionSelect = root.querySelector('[data-ndb-query-execution-select]');
                 const repeatedRunsLabel = executionSelect?.parentElement?.previousElementSibling;
                 const search = root.querySelector('[data-ndb-query-search]');
@@ -50,7 +52,10 @@ it('presents repeated queries as one shared list detail record', function () {
                     && detailHeader?.querySelector('dl') === null
                     && detailHeader?.textContent.trim() === 'Repeated query pattern'
                     && detailHeader?.getBoundingClientRect().height <= 54
-                    && root.querySelector('details') === null
+                    && sourceDisclosure?.tagName === 'DETAILS'
+                    && sourceDisclosure.open === false
+                    && sourcePanel.querySelector('[data-ndb-inspector-stack]') === null
+                    && root.querySelector('details:not([data-ndb-inspector-disclosure])') === null
                     && getComputedStyle(list).overflowY === 'auto'
                     && getComputedStyle(detail).overflowY === 'auto'
                     && searchIcon?.getBoundingClientRect().left < search.getBoundingClientRect().left + 32

@@ -17,15 +17,17 @@
     };
 @endphp
 
-<div {{ $attributes->class('ndb:grid ndb:gap-1 ndb:py-2.5 ndb:first:pt-0 ndb:sm:grid-cols-[8rem_minmax(0,1fr)] ndb:sm:gap-4 ndb:sm:py-3') }}>
+<div {{ $attributes->class('ndb:grid ndb:min-w-0 ndb:gap-1 ndb:py-3 ndb:first:pt-0 ndb:@sm:grid-cols-[8rem_minmax(0,1fr)] ndb:@sm:gap-4') }}>
     @isset($term)
-        <dt {{ $term->attributes->class("ndb:text-xs ndb:font-bold {$termClasses}") }}>{{ $term }}</dt>
+        <dt {{ $term->attributes->class("ndb:text-xs ndb:font-medium {$termClasses}") }}>{{ $term }}</dt>
     @else
-        <dt class="ndb:text-xs ndb:font-bold {{ $termClasses }}">{{ $label }}</dt>
+        <dt class="ndb:text-xs ndb:font-medium {{ $termClasses }}">{{ $label }}</dt>
     @endisset
     @isset($value)
-        <dd {{ $value->attributes->class("ndb:text-xs ndb:leading-5 {$valueClasses}") }}>{{ $value }}</dd>
+        <dd {{ $value->attributes->class("ndb:min-w-0 ndb:break-words ndb:text-sm ndb:leading-5 {$valueClasses}") }}>
+            {{ $value }}
+        </dd>
     @else
-        <dd class="ndb:text-xs ndb:leading-5 {{ $valueClasses }}">{{ $slot }}</dd>
+        <dd class="ndb:min-w-0 ndb:break-words ndb:text-sm ndb:leading-5 {{ $valueClasses }}">{{ $slot }}</dd>
     @endisset
 </div>

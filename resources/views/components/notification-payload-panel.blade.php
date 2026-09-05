@@ -3,7 +3,7 @@
         <x-slot:aside>
             <span
                 x-show="selectedNotification.locale"
-                class="ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400"
+                class="ndb:text-xs ndb:font-semibold ndb:text-zinc-400"
                 x-text="'Locale ' + selectedNotification.locale"
             ></span>
         </x-slot:aside>
@@ -14,7 +14,7 @@
         <div class="ndb:flex ndb:items-center ndb:justify-between ndb:gap-3">
             <h4 class="ndb:text-xs ndb:font-bold">Channel evidence</h4>
             <span
-                class="ndb:text-[11px] ndb:font-bold ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                class="ndb:text-xs ndb:font-bold ndb:text-zinc-500 ndb:dark:text-zinc-400"
                 x-text="selectedNotificationDelivery?.channel_label"
             ></span>
         </div>
@@ -45,7 +45,7 @@
                 x-show.important="selectedNotificationDelivery?.exception_class"
             >
                 <x-slot:value
-                    class="ndb:break-all ndb:font-mono ndb:text-[11px]"
+                    class="ndb:break-all ndb:font-mono ndb:text-xs"
                     x-text="selectedNotificationDelivery?.exception_class"
                 ></x-slot:value>
             </x-newdebugbar::inspector-definition-row>

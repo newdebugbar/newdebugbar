@@ -283,6 +283,18 @@ it('selects and inspects mail with a real in-panel preview', function () {
         ->assertScript(<<<'JS'
             (() => {
                 const panel = document.querySelector('[data-ndb-mail-detail-panel="source"]');
+                const disclosure = panel.querySelector('[data-ndb-inspector-disclosure]');
+
+                return disclosure?.tagName === 'DETAILS'
+                    && disclosure.open === false
+                    && panel.querySelector('[data-ndb-inspector-stack]') === null;
+            })()
+            JS)
+        ->click('[data-ndb-mail-detail-panel="source"] [data-ndb-inspector-disclosure] > summary')
+        ->assertVisible('[data-ndb-mail-detail-panel="source"] [data-ndb-inspector-stack]')
+        ->assertScript(<<<'JS'
+            (() => {
+                const panel = document.querySelector('[data-ndb-mail-detail-panel="source"]');
                 const facts = [...panel.querySelectorAll('[data-ndb-inspector-source-fact]')];
                 const stack = panel.querySelector('[data-ndb-inspector-stack]');
                 const sourceClass = facts[0].querySelector('dd > code');

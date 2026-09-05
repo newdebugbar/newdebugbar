@@ -236,12 +236,12 @@ it('keeps host styles and package styles isolated', function () {
                     && row.getBoundingClientRect().height < 91
                     && Math.abs(typeBadge.getBoundingClientRect().width - 56) <= 1
                     && Math.abs(typeBadge.getBoundingClientRect().height - 18) <= 1
-                    && Number.parseFloat(getComputedStyle(typeBadge).fontSize) === 11
+                    && Number.parseFloat(getComputedStyle(typeBadge).fontSize) === 12
                     && getComputedStyle(typeBadge).backgroundColor !== 'rgb(255, 0, 0)'
                     && getComputedStyle(typeBadge).fontFamily === interfaceFont
                     && root.querySelector('[data-ndb-query-attention-badge]') === null
                     && getComputedStyle(driver).fontFamily === interfaceFont
-                    && Number.parseFloat(getComputedStyle(driver).fontSize) === 11
+                    && Number.parseFloat(getComputedStyle(driver).fontSize) === 12
                     && getComputedStyle(driver).backgroundColor !== 'rgb(255, 0, 0)'
                     && driverRect.bottom <= durationRect.top + 1
                     && Math.abs(driverRect.right - durationRect.right) <= 1
@@ -330,7 +330,7 @@ it('keeps host styles and package styles isolated', function () {
                     getComputedStyle(method).backgroundColor !== 'rgb(255, 0, 0)',
                     getComputedStyle(path).backgroundColor === 'rgba(0, 0, 0, 0)',
                     getComputedStyle(path).color !== 'rgb(0, 0, 0)',
-                    getComputedStyle(facts).display === 'grid',
+                    getComputedStyle(facts.querySelector('[data-ndb-inspector-facts]')).display === 'flex',
                     getComputedStyle(facts).backgroundColor === 'rgba(0, 0, 0, 0)',
                     factElements.every((element) => getComputedStyle(element).backgroundColor === 'rgba(0, 0, 0, 0)'),
                     factElements.every((element) => getComputedStyle(element).color !== 'rgb(0, 128, 0)'),
@@ -347,6 +347,49 @@ it('keeps host styles and package styles isolated', function () {
                 ];
             })()
             JS, [null, null, null, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true])
+        ->assertScript(<<<'JS'
+            (() => {
+                const root = document.querySelector('#newdebugbar');
+                const disclosure = root.querySelector('[data-ndb-http-client-headers="response"]');
+                const facts = root.querySelector('[data-ndb-http-client-response-facts] [data-ndb-inspector-facts]');
+                const summary = disclosure.querySelector(':scope > summary');
+
+                return root.querySelector('[data-inspector-disclosure], [data-inspector-disclosure-content], [data-inspector-facts], .disclosure') === null
+                    && disclosure.hasAttribute('data-ndb-inspector-disclosure')
+                    && ! disclosure.open
+                    && disclosure.querySelector('[data-ndb-inspector-disclosure-content]') === null
+                    && getComputedStyle(disclosure).backgroundColor !== 'rgb(255, 0, 0)'
+                    && getComputedStyle(disclosure).borderLeftWidth === '0px'
+                    && getComputedStyle(disclosure).borderTopWidth === '1px'
+                    && Number.parseFloat(getComputedStyle(disclosure).paddingLeft) < 50
+                    && Number.parseFloat(getComputedStyle(summary).fontSize) === 14
+                    && summary.getBoundingClientRect().height >= 44
+                    && summary.getBoundingClientRect().height < 91
+                    && facts.dataset.ndbInspectorFacts === 'inline'
+                    && getComputedStyle(facts).display === 'flex'
+                    && getComputedStyle(facts).flexWrap === 'wrap'
+                    && Number.parseFloat(getComputedStyle(facts).paddingLeft) < 50;
+            })()
+            JS)
+        ->click('[data-ndb-http-client-headers="response"] > summary')
+        ->assertVisible('[data-ndb-http-client-headers="response"] [data-ndb-inspector-disclosure-content]')
+        ->assertScript(<<<'JS'
+            (() => {
+                const disclosure = document.querySelector('[data-ndb-http-client-headers="response"]');
+                const content = disclosure.querySelector('[data-ndb-inspector-disclosure-content]');
+                const code = content.querySelector('code');
+
+                return disclosure.open
+                    && content.hasAttribute('data-ndb-inspector-disclosure-content')
+                    && ! content.hasAttribute('data-inspector-disclosure-content')
+                    && getComputedStyle(content).backgroundColor !== 'rgb(255, 0, 0)'
+                    && getComputedStyle(content).borderLeftWidth === '0px'
+                    && Number.parseFloat(getComputedStyle(content).paddingLeft) < 50
+                    && Number.parseFloat(getComputedStyle(code).fontSize) === 14
+                    && Number.parseFloat(getComputedStyle(code).lineHeight) === 24
+                    && getComputedStyle(code).fontFamily.includes('JetBrains Mono');
+            })()
+            JS)
         ->click('[data-ndb-http-client-detail-tab="request"]')
         ->assertScript(<<<'JS'
             (() => {
@@ -356,12 +399,15 @@ it('keeps host styles and package styles isolated', function () {
 
                 return copyCurl.getBoundingClientRect().height < 91
                     && getComputedStyle(copyCurl).backgroundColor !== 'rgb(255, 0, 0)'
-                    && getComputedStyle(facts).display === 'grid'
-                    && getComputedStyle(host).color !== 'rgb(0, 128, 0)';
+                    && getComputedStyle(facts).display === 'flex'
+                    && facts.dataset.ndbInspectorFacts === 'inline'
+                    && getComputedStyle(host).color !== 'rgb(0, 128, 0)'
+                    && document.querySelector('[data-ndb-http-client-detail-tab="source"]') === null;
             })()
             JS)
-        ->click('[data-ndb-http-client-detail-tab="source"]')
-        ->waitForText('Application stack')
+        ->assertMissing('[data-ndb-http-client-source-facts] [data-ndb-inspector-stack]')
+        ->click('[data-ndb-http-client-source-facts] [data-ndb-inspector-disclosure] > summary')
+        ->assertVisible('[data-ndb-http-client-source-facts] [data-ndb-inspector-stack]')
         ->assertScript(<<<'JS'
             (() => {
                 const sourcePanel = document.querySelector('[data-ndb-http-client-source-facts]');
@@ -369,7 +415,7 @@ it('keeps host styles and package styles isolated', function () {
                 const source = document.querySelector('[data-ndb-http-client-detail-source]');
                 const sourceGroup = source.closest('[data-ndb-http-client-primary-source]');
                 const sourceLink = source.closest('[data-ndb-inspector-source-link]');
-                const stack = document.querySelector('[data-ndb-http-client-detail-panel="source"] [data-ndb-inspector-stack]');
+                const stack = sourcePanel.querySelector('[data-ndb-inspector-stack]');
                 const functionCall = stack.querySelector('li code');
                 const stackPath = stack.querySelector('[data-ndb-inspector-source-link] > span');
 
@@ -415,7 +461,7 @@ it('keeps host styles and package styles isolated', function () {
                     && Number.parseFloat(getComputedStyle(metadataGrid).paddingTop) === 0
                     && getComputedStyle(metadataGrid).backgroundColor === 'rgba(0, 0, 0, 0)'
                     && metadataFacts.every((fact) => getComputedStyle(fact).backgroundColor === 'rgba(0, 0, 0, 0)')
-                    && Number.parseFloat(getComputedStyle(metadataLabel).fontSize) === 11
+                    && Number.parseFloat(getComputedStyle(metadataLabel).fontSize) === 12
                     && getComputedStyle(metadataLabel).color !== 'rgb(0, 128, 0)'
                     && sourceLink.getBoundingClientRect().height < 91
                     && getComputedStyle(sourceLink).backgroundColor === 'rgba(0, 0, 0, 0)'
@@ -488,7 +534,7 @@ it('keeps host styles and package styles isolated', function () {
                 });
 
                 return getComputedStyle(item).borderLeftWidth !== '20px'
-                    && Number.parseFloat(getComputedStyle(badge).fontSize) === 11
+                    && Number.parseFloat(getComputedStyle(badge).fontSize) === 12
                     && getComputedStyle(item).backgroundColor !== 'rgb(255, 0, 0)'
                     && refresh.getBoundingClientRect().height < 91
                     && link.getBoundingClientRect().height < 91
@@ -517,7 +563,7 @@ it('keeps host styles and package styles isolated', function () {
                     && getComputedStyle(item).borderLeftWidth === '0px'
                     && getComputedStyle(item).backgroundColor !== 'rgb(255, 0, 0)'
                     && item.getBoundingClientRect().height < 91
-                    && Number.parseFloat(getComputedStyle(command).fontSize) === 11
+                    && Number.parseFloat(getComputedStyle(command).fontSize) === 12
                     && getComputedStyle(command).fontFamily === interfaceFont
                     && Math.round(command.getBoundingClientRect().width) === 64
                     && getComputedStyle(command).backgroundColor !== 'rgb(255, 0, 0)'
@@ -525,7 +571,7 @@ it('keeps host styles and package styles isolated', function () {
                     && !getComputedStyle(key).fontFamily.includes('JetBrains Mono')
                     && getComputedStyle(key).backgroundColor !== 'rgb(255, 0, 0)'
                     && getComputedStyle(detail).borderLeftWidth === '0px'
-                    && Number.parseFloat(getComputedStyle(status).fontSize) === 11
+                    && Number.parseFloat(getComputedStyle(status).fontSize) === 12
                     && getComputedStyle(status).backgroundColor !== 'rgb(255, 0, 0)'
                     && body !== null
                     && keyEvidence !== null
@@ -544,7 +590,7 @@ it('keeps host styles and package styles isolated', function () {
 
                 return copy.getBoundingClientRect().height === 36
                     && getComputedStyle(copy).backgroundColor !== 'rgb(255, 0, 255)'
-                    && Number.parseFloat(getComputedStyle(key).fontSize) === 12
+                    && Number.parseFloat(getComputedStyle(key).fontSize) === 14
                     && !getComputedStyle(key).fontFamily.includes('JetBrains Mono')
                     && getComputedStyle(key).backgroundColor === 'rgba(0, 0, 0, 0)';
             })()
@@ -583,15 +629,15 @@ it('keeps host styles and package styles isolated', function () {
                     && metadataFacts.every((fact) => getComputedStyle(fact).backgroundColor === 'rgba(0, 0, 0, 0)')
                     && metadataTerms.every((term) => getComputedStyle(term).backgroundColor === 'rgba(0, 0, 0, 0)')
                     && metadataTerms.every((term) => getComputedStyle(term).color !== 'rgb(0, 128, 0)')
-                    && Number.parseFloat(getComputedStyle(metadata.querySelector('dt')).fontSize) === 11
+                    && Number.parseFloat(getComputedStyle(metadata.querySelector('dt')).fontSize) === 12
                     && sourceLink.getBoundingClientRect().height < 91
                     && getComputedStyle(sourceLink).backgroundColor === 'rgba(0, 0, 0, 0)'
                     && getComputedStyle(sourceLink).color !== 'rgb(0, 128, 0)'
                     && destinations.length >= 1
-                    && destinations.every((destination) => Number.parseFloat(getComputedStyle(destination).fontSize) === 11)
+                    && destinations.every((destination) => Number.parseFloat(getComputedStyle(destination).fontSize) === 12)
                     && destinations.every((destination) => !getComputedStyle(destination).fontFamily.includes('JetBrains Mono'))
                     && destinations.every((destination) => getComputedStyle(destination).backgroundColor !== 'rgb(255, 0, 0)')
-                    && Number.parseFloat(getComputedStyle(status).fontSize) === 11
+                    && Number.parseFloat(getComputedStyle(status).fontSize) === 12
                     && getComputedStyle(status).backgroundColor !== 'rgb(255, 0, 0)'
                     && link.getBoundingClientRect().height < 91
                     && Number.parseFloat(getComputedStyle(backIcon).width) === 14
@@ -636,7 +682,7 @@ it('keeps host styles and package styles isolated', function () {
                 const result = document.querySelector('[data-ndb-authorization-result-label]');
                 const detailResult = document.querySelector('[data-ndb-authorization-detail-result]');
 
-                return Number.parseFloat(getComputedStyle(result).fontSize) === 11
+                return Number.parseFloat(getComputedStyle(result).fontSize) === 12
                     && getComputedStyle(result).backgroundColor === 'rgba(0, 0, 0, 0)'
                     && Number.parseFloat(getComputedStyle(detailResult).fontSize) === 12
                     && getComputedStyle(detailResult).backgroundColor === 'rgba(0, 0, 0, 0)';
@@ -694,7 +740,7 @@ it('keeps host styles and package styles isolated', function () {
                 return getComputedStyle(entry).borderLeftWidth !== '20px'
                     && getComputedStyle(entry).backgroundColor !== 'rgb(255, 0, 0)'
                     && getComputedStyle(entry).paddingLeft === '12px'
-                    && Number.parseFloat(getComputedStyle(severity).fontSize) === 11
+                    && Number.parseFloat(getComputedStyle(severity).fontSize) === 12
                     && getComputedStyle(severity).backgroundColor === 'rgba(0, 0, 0, 0)'
                     && getComputedStyle(severity).borderRadius === '0px'
                     && document.querySelector('[data-ndb-log-attention-label]') === null
@@ -726,7 +772,7 @@ it('keeps host styles and package styles isolated', function () {
                 const checks = {
                     noActions: actions === null,
                     noPopover: document.querySelector('[data-ndb-log-details-popover]') === null,
-                    titleSize: Number.parseFloat(getComputedStyle(title).fontSize) === 14,
+                    titleSize: Number.parseFloat(getComputedStyle(title).fontSize) === 16,
                     titleBackground: getComputedStyle(title).backgroundColor === 'rgba(0, 0, 0, 0)',
                     titleColor: getComputedStyle(title).color !== 'rgb(0, 128, 0)',
                     contextBackground: getComputedStyle(context).backgroundColor !== 'rgb(255, 0, 0)',
@@ -872,8 +918,8 @@ it('keeps host styles and package styles isolated', function () {
                         (term) => getComputedStyle(term).backgroundColor === 'rgba(0, 0, 0, 0)',
                     ),
                     termColors: metadataTerms.every((term) => getComputedStyle(term).color !== 'rgb(0, 128, 0)'),
-                    termSize: Number.parseFloat(getComputedStyle(metadataGrid.querySelector('dt')).fontSize) === 11,
-                    outcomeSize: Number.parseFloat(getComputedStyle(outcome).fontSize) === 11,
+                    termSize: Number.parseFloat(getComputedStyle(metadataGrid.querySelector('dt')).fontSize) === 12,
+                    outcomeSize: Number.parseFloat(getComputedStyle(outcome).fontSize) === 12,
                     outcomeBackground: getComputedStyle(outcome).backgroundColor === 'rgba(0, 0, 0, 0)',
                     listenerBackground: getComputedStyle(listenerRow).backgroundColor === 'rgba(0, 0, 0, 0)',
                     listenerPadding: Number.parseFloat(getComputedStyle(listenerRow).paddingLeft) === 0,

@@ -29,17 +29,17 @@
     <span
         data-ndb-cache-result
         @class([
-            'ndb:col-start-3 ndb:row-start-1 ndb:w-full ndb:text-right ndb:text-[11px] ndb:font-bold',
+            'ndb:col-start-3 ndb:row-start-1 ndb:w-full ndb:text-right ndb:text-xs ndb:font-bold',
             'ndb:text-red-600 ndb:dark:text-red-300' => $item['failed'] ?? false,
             'ndb:text-amber-600 ndb:dark:text-amber-300' => ! ($item['failed'] ?? false) && in_array($item['result'], ['miss', 'flushed'], true),
             'ndb:text-zinc-500 ndb:dark:text-zinc-400' => ! ($item['failed'] ?? false) && ! in_array($item['result'], ['miss', 'flushed'], true),
         ])
     >{{ $item['result_label'] }}</span>
-    <span class="ndb:col-start-2 ndb:row-start-2 ndb:min-w-0 ndb:truncate ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400">
+    <span class="ndb:col-start-2 ndb:row-start-2 ndb:min-w-0 ndb:truncate ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">
         {{ $item['store_label'] }}
     </span>
     <span
         data-ndb-cache-list-duration
-        class="ndb:col-start-3 ndb:row-start-2 ndb:text-right ndb:text-[11px] ndb:font-semibold ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400"
+        class="ndb:col-start-3 ndb:row-start-2 ndb:text-right ndb:text-xs ndb:font-semibold ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400"
     >{{ $item['duration_label'] }}</span>
 </button>

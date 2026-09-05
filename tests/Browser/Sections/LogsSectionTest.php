@@ -108,10 +108,12 @@ it('presents logs as a persistent two column evidence inspector', function () {
         ->click('[data-ndb-log-entry][data-ndb-log-record-count="3"]')
         ->assertAttribute('[data-ndb-log-entry][data-ndb-log-record-count="3"]', 'aria-pressed', 'true')
         ->assertVisible('[data-ndb-log-details-title]')
+        ->assertMissing('[data-ndb-log-detail] [data-ndb-log-occurrences]')
+        ->click('[data-ndb-log-capture-details] > summary')
         ->assertCount('[data-ndb-log-detail] [data-ndb-log-occurrences] li', 3)
         ->assertPresent('[data-ndb-log-detail] [data-ndb-log-context]')
         ->assertPresent('[data-ndb-log-detail] [data-ndb-log-source]')
-        ->assertPresent('[data-ndb-log-detail] [data-ndb-inspector-stack]')
+        ->assertMissing('[data-ndb-log-detail] [data-ndb-inspector-stack]')
         ->assertMissing('[data-ndb-log-detail] [data-ndb-log-actions]')
         ->assertMissing('[data-ndb-log-detail] [data-ndb-log-raw]')
         ->assertScript(<<<'JS'
@@ -145,12 +147,23 @@ it('presents logs as a persistent two column evidence inspector', function () {
 
                 return message.textContent.trim() === 'The rail partner rejected reservation KYO-441.'
                     && document.querySelector('[data-ndb-log-details-title]').textContent.startsWith('Rail reservation refresh failed.')
-                    && stackRows.length > 0
-                    && facts.join('|') === 'Severity|Channel|From request start|Captured at'
-                    && groups.join('|') === 'summary|related-exception|context|source'
+                    && stackRows.length === 0
+                    && facts.join('|') === 'Channel|From request start'
+                    && detail.querySelector('[data-ndb-log-detail-severity]').textContent.trim() === 'Error'
+                    && ! detail.querySelector('[data-ndb-log-capture-details]').open
+                    && groups.join('|') === 'summary|related-exception|context|capture|source'
                     && detail.scrollWidth <= detail.clientWidth + 1;
             })()
             JS)
+        ->click('[data-ndb-log-entry][data-ndb-log-level="critical"]')
+        ->assertMissing('[data-ndb-log-context-full-value]')
+        ->click('[data-ndb-log-context-value] > summary')
+        ->assertSeeIn('[data-ndb-log-context-full-value]', 'Final retained line.')
+        ->assertScript(<<<'JS'
+            document.querySelector('[data-ndb-log-context-full-value]').textContent
+                === 'Retained diagnostic context. '.repeat(12) + '\nFinal retained line.'
+            JS)
+        ->click('[data-ndb-log-entry][data-ndb-log-level="error"]')
         ->select('[data-ndb-log-level-select]', 'attention')
         ->assertAttribute('[data-ndb-log-entry][data-ndb-log-level="error"]', 'aria-pressed', 'true')
         ->assertVisible('[data-ndb-log-details-title]')

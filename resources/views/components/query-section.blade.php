@@ -184,14 +184,14 @@
                         </span>
                         <span
                             x-show.important="visibleQueryCount !== {{ $queryRetainedCount }}"
-                            class="ndb:ml-1 ndb:text-[11px] ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                            class="ndb:ml-1 ndb:text-xs ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
                         >
                             <span data-ndb-query-visible-count x-text="visibleQueryCount"></span>
                             shown
                         </span>
                         <span
                             data-ndb-query-total-time
-                            class="ndb:mt-0.5 ndb:block ndb:text-[11px] ndb:font-medium ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                            class="ndb:mt-0.5 ndb:block ndb:text-xs ndb:font-medium ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400"
                         >
                             {{ $formatDuration((float) ($querySummary['total_time_ms'] ?? 0)) }} total
                         </span>
@@ -225,7 +225,7 @@
                 <x-slot:list data-ndb-query-list>
                     <div
                         data-ndb-query-list-heading
-                        class="ndb:sticky ndb:top-0 ndb:z-10 ndb:grid ndb:grid-cols-[3.5rem_minmax(0,1fr)_4.75rem] ndb:items-center ndb:gap-3 ndb:border-b ndb:border-zinc-200/90 ndb:bg-white/95 ndb:px-3 ndb:py-2 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400 ndb:backdrop-blur-sm ndb:dark:border-zinc-800 ndb:dark:bg-zinc-950/95"
+                        class="ndb:sticky ndb:top-0 ndb:z-10 ndb:grid ndb:grid-cols-[3.5rem_minmax(0,1fr)_4.75rem] ndb:items-center ndb:gap-3 ndb:border-b ndb:border-zinc-200/90 ndb:bg-white/95 ndb:px-3 ndb:py-2 ndb:text-xs ndb:font-semibold ndb:text-zinc-400 ndb:backdrop-blur-sm ndb:dark:border-zinc-800 ndb:dark:bg-zinc-950/95"
                     >
                         <span>Type</span>
                         <span>Query</span>
@@ -290,17 +290,17 @@
                             <code
                                 data-ndb-query-list-sql
                                 title="{{ $record['sql'] }}"
-                                class="ndb:block ndb:max-h-10 ndb:min-w-0 ndb:overflow-hidden ndb:break-words ndb:text-[11px] ndb:font-semibold ndb:leading-5 ndb:text-zinc-800 ndb:dark:text-zinc-200"
+                                class="ndb:block ndb:max-h-10 ndb:min-w-0 ndb:overflow-hidden ndb:break-words ndb:text-xs ndb:font-semibold ndb:leading-5 ndb:text-zinc-800 ndb:dark:text-zinc-200"
                             >{{ $record['sql'] }}</code>
 
                             <span
                                 data-ndb-query-list-outcome
-                                class="ndb:flex ndb:min-w-0 ndb:flex-col ndb:items-end ndb:gap-0.5 ndb:text-right ndb:text-[11px] ndb:tabular-nums"
+                                class="ndb:flex ndb:min-w-0 ndb:flex-col ndb:items-end ndb:gap-0.5 ndb:text-right ndb:text-xs ndb:tabular-nums"
                             >
                                 <span
                                     data-ndb-query-list-driver
                                     title="{{ $record['driver'] }}"
-                                    class="ndb:h-auto ndb:max-w-full ndb:truncate ndb:bg-transparent ndb:[font-family:inherit] ndb:text-[11px] ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                    class="ndb:h-auto ndb:max-w-full ndb:truncate ndb:bg-transparent ndb:[font-family:inherit] ndb:text-xs ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
                                 >{{ $record['driver'] }}</span>
                                 <strong
                                     data-ndb-query-list-duration

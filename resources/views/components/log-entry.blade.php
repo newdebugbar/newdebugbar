@@ -40,7 +40,7 @@
 >
     <span
         data-ndb-log-severity
-        class="ndb:min-w-0 ndb:bg-transparent ndb:text-[11px] ndb:font-bold ndb:uppercase ndb:leading-5 ndb:tracking-[0.08em] {{ $severityClasses }}"
+        class="ndb:min-w-0 ndb:bg-transparent ndb:text-xs ndb:font-bold ndb:uppercase ndb:leading-5 ndb:tracking-wide {{ $severityClasses }}"
     >{{ $entry['level_label'] ?? ucfirst($level) }}</span>
 
     <span class="ndb:min-w-0">
@@ -50,7 +50,7 @@
         >{{ ($entry['message'] ?? '') === '' ? '—' : $entry['message'] }}</span>
         <span
             data-ndb-log-metadata
-            class="ndb:mt-0.5 ndb:flex ndb:min-w-0 ndb:flex-wrap ndb:items-baseline ndb:gap-x-3 ndb:gap-y-0.5 ndb:text-[11px] ndb:leading-4 ndb:text-zinc-500 ndb:dark:text-zinc-400"
+            class="ndb:mt-0.5 ndb:flex ndb:min-w-0 ndb:flex-wrap ndb:items-baseline ndb:gap-x-3 ndb:gap-y-0.5 ndb:text-xs ndb:leading-4 ndb:text-zinc-500 ndb:dark:text-zinc-400"
         >
             <span
                 data-ndb-log-channel-label

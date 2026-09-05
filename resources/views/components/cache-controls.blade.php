@@ -44,13 +44,13 @@
             {{ number_format($count) }} {{ \Illuminate\Support\Str::plural('operation', $count) }}
             <span
                 x-show.important="visibleCacheCount !== cacheOperations.length"
-                class="ndb:ml-1 ndb:text-[11px] ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                class="ndb:ml-1 ndb:text-xs ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
             >
                 <span data-ndb-cache-visible-count x-text="visibleCacheCount"></span>
                 shown
             </span>
         </p>
-        <p class="ndb:mt-0.5 ndb:text-[11px] ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400">
+        <p class="ndb:mt-0.5 ndb:text-xs ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400">
             {{ \NewDebugBar\Support\DurationFormatter::format($duration) }} total
         </p>
     </div>
@@ -63,7 +63,7 @@
             ])>
                 {{ number_format($hitRate, 1) }}% hit rate
             </p>
-            <p class="ndb:mt-0.5 ndb:text-[11px] ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400">
+            <p class="ndb:mt-0.5 ndb:text-xs ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400">
                 {{ number_format($hits) }} {{ \Illuminate\Support\Str::plural('hit', $hits) }}, {{ number_format($misses) }} {{ \Illuminate\Support\Str::plural('miss', $misses) }}
             </p>
         </div>
@@ -75,7 +75,7 @@
         data-ndb-cache-attention
         role="status"
         @class([
-            'ndb:flex ndb:items-start ndb:gap-2 ndb:text-[11px] ndb:font-medium ndb:leading-4',
+            'ndb:flex ndb:items-start ndb:gap-2 ndb:text-xs ndb:font-medium ndb:leading-4',
             'ndb:text-red-700 ndb:dark:text-red-300' => $failures > 0,
             'ndb:text-amber-700 ndb:dark:text-amber-300' => $failures === 0,
         ])

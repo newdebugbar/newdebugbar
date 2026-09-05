@@ -17,7 +17,7 @@
     <span class="ndb:mt-1 ndb:block ndb:min-w-0 ndb:truncate ndb:text-xs ndb:font-semibold">
         {{ $exception['message'] ?: 'No exception message' }}
     </span>
-    <span class="ndb:mt-1 ndb:block ndb:min-w-0 ndb:truncate ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400">
+    <span class="ndb:mt-1 ndb:block ndb:min-w-0 ndb:truncate ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">
         {{ $exception['file'] }}:{{ $exception['line'] }}
     </span>
 </button>

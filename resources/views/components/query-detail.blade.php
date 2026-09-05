@@ -56,7 +56,7 @@
                         <template x-if="selectedQueryRecord.repeated">
                             <div class="ndb:max-w-sm">
                                 <p
-                                    class="ndb:mb-1.5 ndb:text-[11px] ndb:font-bold ndb:uppercase ndb:tracking-wide ndb:text-zinc-400"
+                                    class="ndb:mb-1.5 ndb:text-xs ndb:font-bold ndb:uppercase ndb:tracking-wide ndb:text-zinc-400"
                                     x-text="`Repeated runs (${selectedQueryRecord.count})`"
                                 ></p>
                                 <x-newdebugbar::select-field
@@ -81,26 +81,26 @@
                         <x-newdebugbar::inspector-facts :bordered="false">
                             <x-newdebugbar::inspector-fact label="Duration">
                                 <x-slot:value
-                                    class="ndb:text-xs ndb:font-bold ndb:tabular-nums"
+                                    class="ndb:font-bold ndb:tabular-nums"
                                     x-text="selectedQuery.duration_label"
                                 ></x-slot:value>
                             </x-newdebugbar::inspector-fact>
                             <x-newdebugbar::inspector-fact label="Query time">
                                 <x-slot:value
-                                    class="ndb:text-xs ndb:font-semibold ndb:tabular-nums"
+                                    class="ndb:font-semibold ndb:tabular-nums"
                                     x-text="`${Number(selectedQuery.query_time_percent).toFixed(1)}%`"
                                 ></x-slot:value>
                             </x-newdebugbar::inspector-fact>
                             <x-newdebugbar::inspector-fact label="Type">
                                 <x-slot:value
-                                    class="ndb:text-xs ndb:font-semibold"
+                                    class="ndb:font-semibold"
                                     x-text="formatQueryType(selectedQuery.query_type)"
                                 ></x-slot:value>
                             </x-newdebugbar::inspector-fact>
                             <x-newdebugbar::inspector-fact label="Connection">
                                 <x-slot:value
                                     ::title="selectedQuery.connection"
-                                    class="ndb:truncate ndb:text-xs ndb:font-semibold"
+                                    class="ndb:truncate ndb:font-semibold"
                                     x-text="selectedQuery.connection"
                                 ></x-slot:value>
                             </x-newdebugbar::inspector-fact>
@@ -129,7 +129,7 @@
                         <p
                             data-ndb-query-incomplete-bindings
                             x-show.important="! selectedQuery.display_sql_complete"
-                            class="ndb:text-[11px] ndb:leading-5 ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                            class="ndb:text-xs ndb:leading-5 ndb:text-zinc-500 ndb:dark:text-zinc-400"
                         >
                             Some binding values were not retained, so the remaining placeholders cannot be filled in.
                         </p>
@@ -143,13 +143,12 @@
 
                     <template x-if="selectedQueryHasSource">
                         <x-newdebugbar::inspector-source-panel
-                            title="Source"
                             frames="selectedQuery.stack ?? []"
                             columns="1"
                             empty-label="No application stack was captured for this query."
                             class="ndb:border-t ndb:border-zinc-200/90 ndb:dark:border-zinc-800"
                         >
-                            <x-newdebugbar::inspector-source-fact label="Application call site">
+                            <x-newdebugbar::inspector-source-fact label="Source">
                                 <x-slot:value>
                                     <x-newdebugbar::inspector-source-link
                                         ::title="selectedQuery.source_available ? 'Copy ' + selectedQuery.source_label : null"
@@ -180,7 +179,7 @@
                         x-show.important="queryExplainLoading"
                         data-ndb-query-explain-loading
                         role="status"
-                        class="ndb:flex ndb:items-center ndb:gap-2 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                        class="ndb:flex ndb:items-center ndb:gap-2 ndb:text-xs ndb:font-semibold ndb:text-zinc-500 ndb:dark:text-zinc-400"
                     >
                         <span class="ndb:size-1.5 ndb:shrink-0 ndb:rounded-full ndb:bg-indigo-500"></span>
                         <span>Running EXPLAIN…</span>
@@ -190,16 +189,10 @@
                         <div data-ndb-query-explain-result class="ndb:space-y-3 ndb:sm:space-y-4">
                             <x-newdebugbar::inspector-facts :columns="2" :bordered="false">
                                 <x-newdebugbar::inspector-fact label="Mode">
-                                    <x-slot:value
-                                        class="ndb:text-xs ndb:font-semibold"
-                                        x-text="queryExplain.mode"
-                                    ></x-slot:value>
+                                    <x-slot:value class="ndb:font-semibold" x-text="queryExplain.mode"></x-slot:value>
                                 </x-newdebugbar::inspector-fact>
                                 <x-newdebugbar::inspector-fact label="Driver">
-                                    <x-slot:value
-                                        class="ndb:text-xs ndb:font-semibold"
-                                        x-text="queryExplain.driver"
-                                    ></x-slot:value>
+                                    <x-slot:value class="ndb:font-semibold" x-text="queryExplain.driver"></x-slot:value>
                                 </x-newdebugbar::inspector-fact>
                             </x-newdebugbar::inspector-facts>
                             <x-newdebugbar::inspector-evidence label="Plan" language="json">

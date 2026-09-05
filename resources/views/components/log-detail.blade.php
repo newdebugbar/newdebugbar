@@ -27,6 +27,13 @@
         ? $requestTimeLabel.' to '.$lastRequestTimeLabel
         : $requestTimeLabel;
     $wallTime = null;
+    $contextValue = static fn (mixed $value): string => match (true) {
+        $value === null => 'null',
+        is_bool($value) => $value ? 'true' : 'false',
+        default => (string) $value,
+    };
+    $compactContext = array_values(array_filter($contextFields, static fn (array $field): bool => ! $field['structured'] && $contextValue($field['value']) === $field['preview']));
+    $expandedContext = array_values(array_filter($contextFields, static fn (array $field): bool => $field['structured'] || $contextValue($field['value']) !== $field['preview']));
 
     if (is_string($entry['first_occurred_at'] ?? null) && $entry['first_occurred_at'] !== '') {
         try {
@@ -52,41 +59,28 @@
                 <h3 class="ndb:bg-transparent">
                     <span
                         data-ndb-log-details-title
-                        class="ndb:block ndb:whitespace-pre-wrap ndb:break-words ndb:bg-transparent ndb:text-sm ndb:font-bold ndb:leading-5 ndb:text-zinc-900 ndb:[overflow-wrap:anywhere] ndb:dark:text-zinc-100"
+                        class="ndb:block ndb:whitespace-pre-wrap ndb:break-words ndb:bg-transparent ndb:text-base ndb:font-semibold ndb:leading-6 ndb:text-zinc-900 ndb:[overflow-wrap:anywhere] ndb:dark:text-zinc-100"
                     >{{ $displayMessage }}</span>
                 </h3>
-                <p class="ndb:mt-1 ndb:text-[11px] ndb:font-semibold ndb:tabular-nums ndb:text-zinc-400">
-                    Log {{ $recordLabel }}
-                </p>
             </div>
         </x-slot:title>
+        <x-slot:aside>
+            <span data-ndb-log-detail-severity class="ndb:text-xs ndb:font-semibold {{ $severityClasses }}">
+                {{ $entry['level_label'] ?? ucfirst($level) }}
+            </span>
+        </x-slot:aside>
     </x-newdebugbar::inspector-detail-header>
 
     <div data-ndb-log-detail-groups class="ndb:divide-y ndb:divide-zinc-200/90 ndb:dark:divide-zinc-800">
         <section data-ndb-log-detail-group="summary" class="ndb:p-3 ndb:sm:p-4">
-            <x-newdebugbar::inspector-facts columns="4" :bordered="false">
-                <x-newdebugbar::inspector-fact label="Severity">
-                    <x-slot:value class="ndb:text-xs ndb:font-bold {{ $severityClasses }}">
-                        {{ $entry['level_label'] ?? ucfirst($level) }}
-                    </x-slot:value>
-                </x-newdebugbar::inspector-fact>
+            <x-newdebugbar::inspector-facts columns="2" layout="inline" :bordered="false">
                 <x-newdebugbar::inspector-fact label="Channel">
-                    <x-slot:value class="ndb:truncate ndb:text-xs ndb:font-semibold" title="{{ $channelLabel }}">
+                    <x-slot:value class="ndb:break-words ndb:font-semibold" title="{{ $channelLabel }}">
                         {{ $channelLabel }}
                     </x-slot:value>
                 </x-newdebugbar::inspector-fact>
                 <x-newdebugbar::inspector-fact label="From request start">
-                    <x-slot:value class="ndb:text-xs ndb:font-semibold ndb:tabular-nums">
-                        {{ $requestTimeRange }}
-                    </x-slot:value>
-                </x-newdebugbar::inspector-fact>
-                <x-newdebugbar::inspector-fact label="Captured at">
-                    <x-slot:value
-                        class="ndb:text-xs ndb:font-semibold ndb:tabular-nums"
-                        title="{{ $wallTime?->format(DateTimeInterface::ATOM) ?? '' }}"
-                    >
-                        {{ $wallTime?->format('H:i:s.v') ?? '—' }}
-                    </x-slot:value>
+                    <x-slot:value class="ndb:font-semibold ndb:tabular-nums">{{ $requestTimeRange }}</x-slot:value>
                 </x-newdebugbar::inspector-fact>
             </x-newdebugbar::inspector-facts>
         </section>
@@ -112,14 +106,14 @@
                     </x-newdebugbar::inspector-action>
                 </div>
                 <div class="ndb:mt-3 ndb:min-w-0">
-                    <code class="ndb:block ndb:break-words ndb:bg-transparent ndb:font-mono ndb:text-[11px] ndb:font-semibold ndb:text-zinc-900 ndb:dark:text-zinc-100">
+                    <code class="ndb:block ndb:break-words ndb:bg-transparent ndb:font-mono ndb:text-xs ndb:font-semibold ndb:text-zinc-900 ndb:dark:text-zinc-100">
                         {{ $relatedException['class'] ?? '—' }}
                     </code>
-                    <p class="ndb:mt-1 ndb:break-words ndb:bg-transparent ndb:text-xs ndb:font-medium ndb:leading-5 ndb:text-zinc-700 ndb:[overflow-wrap:anywhere] ndb:dark:text-zinc-200">
+                    <p class="ndb:mt-1 ndb:break-words ndb:bg-transparent ndb:text-sm ndb:leading-5 ndb:text-zinc-700 ndb:[overflow-wrap:anywhere] ndb:dark:text-zinc-200">
                         <span class="ndb:block ndb:whitespace-pre-wrap">{{ $exceptionMessage === '' ? '—' : $exceptionMessage }}</span>
                     </p>
                     @if ($exceptionSource !== null)
-                        <p class="ndb:mt-1 ndb:break-all ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400">
+                        <p class="ndb:mt-1 ndb:break-all ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">
                             {{ $exceptionSource }}
                         </p>
                     @endif
@@ -135,60 +129,101 @@
                 class="ndb:bg-transparent ndb:p-3 ndb:sm:p-4"
             >
                 <h4 class="ndb:text-xs ndb:font-bold ndb:text-zinc-800 ndb:dark:text-zinc-100">Context</h4>
-                <x-newdebugbar::inspector-definition-list class="ndb:mt-2">
-                    @foreach ($contextFields as $field)
-                        <x-newdebugbar::inspector-definition-row :label="$field['key']">
+                @if ($compactContext !== [])
+                    <x-newdebugbar::inspector-definition-list class="ndb:mt-2">
+                        @foreach ($compactContext as $field)
+                            <x-newdebugbar::inspector-definition-row :label="$field['key']">
+                                <x-slot:value>
+                                    <span class="ndb:break-words ndb:[overflow-wrap:anywhere]">{{ $contextValue($field['value']) }}</span>
+                                </x-slot:value>
+                            </x-newdebugbar::inspector-definition-row>
+                        @endforeach
+                    </x-newdebugbar::inspector-definition-list>
+                @endif
+                @foreach ($expandedContext as $field)
+                    @if ($field['structured'])
+                        <x-newdebugbar::inspector-evidence
+                            :label="$field['key']"
+                            language="json"
+                            data-ndb-log-context-payload
+                            class="ndb:mt-3"
+                        >
                             <x-slot:value>
-                                @if ($field['structured'])
-                                    <x-newdebugbar::code-block
-                                        language="json"
-                                        class="ndb:max-w-full"
-                                    >{{ json_encode($field['value'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE) }}</x-newdebugbar::code-block>
-                                @else
-                                    <span class="ndb:break-words ndb:[overflow-wrap:anywhere]">{{ $field['preview'] }}</span>
-                                @endif
+                                {{ json_encode($field['value'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE) }}
                             </x-slot:value>
-                        </x-newdebugbar::inspector-definition-row>
-                    @endforeach
-                </x-newdebugbar::inspector-definition-list>
+                        </x-newdebugbar::inspector-evidence>
+                    @else
+                        <x-newdebugbar::inspector-disclosure
+                            :label="$field['key']"
+                            data-ndb-log-context-value
+                            class="ndb:mt-3"
+                        >
+                            <x-slot:summary>
+                                <span class="ndb:flex ndb:min-w-0 ndb:flex-wrap ndb:items-baseline ndb:gap-x-3 ndb:gap-y-1">
+                                    <span class="ndb:shrink-0">{{ $field['key'] }}</span>
+                                    <span class="ndb:min-w-0 ndb:truncate ndb:text-xs ndb:font-normal ndb:text-zinc-500 ndb:dark:text-zinc-400">{{ $field['preview'] }}</span>
+                                </span>
+                            </x-slot:summary>
+                            <p class="ndb:break-words ndb:text-sm ndb:leading-5 ndb:[overflow-wrap:anywhere]">
+                                <span
+                                    data-ndb-log-context-full-value
+                                    class="ndb:whitespace-pre-wrap"
+                                >{{ $contextValue($field['value']) }}</span>
+                            </p>
+                        </x-newdebugbar::inspector-disclosure>
+                    @endif
+                @endforeach
             </section>
         @endif
 
-        @if ($repeatCount > 1)
-            <section
-                data-ndb-log-detail-group="occurrences"
-                data-ndb-log-occurrences
-                aria-label="Repeated log occurrences"
-                class="ndb:p-3 ndb:sm:p-4"
+        <section data-ndb-log-detail-group="capture" class="ndb:p-3 ndb:sm:p-4">
+            <x-newdebugbar::inspector-disclosure
+                :label="$repeatCount > 1 ? 'Timing and occurrences' : 'Capture details'"
+                data-ndb-log-capture-details
             >
-                <div class="ndb:flex ndb:items-baseline ndb:justify-between ndb:gap-3 ndb:border-b ndb:border-zinc-200/90 ndb:pb-2 ndb:dark:border-zinc-800">
-                    <h4 class="ndb:text-xs ndb:font-bold ndb:text-zinc-800 ndb:dark:text-zinc-100">Occurrences</h4>
-                    <span class="ndb:text-[11px] ndb:font-medium ndb:tabular-nums ndb:text-zinc-400">
-                        {{ $repeatCount }} records
-                    </span>
-                </div>
-                <ol class="ndb:list-none ndb:divide-y ndb:divide-zinc-200/90 ndb:p-0 ndb:dark:divide-zinc-800">
-                    @foreach ($occurrences as $occurrence)
-                        <li class="ndb:grid ndb:grid-cols-[5rem_minmax(0,1fr)] ndb:gap-3 ndb:py-2 ndb:text-[11px]">
-                            <span class="ndb:font-semibold ndb:tabular-nums">#{{ $occurrence['sequence'] }}</span>
-                            <span class="ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400">
-                                {{ $occurrence['at_ms'] === null ? '—' : '+'.\NewDebugBar\Support\DurationFormatter::format($occurrence['at_ms']) }}
-                            </span>
-                        </li>
-                    @endforeach
-                </ol>
-            </section>
-        @endif
+                <x-slot:count>
+                    {{ $repeatCount }} {{ \Illuminate\Support\Str::plural('record', $repeatCount) }}
+                </x-slot:count>
+                <x-newdebugbar::inspector-facts columns="2" layout="inline" :bordered="false">
+                    <x-newdebugbar::inspector-fact label="Captured at">
+                        <x-slot:value
+                            class="ndb:tabular-nums"
+                            title="{{ $wallTime?->format(DateTimeInterface::ATOM) ?? '' }}"
+                        >
+                            {{ $wallTime?->format('Y-m-d H:i:s.v P') ?? 'Not captured' }}
+                        </x-slot:value>
+                    </x-newdebugbar::inspector-fact>
+                    <x-newdebugbar::inspector-fact label="Log">
+                        <x-slot:value class="ndb:tabular-nums">{{ $recordLabel }}</x-slot:value>
+                    </x-newdebugbar::inspector-fact>
+                </x-newdebugbar::inspector-facts>
+                @if ($repeatCount > 1)
+                    <ol
+                        data-ndb-log-occurrences
+                        aria-label="Repeated log occurrences"
+                        class="ndb:mt-3 ndb:list-none ndb:divide-y ndb:divide-zinc-200/90 ndb:p-0 ndb:dark:divide-zinc-800"
+                    >
+                        @foreach ($occurrences as $occurrence)
+                            <li class="ndb:grid ndb:grid-cols-[5rem_minmax(0,1fr)] ndb:gap-3 ndb:py-2 ndb:text-xs">
+                                <span class="ndb:font-semibold ndb:tabular-nums">#{{ $occurrence['sequence'] }}</span>
+                                <span class="ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400">
+                                    {{ $occurrence['at_ms'] === null ? '—' : '+'.\NewDebugBar\Support\DurationFormatter::format($occurrence['at_ms']) }}
+                                </span>
+                            </li>
+                        @endforeach
+                    </ol>
+                @endif
+            </x-newdebugbar::inspector-disclosure>
+        </section>
 
         <section data-ndb-log-detail-group="source" data-ndb-log-source class="ndb:bg-transparent ndb:p-0">
             <x-newdebugbar::inspector-source-panel
                 :frames="\Illuminate\Support\Js::from($stack)"
                 columns="1"
                 empty-label="No application stack was captured for this log entry."
-                title="Source"
                 class="ndb:bg-transparent"
             >
-                <x-newdebugbar::inspector-source-fact label="Application call site">
+                <x-newdebugbar::inspector-source-fact label="Source">
                     <x-slot:value>
                         @if ($sourceLabel !== null)
                             <x-newdebugbar::inspector-source-link :copy="$sourceLabel">

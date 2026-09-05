@@ -92,7 +92,7 @@
         <x-slot:title>
             <h3
                 data-ndb-model-class
-                class="ndb:min-w-0 ndb:break-all ndb:text-sm ndb:font-bold ndb:leading-5 ndb:text-zinc-950 ndb:dark:text-white"
+                class="ndb:min-w-0 ndb:break-all ndb:text-base ndb:font-semibold ndb:leading-6 ndb:text-zinc-950 ndb:dark:text-white"
             >
                 {{ $group['model'] }}
             </h3>
@@ -100,14 +100,14 @@
         <x-slot:aside></x-slot:aside>
         <x-slot:metadata class="ndb:gap-x-3 ndb:gap-y-2 ndb:sm:gap-x-8">
             <div class="ndb:min-w-0">
-                <dt class="ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400">Connection</dt>
-                <dd class="ndb:text-[11px] ndb:font-semibold ndb:text-zinc-700 ndb:dark:text-zinc-300">
+                <dt class="ndb:text-xs ndb:font-semibold ndb:text-zinc-400">Connection</dt>
+                <dd class="ndb:text-sm ndb:font-semibold ndb:text-zinc-700 ndb:dark:text-zinc-300">
                     {{ $connection }}
                 </dd>
             </div>
             <div class="ndb:min-w-0">
-                <dt class="ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400">Table</dt>
-                <dd class="ndb:text-[11px] ndb:font-semibold ndb:text-zinc-700 ndb:dark:text-zinc-300">{{ $table }}</dd>
+                <dt class="ndb:text-xs ndb:font-semibold ndb:text-zinc-400">Table</dt>
+                <dd class="ndb:text-sm ndb:font-semibold ndb:text-zinc-700 ndb:dark:text-zinc-300">{{ $table }}</dd>
             </div>
         </x-slot:metadata>
     </x-newdebugbar::inspector-detail-header>
@@ -132,169 +132,8 @@
                 data-ndb-model-detail-panel="records"
                 class="ndb:border-l-0 ndb:bg-transparent ndb:p-0 ndb:text-xs ndb:text-zinc-950 ndb:dark:text-white"
             >
-                @if ($retrievalCount > 0)
-                    <section
-                        data-ndb-model-records
-                        class="ndb:border-l-0 ndb:bg-transparent ndb:p-0 ndb:text-xs ndb:text-zinc-950 ndb:dark:text-white"
-                    >
-                        <x-newdebugbar::inspector-explanation
-                            title="How this model was loaded"
-                            description="Each row is one record Laravel loaded during this request. Retrieved shows how often it was loaded. If the count is above 1, check whether those repeated loads are expected."
-                        />
-
-                        <div class="ndb:mt-3 ndb:border-y ndb:border-zinc-200/90 ndb:dark:border-zinc-800">
-                            <div class="ndb:hidden ndb:grid-cols-[minmax(8rem,1fr)_5.5rem_minmax(10rem,1.25fr)] ndb:gap-3 ndb:border-b ndb:border-zinc-200/90 ndb:py-2 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400 ndb:dark:border-zinc-800 ndb:sm:grid">
-                                <span>Identifier</span>
-                                <span class="ndb:text-right">Retrieved</span>
-                                <span>Source</span>
-                            </div>
-
-                            <div class="ndb:divide-y ndb:divide-zinc-200/90 ndb:dark:divide-zinc-800">
-                                @foreach ($group['records'] ?? [] as $record)
-                                    @php
-                                        $recordSource = $record['sources'][0]['callsite'] ?? null;
-                                        $recordSourceCopy = $sourceCopy($recordSource);
-                                        $recordLoads = (int) ($record['loads'] ?? 0);
-                                        $recordKey = $record['key'] ?? null;
-                                    @endphp
-                                    <article
-                                        data-ndb-model-record
-                                        data-ndb-model-record-retrievals="{{ $recordLoads }}"
-                                        class="ndb:grid ndb:min-w-0 ndb:gap-2 ndb:border-l-0 ndb:bg-transparent ndb:px-0 ndb:py-2.5 ndb:text-xs ndb:text-zinc-950 ndb:dark:text-white ndb:sm:grid-cols-[minmax(8rem,1fr)_5.5rem_minmax(10rem,1.25fr)] ndb:sm:items-center ndb:sm:gap-3"
-                                    >
-                                        <p @class([
-                                            'ndb:min-w-0 ndb:break-all ndb:text-[11px] ndb:font-semibold',
-                                            'ndb:font-mono ndb:tabular-nums' => is_numeric($recordKey),
-                                        ])>
-                                            {{ (string) $recordKey }}
-                                        </p>
-                                        <span @class([
-                                            'ndb:text-[11px] ndb:font-semibold ndb:tabular-nums ndb:sm:text-right',
-                                            'ndb:text-amber-700 ndb:dark:text-amber-300' => $recordLoads > 1,
-                                            'ndb:text-zinc-600 ndb:dark:text-zinc-300' => $recordLoads === 1,
-                                        ])>
-                                            <span class="ndb:text-zinc-400 ndb:sm:hidden">Retrieved </span
-                                            >{{ number_format($recordLoads) }}
-                                        </span>
-                                        @if ($recordSourceCopy !== null)
-                                            <x-newdebugbar::inspector-source-link
-                                                :copy="$recordSourceCopy"
-                                                :title="$sourceTitle($recordSource)"
-                                                class="ndb:justify-self-start ndb:text-zinc-500 ndb:dark:text-zinc-400"
-                                            >
-                                                <span class="ndb:sm:hidden">Source </span
-                                                >{{ $sourceShortLabel($recordSource) }}
-                                            </x-newdebugbar::inspector-source-link>
-                                        @else
-                                            <span class="ndb:text-[11px] ndb:text-zinc-400">—</span>
-                                        @endif
-                                    </article>
-                                @endforeach
-
-                                @if ($unidentifiedCount > 0)
-                                    <article
-                                        data-ndb-model-missing-identifiers
-                                        class="ndb:grid ndb:min-w-0 ndb:gap-2 ndb:border-l-0 ndb:bg-transparent ndb:px-0 ndb:py-2.5 ndb:sm:grid-cols-[minmax(8rem,1fr)_5.5rem_minmax(10rem,1.25fr)] ndb:sm:items-center ndb:sm:gap-3"
-                                    >
-                                        <p class="ndb:text-[11px] ndb:font-semibold">—</p>
-                                        <span class="ndb:text-[11px] ndb:font-semibold ndb:tabular-nums ndb:text-zinc-600 ndb:dark:text-zinc-300 ndb:sm:text-right">
-                                            <span class="ndb:text-zinc-400 ndb:sm:hidden">Retrieved </span
-                                            >{{ number_format($unidentifiedCount) }}
-                                        </span>
-                                        <span class="ndb:text-[11px] ndb:text-zinc-400">—</span>
-                                    </article>
-                                @endif
-                            </div>
-                        </div>
-
-                        @if ((int) ($group['hidden_record_count'] ?? 0) > 0)
-                            <p
-                                data-ndb-model-record-limit
-                                class="ndb:mt-2 ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400"
-                            >
-                                Showing {{ number_format(count($group['records'])) }} of {{ number_format($recordCount) }} identified
-                                records.
-                            </p>
-                        @endif
-
-                        @if ($unidentifiedCount > 0)
-                            <p
-                                data-ndb-model-unidentified
-                                class="ndb:mt-2 ndb:text-[11px] ndb:leading-5 ndb:text-zinc-500 ndb:dark:text-zinc-400"
-                            >
-                                A dash means the model identifier was unavailable. These retrievals are excluded from
-                                the reload count.
-                            </p>
-                        @endif
-                    </section>
-                @endif
-
-                @if ($writeOperations !== [])
-                    <section
-                        data-ndb-model-write-table
-                        @class([
-                            'ndb:border-l-0 ndb:bg-transparent ndb:p-0 ndb:text-xs ndb:text-zinc-950 ndb:dark:text-white',
-                            'ndb:mt-3 ndb:sm:mt-5' => $retrievalCount > 0,
-                        ])
-                    >
-                        <x-newdebugbar::inspector-explanation
-                            title="How this model changed"
-                            description="Each row is one create, update, or delete completed during this request. If a write is unexpected, check whether the model is being saved more than once or earlier than intended."
-                        />
-
-                        <div class="ndb:mt-3 ndb:border-y ndb:border-zinc-200/90 ndb:dark:border-zinc-800">
-                            <div class="ndb:hidden ndb:grid-cols-[minmax(6rem,0.7fr)_minmax(5rem,0.55fr)_minmax(8rem,1.25fr)] ndb:gap-3 ndb:border-b ndb:border-zinc-200/90 ndb:py-2 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400 ndb:dark:border-zinc-800 ndb:sm:grid">
-                                <span>Operation</span>
-                                <span>Record</span>
-                                <span>Source</span>
-                            </div>
-
-                            <div class="ndb:divide-y ndb:divide-zinc-200/90 ndb:dark:divide-zinc-800">
-                                @foreach ($writeOperations as $operation)
-                                    @php
-                                        $writeKey = $operation['key'] ?? null;
-                                        $writeSource = $operation['callsite'] ?? null;
-                                        $writeSourceCopy = $sourceCopy($writeSource);
-                                    @endphp
-                                    <article
-                                        data-ndb-model-write-operation
-                                        class="ndb:grid ndb:min-w-0 ndb:gap-2 ndb:border-l-0 ndb:bg-transparent ndb:px-0 ndb:py-2.5 ndb:text-xs ndb:text-zinc-950 ndb:dark:text-white ndb:sm:grid-cols-[minmax(6rem,0.7fr)_minmax(5rem,0.55fr)_minmax(8rem,1.25fr)] ndb:sm:items-center ndb:sm:gap-3"
-                                    >
-                                        <span class="ndb:text-[11px] ndb:font-semibold">
-                                            <span class="ndb:text-zinc-400 ndb:sm:hidden">Operation </span
-                                            >{{ $formatEvent((string) ($operation['event'] ?? 'changed')) }}
-                                        </span>
-                                        <span @class([
-                                            'ndb:min-w-0 ndb:break-all ndb:text-[11px] ndb:font-semibold',
-                                            'ndb:font-mono ndb:tabular-nums' => is_numeric($writeKey),
-                                        ])>
-                                            <span class="ndb:font-sans ndb:text-zinc-400 ndb:sm:hidden">Record </span
-                                            >{{ $writeKey === null || $writeKey === '' ? '—' : (string) $writeKey }}
-                                        </span>
-                                        @if ($writeSourceCopy !== null)
-                                            <x-newdebugbar::inspector-source-link
-                                                :copy="$writeSourceCopy"
-                                                :title="$sourceTitle($writeSource)"
-                                                class="ndb:justify-self-start ndb:text-zinc-500 ndb:dark:text-zinc-400"
-                                            >
-                                                <span class="ndb:sm:hidden">Source </span
-                                                >{{ $sourceShortLabel($writeSource) }}
-                                            </x-newdebugbar::inspector-source-link>
-                                        @else
-                                            <span class="ndb:text-[11px] ndb:text-zinc-400">—</span>
-                                        @endif
-                                    </article>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        @if ($hiddenWriteCount > 0)
-                            <p class="ndb:mt-2 ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400">
-                                Showing {{ number_format(count($writeOperations)) }} of {{ number_format($changeCount) }} writes.
-                            </p>
-                        @endif
-                    </section>
-                @endif
+                @include('newdebugbar::livewire.models.records')
+                @include('newdebugbar::livewire.models.writes')
 
                 @if ($retrievalCount === 0 && $writeOperations === [])
                     <x-newdebugbar::empty-state label="No model retrievals were captured for this context." />
@@ -319,7 +158,7 @@
                             <div
                                 data-ndb-model-source-heading
                                 aria-hidden="true"
-                                class="ndb:hidden ndb:grid-cols-[minmax(0,1fr)_10rem] ndb:gap-3 ndb:border-b ndb:border-zinc-200/90 ndb:py-2 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400 ndb:dark:border-zinc-800 ndb:sm:grid"
+                                class="ndb:hidden ndb:grid-cols-[minmax(0,1fr)_10rem] ndb:gap-3 ndb:border-b ndb:border-zinc-200/90 ndb:py-2 ndb:text-xs ndb:font-semibold ndb:text-zinc-400 ndb:dark:border-zinc-800 ndb:sm:grid"
                             >
                                 <span>Source</span>
                                 <span class="ndb:text-right">Activity</span>
@@ -341,7 +180,7 @@
                                             @if ($isCompiledView && $templateFile !== null)
                                                 <p
                                                     data-ndb-model-compiled-source
-                                                    class="ndb:border-l-0 ndb:bg-transparent ndb:p-0 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400"
+                                                    class="ndb:border-l-0 ndb:bg-transparent ndb:p-0 ndb:text-xs ndb:font-semibold ndb:text-zinc-400"
                                                 >
                                                     Blade template
                                                 </p>
@@ -352,12 +191,10 @@
                                                 >
                                                     {{ $templateFile }}
                                                 </x-newdebugbar::inspector-source-link>
-                                                <p class="ndb:mt-2 ndb:text-[11px] ndb:text-zinc-400">
-                                                    Compiled location
-                                                </p>
+                                                <p class="ndb:mt-2 ndb:text-xs ndb:text-zinc-400">Compiled location</p>
                                                 <p
                                                     data-ndb-model-source-path="compiled"
-                                                    class="ndb:mt-0.5 ndb:break-all ndb:border-l-0 ndb:bg-transparent ndb:p-0 ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                                    class="ndb:mt-0.5 ndb:break-all ndb:border-l-0 ndb:bg-transparent ndb:p-0 ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400"
                                                 >
                                                     {{ $sourcePath ?? 'Source unavailable' }}
                                                 </p>
@@ -371,15 +208,15 @@
                                                         {{ $sourcePath }}
                                                     </x-newdebugbar::inspector-source-link>
                                                 @else
-                                                    <span class="ndb:text-[11px] ndb:text-zinc-400">Source unavailable</span>
+                                                    <span class="ndb:text-xs ndb:text-zinc-400">Source unavailable</span>
                                                 @endif
                                             @endif
                                         </div>
                                         <div class="ndb:sm:text-right">
-                                            <p class="ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400 ndb:sm:hidden">
+                                            <p class="ndb:text-xs ndb:font-semibold ndb:text-zinc-400 ndb:sm:hidden">
                                                 Activity
                                             </p>
-                                            <p class="ndb:mt-0.5 ndb:text-[11px] ndb:text-zinc-600 ndb:dark:text-zinc-300 ndb:sm:mt-0">
+                                            <p class="ndb:mt-0.5 ndb:text-xs ndb:text-zinc-600 ndb:dark:text-zinc-300 ndb:sm:mt-0">
                                                 {{ $formatActivity((int) ($source['retrieval_count'] ?? 0), (int) ($source['change_count'] ?? 0)) }}
                                             </p>
                                         </div>
@@ -389,7 +226,7 @@
                         </div>
 
                         @if ((int) ($group['hidden_source_count'] ?? 0) > 0)
-                            <p class="ndb:mt-2 ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400">
+                            <p class="ndb:mt-2 ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">
                                 Showing {{ number_format(count($group['sources'])) }} of {{ number_format($sourceCount) }} application
                                 sources.
                             </p>

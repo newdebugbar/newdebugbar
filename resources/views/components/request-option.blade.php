@@ -16,7 +16,7 @@
 >
     <span
         data-ndb-request-method
-        class="ndb:flex ndb:w-12 ndb:shrink-0 ndb:items-center ndb:justify-center ndb:rounded-md ndb:bg-zinc-100/70 ndb:py-0.5 ndb:text-[11px] ndb:font-bold ndb:uppercase ndb:tracking-wide ndb:text-zinc-600 ndb:dark:bg-white/10 ndb:dark:text-white"
+        class="ndb:flex ndb:w-12 ndb:shrink-0 ndb:items-center ndb:justify-center ndb:rounded-md ndb:bg-zinc-100/70 ndb:py-0.5 ndb:text-xs ndb:font-bold ndb:uppercase ndb:tracking-wide ndb:text-zinc-600 ndb:dark:bg-white/10 ndb:dark:text-white"
         x-text="request.method"
     ></span>
     <span class="ndb:min-w-0 ndb:flex-1">
@@ -25,7 +25,7 @@
             :title="requestTitle(request)"
             x-text="requestTitle(request)"
         ></span>
-        <span class="ndb:mt-0.5 ndb:flex ndb:flex-wrap ndb:items-center ndb:gap-x-2 ndb:gap-y-0.5 ndb:text-[11px] ndb:font-medium ndb:text-zinc-400">
+        <span class="ndb:mt-0.5 ndb:flex ndb:flex-wrap ndb:items-center ndb:gap-x-2 ndb:gap-y-0.5 ndb:text-xs ndb:font-medium ndb:text-zinc-400">
             <span x-text="requestTypeLabel(request.request_type)"></span>
             <span class="ndb:tabular-nums" x-text="request.duration_label"></span>
             <span
@@ -37,7 +37,7 @@
     </span>
     <span
         data-ndb-request-status
-        class="ndb:w-8 ndb:shrink-0 ndb:self-center ndb:text-center ndb:text-[11px] ndb:font-bold ndb:tabular-nums"
+        class="ndb:w-8 ndb:shrink-0 ndb:self-center ndb:text-center ndb:text-xs ndb:font-bold ndb:tabular-nums"
         :class="requestStatusClass(request.status)"
         x-text="request.status"
     ></span>

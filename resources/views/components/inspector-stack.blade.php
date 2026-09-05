@@ -14,7 +14,7 @@
             <h4 class="ndb:text-xs ndb:font-bold ndb:text-zinc-800 ndb:dark:text-zinc-100">{{ $title }}</h4>
             <span
                 x-show.important="({{ $frames }}).length > 0"
-                class="ndb:text-[11px] ndb:font-medium ndb:text-zinc-400"
+                class="ndb:text-xs ndb:font-medium ndb:text-zinc-400"
                 x-text="({{ $frames }}).length + (({{ $frames }}).length === 1 ? ' frame' : ' frames')"
             ></span>
         </div>
@@ -26,12 +26,12 @@
         <template x-for="(frame, index) in {{ $frames }}" :key="frame.file + ':' + frame.line + ':' + index">
             <li class="ndb:flex ndb:min-w-0 ndb:items-start ndb:gap-3 ndb:py-2.5 ndb:sm:py-3">
                 <span
-                    class="ndb:flex ndb:size-6 ndb:shrink-0 ndb:items-center ndb:justify-center ndb:rounded-md ndb:bg-zinc-100 ndb:text-[11px] ndb:font-semibold ndb:tabular-nums ndb:text-zinc-500 ndb:dark:bg-zinc-800 ndb:dark:text-zinc-400"
+                    class="ndb:flex ndb:size-6 ndb:shrink-0 ndb:items-center ndb:justify-center ndb:rounded-md ndb:bg-zinc-100 ndb:text-xs ndb:font-semibold ndb:tabular-nums ndb:text-zinc-500 ndb:dark:bg-zinc-800 ndb:dark:text-zinc-400"
                     x-text="index + 1"
                 ></span>
                 <span class="ndb:min-w-0 ndb:flex-1">
                     <code
-                        class="ndb:block ndb:truncate ndb:font-mono ndb:text-[11px] ndb:font-semibold ndb:leading-5 ndb:text-zinc-700 ndb:dark:text-zinc-200"
+                        class="ndb:block ndb:truncate ndb:font-mono ndb:text-xs ndb:font-semibold ndb:leading-5 ndb:text-zinc-700 ndb:dark:text-zinc-200"
                         x-text="frame.function || 'Application call'"
                     ></code>
                     <x-newdebugbar::inspector-source-link

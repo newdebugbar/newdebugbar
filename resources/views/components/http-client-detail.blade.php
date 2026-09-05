@@ -28,19 +28,15 @@
                     <x-newdebugbar::http-client-request-panel />
                 </template>
 
-                <template x-if="httpClientDetailTab === 'source'">
+                <template x-if="selectedHttpClientRequest.has_source">
                     <x-newdebugbar::inspector-source-panel
                         frames="selectedHttpClientRequest.stack ?? []"
-                        columns="1"
-                        data-ndb-http-client-detail-panel="source"
+                        reset-on="selectedHttpClientRequest.execution + ':' + httpClientDetailTab"
                         data-ndb-http-client-source-facts
                     >
                         <template x-if="selectedHttpClientRequest.callsite_label">
-                            <div data-ndb-http-client-primary-source class="ndb:min-w-0">
-                                <dt class="ndb:text-[11px] ndb:font-semibold ndb:text-zinc-500 ndb:dark:text-zinc-400">
-                                    Request initiated at
-                                </dt>
-                                <dd class="ndb:mt-1 ndb:min-w-0">
+                            <x-newdebugbar::inspector-source-fact label="Source" data-ndb-http-client-primary-source>
+                                <x-slot:value>
                                     <x-newdebugbar::inspector-source-link
                                         ::aria-label="'Copy source ' + selectedHttpClientRequest.callsite_label"
                                         @click="copyText(selectedHttpClientRequest.callsite_label)"
@@ -51,8 +47,8 @@
                                             x-text="selectedHttpClientRequest.callsite_label"
                                         ></x-slot:value>
                                     </x-newdebugbar::inspector-source-link>
-                                </dd>
-                            </div>
+                                </x-slot:value>
+                            </x-newdebugbar::inspector-source-fact>
                         </template>
                     </x-newdebugbar::inspector-source-panel>
                 </template>

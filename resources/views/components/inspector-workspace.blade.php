@@ -48,7 +48,7 @@
             aria-live="polite"
             aria-label="{{ $detailLabel }}"
             tabindex="-1"
-            {{ $detail->attributes->class('ndb:min-w-0 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500') }}
+            {{ $detail->attributes->class('ndb:@container ndb:min-w-0 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500') }}
         >
             <x-newdebugbar::inspector-detail-back
                 persistent

@@ -20,7 +20,7 @@
                 {{ $fromPreviousRequest ? 'Carried from the previous request.' : ($item['exception_message'] ?? 'Laravel rejected the submitted data.') }}
             </p>
         </div>
-        <div class="ndb:flex ndb:w-full ndb:max-w-full ndb:flex-wrap ndb:gap-x-3 ndb:gap-y-1 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-500 ndb:sm:w-auto ndb:dark:text-zinc-400">
+        <div class="ndb:flex ndb:w-full ndb:max-w-full ndb:flex-wrap ndb:gap-x-3 ndb:gap-y-1 ndb:text-xs ndb:font-semibold ndb:text-zinc-500 ndb:sm:w-auto ndb:dark:text-zinc-400">
             @if ($fromPreviousRequest)
                 <span class="ndb:text-amber-700 ndb:dark:text-amber-300">Previous request</span>
             @endif
@@ -55,7 +55,7 @@
         <div
             role="row"
             data-ndb-validation-table-header
-            class="ndb:hidden ndb:grid-cols-[minmax(8rem,0.8fr)_minmax(14rem,2fr)_minmax(9rem,1fr)] ndb:gap-4 ndb:border-b ndb:border-zinc-200/90 ndb:bg-zinc-50/75 ndb:px-4 ndb:py-2 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400 ndb:dark:border-zinc-800 ndb:dark:bg-zinc-900/55 ndb:sm:grid"
+            class="ndb:hidden ndb:grid-cols-[minmax(8rem,0.8fr)_minmax(14rem,2fr)_minmax(9rem,1fr)] ndb:gap-4 ndb:border-b ndb:border-zinc-200/90 ndb:bg-zinc-50/75 ndb:px-4 ndb:py-2 ndb:text-xs ndb:font-semibold ndb:text-zinc-400 ndb:dark:border-zinc-800 ndb:dark:bg-zinc-900/55 ndb:sm:grid"
         >
             <span role="columnheader" data-ndb-validation-column="field">Field</span>
             <span role="columnheader" data-ndb-validation-column="message">Message</span>
@@ -76,7 +76,7 @@
                     <div role="cell" data-ndb-validation-field="{{ $field }}" class="ndb:min-w-0">
                         <span
                             data-ndb-validation-mobile-label
-                            class="ndb:mb-1 ndb:block ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400 ndb:sm:hidden"
+                            class="ndb:mb-1 ndb:block ndb:text-xs ndb:font-semibold ndb:text-zinc-400 ndb:sm:hidden"
                         >Field</span>
                         <code class="ndb:block ndb:break-words ndb:text-xs ndb:font-bold">{{ $field }}</code>
                     </div>
@@ -84,7 +84,7 @@
                     <div role="cell" data-ndb-validation-messages="{{ $field }}" class="ndb:min-w-0">
                         <span
                             data-ndb-validation-mobile-label
-                            class="ndb:mb-1 ndb:block ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400 ndb:sm:hidden"
+                            class="ndb:mb-1 ndb:block ndb:text-xs ndb:font-semibold ndb:text-zinc-400 ndb:sm:hidden"
                         >Message</span>
                         <ul class="ndb:m-0 ndb:list-none ndb:space-y-1 ndb:p-0">
                             @forelse ($messages as $message)
@@ -105,16 +105,16 @@
                     <div role="cell" data-ndb-validation-rules="{{ $field }}" class="ndb:min-w-0">
                         <span
                             data-ndb-validation-mobile-label
-                            class="ndb:mb-1 ndb:block ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400 ndb:sm:hidden"
+                            class="ndb:mb-1 ndb:block ndb:text-xs ndb:font-semibold ndb:text-zinc-400 ndb:sm:hidden"
                         >Failed rules</span>
                         @if ($rules !== [])
                             <div class="ndb:flex ndb:flex-wrap ndb:gap-1">
                                 @foreach ($rules as $rule)
-                                    <code class="ndb:rounded-md ndb:bg-zinc-100 ndb:px-1.5 ndb:py-0.5 ndb:font-mono ndb:text-[11px] ndb:font-semibold ndb:text-zinc-700 ndb:dark:bg-zinc-900 ndb:dark:text-zinc-300">{{ $rule }}</code>
+                                    <code class="ndb:rounded-md ndb:bg-zinc-100 ndb:px-1.5 ndb:py-0.5 ndb:font-mono ndb:text-xs ndb:font-semibold ndb:text-zinc-700 ndb:dark:bg-zinc-900 ndb:dark:text-zinc-300">{{ $rule }}</code>
                                 @endforeach
                             </div>
                         @else
-                            <span class="ndb:text-[11px] ndb:text-zinc-400">Not captured</span>
+                            <span class="ndb:text-xs ndb:text-zinc-400">Not captured</span>
                         @endif
                     </div>
                 </div>

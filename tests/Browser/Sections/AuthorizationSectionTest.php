@@ -39,7 +39,7 @@ it('scans filters searches and inspects authorization evidence on desktop', func
                     && abilities.every((ability) => Number.parseFloat(getComputedStyle(ability).fontSize) === 12)
                     && abilities.every((ability) => getComputedStyle(ability).fontFamily === interfaceFont)
                     && getComputedStyle(detailAbility).fontFamily === interfaceFont
-                    && results.every((result) => Number.parseFloat(getComputedStyle(result).fontSize) === 11)
+                    && results.every((result) => Number.parseFloat(getComputedStyle(result).fontSize) === 12)
                     && results.every((result) => getComputedStyle(result).backgroundColor === 'rgba(0, 0, 0, 0)')
                     && results.every((result, index) => {
                         const gap = result.getBoundingClientRect().left - abilities[index].getBoundingClientRect().right;
@@ -161,6 +161,9 @@ it('scans filters searches and inspects authorization evidence on desktop', func
                 return state?.selectedAuthorizationDecision?.ability === 'access-private-planning-notes';
             })()
             JS)
+        ->assertCount('[data-ndb-authorization-detail-panel="combined"] [data-ndb-inspector-stack]', 0)
+        ->click('[data-ndb-authorization-detail-panel="combined"] [data-ndb-inspector-disclosure] > summary')
+        ->assertVisible('[data-ndb-authorization-detail-panel="combined"] [data-ndb-inspector-stack]')
         ->assertScript(<<<'JS'
             (() => {
                 const panel = document.querySelector('[data-ndb-authorization-detail-panel="combined"]');

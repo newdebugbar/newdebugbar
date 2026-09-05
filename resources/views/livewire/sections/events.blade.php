@@ -92,10 +92,10 @@
                                 class="ndb:col-start-1 ndb:row-start-1 ndb:min-w-0 ndb:truncate ndb:text-xs ndb:font-bold ndb:text-zinc-900 ndb:dark:text-zinc-100"
                             >{{ $event['display_name'] }}</span>
                             <span
-                                class="ndb:col-start-2 ndb:row-start-1 ndb:w-full ndb:truncate ndb:text-right ndb:text-[11px] ndb:font-semibold ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                class="ndb:col-start-2 ndb:row-start-1 ndb:w-full ndb:truncate ndb:text-right ndb:text-xs ndb:font-semibold ndb:text-zinc-500 ndb:dark:text-zinc-400"
                                 title="{{ $eventListenerActivity }}"
                             >{{ $eventListenerActivity }}</span>
-                            <span class="ndb:col-start-1 ndb:row-start-2 ndb:flex ndb:min-w-0 ndb:items-baseline ndb:gap-2 ndb:overflow-hidden ndb:text-[11px] ndb:text-zinc-400">
+                            <span class="ndb:col-start-1 ndb:row-start-2 ndb:flex ndb:min-w-0 ndb:items-baseline ndb:gap-2 ndb:overflow-hidden ndb:text-xs ndb:text-zinc-400">
                                 <span
                                     x-show.important="eventSource === 'all' || {{ $event['namespace'] === null ? 'true' : 'false' }}"
                                     class="ndb:shrink-0 ndb:font-semibold"
@@ -103,12 +103,12 @@
                                 @if ($event['namespace'] !== null)
                                     <code
                                         data-ndb-event-list-namespace
-                                        class="ndb:min-w-0 ndb:truncate ndb:font-mono ndb:text-[11px]"
+                                        class="ndb:min-w-0 ndb:truncate ndb:font-mono ndb:text-xs"
                                     >{{ $event['namespace'] }}</code>
                                 @endif
                             </span>
                             <span @class([
-                                'ndb:col-start-2 ndb:row-start-2 ndb:w-full ndb:truncate ndb:text-right ndb:text-[11px] ndb:font-semibold',
+                                'ndb:col-start-2 ndb:row-start-2 ndb:w-full ndb:truncate ndb:text-right ndb:text-xs ndb:font-semibold',
                                 'ndb:text-amber-600 ndb:dark:text-amber-300' => $event['duplicate_registration_count'] > 0,
                                 'ndb:tabular-nums ndb:text-zinc-400' => $event['duplicate_registration_count'] === 0,
                             ])>

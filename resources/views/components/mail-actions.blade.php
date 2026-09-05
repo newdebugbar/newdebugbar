@@ -51,7 +51,7 @@
             </span>
             <span class="ndb:min-w-0">
                 <span class="ndb:block ndb:text-xs ndb:font-bold" x-text="selectedMailMessage.related_label"></span>
-                <span class="ndb:mt-0.5 ndb:block ndb:text-[11px] ndb:text-zinc-400">Follow the linked queue activity</span>
+                <span class="ndb:mt-0.5 ndb:block ndb:text-xs ndb:text-zinc-400">Follow the linked queue activity</span>
             </span>
         </button>
         <a
@@ -69,7 +69,7 @@
             </span>
             <span class="ndb:min-w-0">
                 <span class="ndb:block ndb:text-xs ndb:font-bold">Open preview</span>
-                <span class="ndb:mt-0.5 ndb:block ndb:text-[11px] ndb:text-zinc-400">Open the rendered message in a new tab</span>
+                <span class="ndb:mt-0.5 ndb:block ndb:text-xs ndb:text-zinc-400">Open the rendered message in a new tab</span>
             </span>
         </a>
         <a
@@ -85,7 +85,7 @@
             </span>
             <span class="ndb:min-w-0">
                 <span class="ndb:block ndb:text-xs ndb:font-bold">Download .EML</span>
-                <span class="ndb:mt-0.5 ndb:block ndb:text-[11px] ndb:text-zinc-400">Save the raw captured message</span>
+                <span class="ndb:mt-0.5 ndb:block ndb:text-xs ndb:text-zinc-400">Save the raw captured message</span>
             </span>
         </a>
     </x-newdebugbar::popover-surface>

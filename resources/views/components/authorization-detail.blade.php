@@ -59,12 +59,12 @@
                                 ></span>
                                 <code
                                     x-show.important="selectedAuthorizationDecision.user_type !== null"
-                                    class="ndb:mt-0.5 ndb:block ndb:truncate ndb:font-mono ndb:text-[11px] ndb:text-zinc-400"
+                                    class="ndb:mt-0.5 ndb:block ndb:truncate ndb:font-mono ndb:text-xs ndb:text-zinc-400"
                                     x-text="selectedAuthorizationDecision.user_type"
                                 ></code>
                                 <span
                                     x-show.important="selectedAuthorizationDecision.user_identifier !== null"
-                                    class="ndb:mt-0.5 ndb:flex ndb:min-w-0 ndb:gap-1.5 ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                    class="ndb:mt-0.5 ndb:flex ndb:min-w-0 ndb:gap-1.5 ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400"
                                 >
                                     <span x-text="selectedAuthorizationDecision.user_identifier_name ?? 'Identifier'"></span>
                                     <span
@@ -132,12 +132,12 @@
                                             x-text="argument.label"
                                         ></span>
                                         <code
-                                            class="ndb:mt-0.5 ndb:block ndb:break-words ndb:font-mono ndb:text-[11px] ndb:text-zinc-400"
+                                            class="ndb:mt-0.5 ndb:block ndb:break-words ndb:font-mono ndb:text-xs ndb:text-zinc-400"
                                             x-text="argument.type"
                                         ></code>
                                         <span
                                             x-show.important="argument.identity_label !== null"
-                                            class="ndb:mt-0.5 ndb:block ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                            class="ndb:mt-0.5 ndb:block ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400"
                                             x-text="argument.identity_label"
                                         ></span>
                                     </x-slot:value>
@@ -160,7 +160,7 @@
                             <code
                                 data-ndb-language="php"
                                 x-show.important="selectedAuthorizationDecision.handler_available"
-                                class="ndb:block ndb:min-w-0 ndb:break-all ndb:bg-transparent ndb:font-mono ndb:text-[11px] ndb:font-medium ndb:leading-5 ndb:text-zinc-700 ndb:dark:text-zinc-200"
+                                class="ndb:block ndb:min-w-0 ndb:break-all ndb:bg-transparent ndb:font-mono ndb:text-xs ndb:font-medium ndb:leading-5 ndb:text-zinc-700 ndb:dark:text-zinc-200"
                                 x-text="selectedAuthorizationDecision.handler_name"
                             ></code>
                             <span
@@ -200,7 +200,7 @@
                     </template>
                 </x-newdebugbar::inspector-source-panel>
 
-                <p class="ndb:px-3 ndb:pb-3 ndb:text-[11px] ndb:leading-5 ndb:text-zinc-500 ndb:sm:px-4 ndb:sm:pb-4 ndb:dark:text-zinc-400">
+                <p class="ndb:px-3 ndb:pb-3 ndb:text-xs ndb:leading-5 ndb:text-zinc-500 ndb:sm:px-4 ndb:sm:pb-4 ndb:dark:text-zinc-400">
                     Gate before or after hooks can change the final result and are not identified here.
                 </p>
             </div>

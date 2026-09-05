@@ -18,23 +18,23 @@
             ></span>
             <span
                 x-show.important="item.status === 'failed' || item.status === 'failed_validation'"
-                class="ndb:shrink-0 ndb:text-[11px] ndb:font-bold ndb:text-red-600 ndb:dark:text-red-300"
+                class="ndb:shrink-0 ndb:text-xs ndb:font-bold ndb:text-red-600 ndb:dark:text-red-300"
                 x-text="livewireActivityStatusLabel(item)"
             ></span>
             <span
                 x-show.important="item.status === 'updating'"
-                class="ndb:shrink-0 ndb:text-[11px] ndb:font-bold ndb:text-indigo-600 ndb:dark:text-indigo-300"
+                class="ndb:shrink-0 ndb:text-xs ndb:font-bold ndb:text-indigo-600 ndb:dark:text-indigo-300"
             >Running</span>
         </span>
         <span
             x-show.important="livewireActivityShowsComponent(item)"
             data-ndb-livewire-activity-component
-            class="ndb:mt-0.5 ndb:block ndb:min-w-0 ndb:truncate ndb:text-[11px] ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
+            class="ndb:mt-0.5 ndb:block ndb:min-w-0 ndb:truncate ndb:text-xs ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
             x-text="livewireActivityComponentTitle(item)"
         ></span>
     </span>
 
-    <span class="ndb:flex ndb:min-w-0 ndb:flex-col ndb:items-end ndb:gap-0.5 ndb:text-[11px] ndb:tabular-nums">
+    <span class="ndb:flex ndb:min-w-0 ndb:flex-col ndb:items-end ndb:gap-0.5 ndb:text-xs ndb:tabular-nums">
         <span
             data-ndb-livewire-activity-time
             class="ndb:max-w-full ndb:truncate ndb:font-medium ndb:text-zinc-400"

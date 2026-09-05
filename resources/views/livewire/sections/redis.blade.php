@@ -98,10 +98,10 @@
                             {{ number_format($redisCount) }} {{ \Illuminate\Support\Str::plural('command', $redisCount) }}
                             <span
                                 x-show.important="visibleRedisCount !== redisCommands.length"
-                                class="ndb:ml-1 ndb:text-[11px] ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                class="ndb:ml-1 ndb:text-xs ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
                             ><span data-ndb-redis-visible-count x-text="visibleRedisCount"></span> shown</span>
                         </p>
-                        <p class="ndb:mt-0.5 ndb:text-[11px] ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400">
+                        <p class="ndb:mt-0.5 ndb:text-xs ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400">
                             {{ implode(', ', $summaryParts) }}
                         </p>
                     </div>
@@ -162,13 +162,13 @@
                             >{{ $item['key_label'] }}</span>
                             <span
                                 @class([
-                                    'ndb:text-right ndb:text-[11px] ndb:font-bold',
+                                    'ndb:text-right ndb:text-xs ndb:font-bold',
                                     'ndb:text-red-600 ndb:dark:text-red-300' => $item['failed'],
                                     'ndb:text-zinc-500 ndb:dark:text-zinc-400' => ! $item['failed'],
                                 ])
                             >{{ $item['status_label'] }}</span>
-                            <span class="ndb:min-w-0 ndb:truncate ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400">{{ $item['connection'] }}</span>
-                            <span class="ndb:text-right ndb:text-[11px] ndb:font-semibold ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400">{{ $item['duration_label'] }}</span>
+                            <span class="ndb:min-w-0 ndb:truncate ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">{{ $item['connection'] }}</span>
+                            <span class="ndb:text-right ndb:text-xs ndb:font-semibold ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400">{{ $item['duration_label'] }}</span>
                         </button>
                     @endforeach
                 </x-slot:list>
@@ -218,7 +218,7 @@
                             <x-slot:aside>
                                 <span
                                     data-ndb-redis-detail-status
-                                    class="ndb:inline-flex ndb:rounded-md ndb:px-2 ndb:py-1 ndb:text-[11px] ndb:font-bold"
+                                    class="ndb:inline-flex ndb:rounded-md ndb:px-2 ndb:py-1 ndb:text-xs ndb:font-bold"
                                     :class="selectedRedisCommand.failed
                                         ? 'ndb:bg-red-100 ndb:text-red-700 ndb:dark:bg-red-950 ndb:dark:text-red-300'
                                         : 'ndb:bg-zinc-100 ndb:text-zinc-600 ndb:dark:bg-zinc-800 ndb:dark:text-zinc-300'"
@@ -248,17 +248,6 @@
                                     <x-newdebugbar::inspector-fact label="Phase"
                                         ><x-slot:value x-text="selectedRedisCommand.phase_label"></x-slot:value
                                     ></x-newdebugbar::inspector-fact>
-                                    <template x-if="selectedRedisCommand.callsite">
-                                        <x-newdebugbar::inspector-fact label="Source" class="ndb:sm:col-span-4">
-                                            <x-newdebugbar::inspector-source-link
-                                                ::title="'Copy ' + selectedRedisCommand.source_label"
-                                                ::aria-label="'Copy Redis source ' + selectedRedisCommand.source_label"
-                                                @click="copyText(selectedRedisCommand.source_label)"
-                                            >
-                                                <x-slot:value x-text="selectedRedisCommand.source_label"></x-slot:value>
-                                            </x-newdebugbar::inspector-source-link>
-                                        </x-newdebugbar::inspector-fact>
-                                    </template>
                                 </x-newdebugbar::inspector-facts>
 
                                 <section
@@ -283,7 +272,7 @@
                                 <p
                                     data-ndb-redis-after-response
                                     x-show.important="selectedRedisCommand.lifecycle === 'after_response'"
-                                    class="ndb:text-[11px] ndb:leading-5 ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                    class="ndb:text-xs ndb:leading-5 ndb:text-zinc-500 ndb:dark:text-zinc-400"
                                     x-text="
                                         selectedRedisCommand.after_response_label
                                             ? `This command ran ${selectedRedisCommand.after_response_label} after the response was sent, so its time is not part of the response time.`
@@ -318,7 +307,7 @@
                                                 ).join('\n'),
                                             )
                                         "
-                                        class="ndb:h-9 ndb:min-h-0 ndb:shrink-0 ndb:bg-transparent"
+                                        class="ndb:shrink-0"
                                         ><span
                                             x-text="selectedRedisCommand.keys.length ? 'Copy keys' : 'Copy identifiers'"
                                         ></span
@@ -343,7 +332,7 @@
                                                 <x-slot:term x-text="`Key ${index + 1}`"></x-slot:term>
                                                 <x-slot:value
                                                     data-ndb-redis-key
-                                                    class="ndb:break-all ndb:bg-transparent ndb:text-xs ndb:leading-5 ndb:text-zinc-600 ndb:dark:text-zinc-300"
+                                                    class="ndb:break-all"
                                                     x-text="key"
                                                 ></x-slot:value>
                                             </x-newdebugbar::inspector-definition-row>
@@ -365,7 +354,7 @@
                                                 <x-slot:term x-text="`Identifier ${index + 1}`"></x-slot:term>
                                                 <x-slot:value
                                                     data-ndb-redis-key-hash
-                                                    class="ndb:break-all ndb:text-xs ndb:leading-5 ndb:text-zinc-600 ndb:dark:text-zinc-300"
+                                                    class="ndb:break-all"
                                                     x-text="hash"
                                                 ></x-slot:value>
                                             </x-newdebugbar::inspector-definition-row>
@@ -383,7 +372,7 @@
                                 <p
                                     data-ndb-redis-key-limit
                                     x-show.important="selectedRedisCommand.key_dropped > 0"
-                                    class="ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                    class="ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400"
                                 >
                                     <span class="ndb:tabular-nums" x-text="selectedRedisCommand.key_dropped"></span>
                                     <span
@@ -395,6 +384,24 @@
                                     ></span>
                                 </p>
                             </section>
+
+                            <template x-if="selectedRedisCommand.callsite">
+                                <x-newdebugbar::inspector-source-panel
+                                    frames="[]"
+                                    data-ndb-redis-source
+                                    class="ndb:border-t ndb:border-zinc-200/90 ndb:dark:border-zinc-800"
+                                >
+                                    <x-newdebugbar::inspector-source-fact label="Source">
+                                        <x-newdebugbar::inspector-source-link
+                                            ::title="'Copy ' + selectedRedisCommand.source_label"
+                                            ::aria-label="'Copy Redis source ' + selectedRedisCommand.source_label"
+                                            @click="copyText(selectedRedisCommand.source_label)"
+                                        >
+                                            <x-slot:value x-text="selectedRedisCommand.source_label"></x-slot:value>
+                                        </x-newdebugbar::inspector-source-link>
+                                    </x-newdebugbar::inspector-source-fact>
+                                </x-newdebugbar::inspector-source-panel>
+                            </template>
                         </div>
                     </div>
                 </template>

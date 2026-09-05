@@ -348,7 +348,7 @@
                                 </span>
                                 <span
                                     data-ndb-notification-summary-runtime
-                                    class="ndb:mt-0.5 ndb:block ndb:text-[11px] ndb:font-medium ndb:tabular-nums ndb:text-zinc-400"
+                                    class="ndb:mt-0.5 ndb:block ndb:text-xs ndb:font-medium ndb:tabular-nums ndb:text-zinc-400"
                                 >
                                     {{ \NewDebugBar\Support\DurationFormatter::format($notificationSummary['duration_ms'] ?? 0) }} total
                                 </span>
@@ -402,7 +402,7 @@
                             <span
                                 data-ndb-notification-list-status
                                 @class([
-                                    'ndb:justify-self-end ndb:text-[11px] ndb:font-bold',
+                                    'ndb:justify-self-end ndb:text-xs ndb:font-bold',
                                     'ndb:text-emerald-600 ndb:dark:text-emerald-300' => $notification['status'] === 'sent',
                                     'ndb:text-amber-600 ndb:dark:text-amber-300' => in_array($notification['status'], ['partial', 'delayed', 'waiting'], true),
                                     'ndb:text-red-600 ndb:dark:text-red-300' => $notification['status'] === 'failed',
@@ -414,11 +414,11 @@
                             </span>
                             <span
                                 data-ndb-notification-list-recipient
-                                class="ndb:col-start-1 ndb:min-w-0 ndb:truncate ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                class="ndb:col-start-1 ndb:min-w-0 ndb:truncate ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400"
                             >To {{ $notification['recipient_label'] }}</span>
                             <span
                                 data-ndb-notification-list-activity
-                                class="ndb:col-start-2 ndb:justify-self-end ndb:text-right ndb:text-[11px] ndb:font-semibold ndb:tabular-nums ndb:text-zinc-400"
+                                class="ndb:col-start-2 ndb:justify-self-end ndb:text-right ndb:text-xs ndb:font-semibold ndb:tabular-nums ndb:text-zinc-400"
                             >
                                 @if ($notification['duration_ms'] > 0 || in_array($notification['status'], ['sent', 'failed', 'partial'], true))
                                     {{ $notification['duration_label'] }}

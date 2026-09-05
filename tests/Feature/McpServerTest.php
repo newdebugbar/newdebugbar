@@ -16,6 +16,7 @@ use NewDebugBar\Storage\ProfileStore;
 use NewDebugBar\Support\DurationFormatter;
 use NewDebugBar\Tests\Fixtures\Models\Client;
 use NewDebugBar\Tests\Fixtures\Models\JobActivity;
+use NewDebugBar\Tests\Fixtures\Models\ProofVersion;
 use NewDebugBar\Tests\Support\McpResponse;
 
 function profilePointerToValue(mixed $value, mixed $target, string $path = ''): ?string
@@ -205,16 +206,19 @@ it('walks exact retained values that focused MCP responses intentionally omit', 
 });
 
 it('keeps complete Models evidence reachable through bounded generic MCP paths', function () {
-    $response = $this->get('/profiled-models?changes=1&queries=1&missing=1', ['Accept' => 'text/html'])
+    $response = $this->get('/profiled-models?changes=1&queries=1&missing=1&sources=1', ['Accept' => 'text/html'])
         ->assertOk();
     $profileId = $response->headers->get('X-NewDebugBar-Profile');
     $profile = app(ProfilePresenter::class)->present(app(ProfileStore::class)->get($profileId));
     $groups = $profile['sections']['models']['payload']['model_groups'];
     $clientIndex = array_search(Client::class, array_column($groups, 'model'), true);
     $jobIndex = array_search(JobActivity::class, array_column($groups, 'model'), true);
+    $proofIndex = array_search(ProofVersion::class, array_column($groups, 'model'), true);
 
     expect($clientIndex)->not->toBeFalse()
-        ->and($jobIndex)->not->toBeFalse();
+        ->and($jobIndex)->not->toBeFalse()
+        ->and($proofIndex)->not->toBeFalse()
+        ->and($groups[$proofIndex]['records'][0]['sources'])->toHaveCount(2);
 
     $jobSourceIndex = collect($groups[$jobIndex]['sources'])
         ->search(fn (array $source): bool => (int) ($source['query_count'] ?? 0) > 0);
@@ -238,6 +242,8 @@ it('keeps complete Models evidence reachable through bounded generic MCP paths',
         "/sections/models/payload/model_groups/{$clientIndex}/change_operations/0/at_ms" => $groups[$clientIndex]['change_operations'][0]['at_ms'],
         "/sections/models/payload/model_groups/{$clientIndex}/sources/0/callsite/file" => $groups[$clientIndex]['sources'][0]['callsite']['file'],
         "/sections/models/payload/model_groups/{$jobIndex}/records/0/key" => $groups[$jobIndex]['records'][0]['key'],
+        "/sections/models/payload/model_groups/{$proofIndex}/records/0/sources/1/callsite/file" => $groups[$proofIndex]['records'][0]['sources'][1]['callsite']['file'],
+        "/sections/models/payload/model_groups/{$proofIndex}/records/0/sources/1/callsite/line" => $groups[$proofIndex]['records'][0]['sources'][1]['callsite']['line'],
         "/sections/models/payload/model_groups/{$jobIndex}/sources/{$jobSourceIndex}/query_count" => 1,
         "/sections/models/payload/model_groups/{$jobIndex}/sources/{$jobSourceIndex}/query_read_count" => 1,
         "/sections/models/payload/model_groups/{$jobIndex}/guidance/{$queryGuidanceIndex}/type" => 'query_correlation',
@@ -267,6 +273,38 @@ it('keeps complete Models evidence reachable through bounded generic MCP paths',
         ->not->toHaveKeys(['groups', 'model_groups', 'model_group_previews'])
         ->and(collect($focused['data']['payload']['items'])->firstWhere('key', '[identifier]'))
         ->not->toBeNull();
+});
+
+it('keeps full log context values reachable beyond their compact previews', function () {
+    $response = $this->get('/profiled-logs', ['Accept' => 'text/html'])->assertOk();
+    $profileId = $response->headers->get('X-NewDebugBar-Profile');
+    $profile = app(ProfilePresenter::class)->present(app(ProfileStore::class)->get($profileId));
+    $groups = $profile['sections']['logs']['payload']['groups'];
+    $groupIndex = array_search('critical', array_column($groups, 'level'), true);
+    $expected = str_repeat('Retained diagnostic context. ', 12)."\nFinal retained line.";
+
+    expect($groupIndex)->not->toBeFalse();
+
+    $fieldIndex = array_search('detail', array_column($groups[$groupIndex]['context_fields'], 'key'), true);
+
+    expect($fieldIndex)->not->toBeFalse()
+        ->and($groups[$groupIndex]['context_fields'][$fieldIndex]['preview'])->not->toBe($expected);
+
+    foreach ([
+        "/sections/logs/payload/groups/{$groupIndex}/context/detail",
+        "/sections/logs/payload/groups/{$groupIndex}/context_fields/{$fieldIndex}/value",
+    ] as $path) {
+        $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
+            'profile_id' => $profileId,
+            'path' => $path,
+            'limit' => 2,
+        ])->assertOk());
+
+        expect($content)
+            ->status->toBe('ok')
+            ->data->path->toBe($path)
+            ->data->value->toBe($expected);
+    }
 });
 
 it('keeps Redis client call sites reachable through focused and generic MCP responses', function () {

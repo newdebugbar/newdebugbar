@@ -56,7 +56,7 @@
                                         'waiting',
                                     ].includes(delivery.status),
                                 }"
-                                class="ndb:mt-0.5 ndb:text-[11px] ndb:font-medium"
+                                class="ndb:mt-0.5 ndb:text-xs ndb:font-medium"
                                 x-text="delivery.status_label"
                             ></p>
                             <template x-if="delivery.destination_labels.length <= 1">
@@ -65,7 +65,7 @@
                                     :class="delivery.destination_resolved
                                         ? 'ndb:text-zinc-500 ndb:dark:text-zinc-400'
                                         : 'ndb:text-amber-700 ndb:dark:text-amber-300'"
-                                    class="ndb:mt-1 ndb:block ndb:break-all ndb:bg-transparent ndb:p-0 ndb:text-[11px]"
+                                    class="ndb:mt-1 ndb:block ndb:break-all ndb:bg-transparent ndb:p-0 ndb:text-xs"
                                     x-text="delivery.destination_label"
                                 ></span>
                             </template>
@@ -74,7 +74,7 @@
                                     <template x-for="destination in delivery.destination_labels" :key="destination">
                                         <span
                                             data-ndb-notification-destination
-                                            class="ndb:max-w-full ndb:break-all ndb:rounded-md ndb:bg-zinc-100 ndb:px-1.5 ndb:py-0.5 ndb:text-[11px] ndb:text-zinc-600 ndb:dark:bg-zinc-800 ndb:dark:text-zinc-300"
+                                            class="ndb:max-w-full ndb:break-all ndb:rounded-md ndb:bg-zinc-100 ndb:px-1.5 ndb:py-0.5 ndb:text-xs ndb:text-zinc-600 ndb:dark:bg-zinc-800 ndb:dark:text-zinc-300"
                                             x-text="destination"
                                         ></span>
                                     </template>
@@ -83,7 +83,7 @@
                         </div>
                     </div>
                     <span
-                        class="ndb:shrink-0 ndb:text-[11px] ndb:font-semibold ndb:tabular-nums ndb:text-zinc-400"
+                        class="ndb:shrink-0 ndb:text-xs ndb:font-semibold ndb:tabular-nums ndb:text-zinc-400"
                         x-text="
                             ['sent', 'failed'].includes(delivery.status) || delivery.duration_ms > 0
                                 ? delivery.duration_label
@@ -104,12 +104,12 @@
                     ></p>
                     <code
                         x-show.important="delivery.exception_class"
-                        class="ndb:mt-1 ndb:block ndb:break-all ndb:text-[11px] ndb:text-red-500 ndb:dark:text-red-400"
+                        class="ndb:mt-1 ndb:block ndb:break-all ndb:text-xs ndb:text-red-500 ndb:dark:text-red-400"
                         x-text="delivery.exception_class"
                     ></code>
                     <span
                         x-show.important="delivery.exception_location"
-                        class="ndb:mt-1 ndb:block ndb:break-all ndb:text-[11px] ndb:text-red-500 ndb:dark:text-red-400"
+                        class="ndb:mt-1 ndb:block ndb:break-all ndb:text-xs ndb:text-red-500 ndb:dark:text-red-400"
                         x-text="
                             delivery.exception_location
                                 ? delivery.exception_location.file + ':' + delivery.exception_location.line
@@ -120,7 +120,7 @@
 
                 <div
                     x-show="delivery.evidence_summary"
-                    class="ndb:border-t ndb:border-zinc-200/80 ndb:px-3 ndb:py-2 ndb:text-[11px] ndb:text-zinc-500 ndb:dark:border-zinc-800 ndb:dark:text-zinc-400"
+                    class="ndb:border-t ndb:border-zinc-200/80 ndb:px-3 ndb:py-2 ndb:text-xs ndb:text-zinc-500 ndb:dark:border-zinc-800 ndb:dark:text-zinc-400"
                     x-text="delivery.evidence_summary"
                 ></div>
             </article>

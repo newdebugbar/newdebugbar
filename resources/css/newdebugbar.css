@@ -130,27 +130,12 @@
 }
 
 #newdebugbar .ndb-code {
-    background: #f4f4f5;
-    border-radius: 0.75rem;
-    color: #3f3f46;
     font-family: var(--ndb-font-mono);
     font-feature-settings:
         "calt" 1,
         "liga" 1;
     font-variant-ligatures: contextual common-ligatures discretionary-ligatures;
-    font-size: 11px;
-    line-height: 1.65;
-    margin: 0;
-    overflow-x: auto;
-    padding: 0.75rem;
     tab-size: 2;
-    white-space: pre;
-}
-
-@media (min-width: 640px) {
-    #newdebugbar .ndb-code {
-        padding: 0.875rem 1rem;
-    }
 }
 
 #newdebugbar .ndb-code code {
@@ -161,15 +146,6 @@
     padding: 0;
 }
 
-#newdebugbar [data-ndb-view-data] {
-    font-size: 12px;
-    line-height: 1.7;
-}
-
-#newdebugbar [data-ndb-view-data] .hljs-attr {
-    color: #0369a1;
-}
-
 #newdebugbar .hljs-keyword,
 #newdebugbar .hljs-literal,
 #newdebugbar .hljs-selector-tag {
@@ -177,7 +153,6 @@
 }
 
 #newdebugbar .hljs-string,
-#newdebugbar .hljs-attr,
 #newdebugbar .hljs-attribute,
 #newdebugbar .hljs-template-variable {
     color: #15803d;
@@ -201,16 +176,15 @@
     font-style: italic;
 }
 
-#newdebugbar[data-ndb-theme="dark"] .ndb-code {
-    background: #09090b;
-    color: #d4d4d8;
+#newdebugbar .hljs-attr {
+    color: #3f3f46;
 }
 
 #newdebugbar[data-ndb-theme="dark"] :is(.hljs-keyword, .hljs-literal, .hljs-selector-tag) {
     color: #c4b5fd;
 }
 
-#newdebugbar[data-ndb-theme="dark"] :is(.hljs-string, .hljs-attr, .hljs-attribute, .hljs-template-variable) {
+#newdebugbar[data-ndb-theme="dark"] :is(.hljs-string, .hljs-attribute, .hljs-template-variable) {
     color: #86efac;
 }
 
@@ -222,8 +196,8 @@
     color: #7dd3fc;
 }
 
-#newdebugbar[data-ndb-theme="dark"] [data-ndb-view-data] .hljs-attr {
-    color: #7dd3fc;
+#newdebugbar[data-ndb-theme="dark"] .hljs-attr {
+    color: #d4d4d8;
 }
 
 #newdebugbar summary::-webkit-details-marker {

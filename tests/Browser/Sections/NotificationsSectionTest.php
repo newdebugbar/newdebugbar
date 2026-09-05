@@ -212,6 +212,18 @@ it('groups notification attempts in a full-height delivery inspector', function 
         ->assertScript(<<<'JS'
             (() => {
                 const panel = document.querySelector('[data-ndb-notification-detail-panel="source"]');
+                const disclosure = panel.querySelector('[data-ndb-inspector-disclosure]');
+
+                return disclosure?.tagName === 'DETAILS'
+                    && disclosure.open === false
+                    && panel.querySelector('[data-ndb-inspector-stack]') === null;
+            })()
+            JS)
+        ->click('[data-ndb-notification-detail-panel="source"] [data-ndb-inspector-disclosure] > summary')
+        ->assertVisible('[data-ndb-notification-detail-panel="source"] [data-ndb-inspector-stack]')
+        ->assertScript(<<<'JS'
+            (() => {
+                const panel = document.querySelector('[data-ndb-notification-detail-panel="source"]');
                 const facts = [...panel.querySelectorAll('[data-ndb-inspector-source-fact]')];
                 const stack = panel.querySelector('[data-ndb-inspector-stack]');
                 const notificationClass = facts[0].querySelector('dd > code');

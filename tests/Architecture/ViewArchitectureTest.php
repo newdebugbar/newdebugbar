@@ -249,7 +249,7 @@ it('composes the HTTP Client workspace from focused view components', function (
         ->toContain('<x-newdebugbar::http-client-response-panel')
         ->toContain('<x-newdebugbar::inspector-source-panel')
         ->toContain('<x-newdebugbar::inspector-source-link')
-        ->not->toContain('<x-newdebugbar::inspector-source-fact');
+        ->toContain('<x-newdebugbar::inspector-source-fact');
 
     expect($controls)
         ->toContain('<x-newdebugbar::inspector-list-controls')
@@ -332,7 +332,9 @@ it('composes the Cache workspace from the shared inspector components', function
 
     expect($overview)
         ->toContain('<x-newdebugbar::cache-overview-facts')
+        ->toContain('<x-newdebugbar::inspector-evidence label="Value"')
         ->toContain('<x-newdebugbar::inspector-definition-list')
+        ->not->toContain('<x-newdebugbar::inspector-definition-row label="Value"')
         ->not->toContain('What happened')
         ->not->toContain('Check next');
 });
@@ -340,7 +342,9 @@ it('composes the Cache workspace from the shared inspector components', function
 it('composes Models as a shared split inspector with reusable explanations', function () {
     $views = dirname(__DIR__, 2).'/resources/views';
     $section = file_get_contents($views.'/livewire/sections/models.blade.php');
-    $detail = file_get_contents($views.'/components/model-group-detail.blade.php');
+    $detail = file_get_contents($views.'/components/model-group-detail.blade.php')
+        .file_get_contents($views.'/livewire/models/records.blade.php')
+        .file_get_contents($views.'/livewire/models/writes.blade.php');
     $explanation = file_get_contents($views.'/components/inspector-explanation.blade.php');
 
     expect($section)
@@ -379,7 +383,7 @@ it('composes Models as a shared split inspector with reusable explanations', fun
         ->toContain('@isset($heading)')
         ->toContain('@isset($body)')
         ->toContain('ndb:text-xs ndb:font-bold')
-        ->toContain('ndb:text-[11px] ndb:leading-5');
+        ->toContain('ndb:text-xs ndb:leading-5');
 });
 
 it('composes Livewire as one shared inspector workspace with focused details', function () {
@@ -528,7 +532,7 @@ it('uses one calm source presentation across inspector sections', function () {
     expect(file_get_contents($views.'/components/http-client-detail.blade.php'))
         ->toContain('<x-newdebugbar::inspector-source-panel')
         ->toContain('<x-newdebugbar::inspector-source-link')
-        ->not->toContain('<x-newdebugbar::inspector-source-fact');
+        ->toContain('<x-newdebugbar::inspector-source-fact');
 
     expect(file_get_contents($views.'/components/mail-message-details.blade.php'))
         ->toContain('<x-newdebugbar::inspector-source-panel')

@@ -23,7 +23,7 @@
     @endisset
 
     @isset($metadata)
-        <dl {{ $metadata->attributes->class('ndb:mt-2.5 ndb:flex ndb:flex-wrap ndb:items-center ndb:gap-x-3 ndb:gap-y-1 ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400') }}>
+        <dl {{ $metadata->attributes->class('ndb:mt-2.5 ndb:flex ndb:flex-wrap ndb:items-center ndb:gap-x-3 ndb:gap-y-1 ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400') }}>
             {{ $metadata }}
         </dl>
     @endisset

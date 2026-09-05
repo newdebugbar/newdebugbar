@@ -21,16 +21,17 @@
         :class="livewireDrafts[livewireDraftKey(row)] && livewireDrafts[livewireDraftKey(row)]?.status !== 'closing'
             ? 'ndb:bg-indigo-50 ndb:dark:bg-indigo-950/60'
             : 'ndb:hover:bg-zinc-100 ndb:dark:hover:bg-zinc-800'"
-        class="ndb:inline-flex ndb:h-7 ndb:items-center ndb:rounded-md ndb:px-2 ndb:text-[11px] ndb:font-bold ndb:text-indigo-600 ndb:transition ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500 ndb:dark:text-indigo-300"
+        class="ndb:inline-flex ndb:h-7 ndb:items-center ndb:rounded-md ndb:px-2 ndb:text-xs ndb:font-bold ndb:text-indigo-600 ndb:transition ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500 ndb:dark:text-indigo-300"
     >
         Edit
     </button>
 
     <template x-if="livewireDrafts[livewireDraftKey(row)] && livewireDrafts[livewireDraftKey(row)]?.status !== 'closing'">
         <template x-teleport="#newdebugbar">
+            {{-- Keep the anchor gap inside the measured popover height. --}}
             <x-newdebugbar::popover-surface
                 :anchored="true"
-                x-anchor.bottom-end.offset.12.fixed="document.getElementById($id('newdebugbar-livewire-edit-trigger'))"
+                x-anchor.bottom-end.fixed="document.getElementById($id('newdebugbar-livewire-edit-trigger'))"
                 x-init="
                     $nextTick(() => {
                         $el.querySelector('[data-ndb-livewire-edit-control]')?.focus();
@@ -61,7 +62,7 @@
                 width-class="ndb:w-[min(21rem,calc(100vw-3rem))]"
                 surface-class="ndb:p-0"
                 arrow-class="ndb:hidden"
-                class="ndb:pointer-events-auto"
+                class="ndb:pointer-events-auto ndb:py-3"
             >
                 <div class="ndb:border-b ndb:border-zinc-200/80 ndb:px-4 ndb:py-3 ndb:dark:border-zinc-700/80">
                     <p
@@ -99,7 +100,7 @@
                         >
                             <span
                                 data-ndb-livewire-boolean-label="false"
-                                class="ndb:text-right ndb:text-[11px] ndb:leading-none ndb:font-semibold ndb:transition-colors"
+                                class="ndb:text-right ndb:text-xs ndb:leading-none ndb:font-semibold ndb:transition-colors"
                                 :class="livewireDrafts[livewireDraftKey(row)].value
                                     ? 'ndb:text-zinc-400'
                                     : 'ndb:font-bold ndb:text-zinc-900 ndb:dark:text-zinc-100'"
@@ -112,7 +113,7 @@
                             </span>
                             <span
                                 data-ndb-livewire-boolean-label="true"
-                                class="ndb:text-left ndb:text-[11px] ndb:leading-none ndb:font-semibold ndb:transition-colors"
+                                class="ndb:text-left ndb:text-xs ndb:leading-none ndb:font-semibold ndb:transition-colors"
                                 :class="livewireDrafts[livewireDraftKey(row)].value
                                     ? 'ndb:font-bold ndb:text-zinc-900 ndb:dark:text-zinc-100'
                                     : 'ndb:text-zinc-400'"
@@ -144,14 +145,13 @@
                     <p
                         x-show.important="livewireDrafts[livewireDraftKey(row)]?.error"
                         role="alert"
-                        class="ndb:text-[11px] ndb:font-semibold ndb:text-red-700 ndb:dark:text-red-300"
+                        class="ndb:text-xs ndb:font-semibold ndb:text-red-700 ndb:dark:text-red-300"
                         x-text="livewireDrafts[livewireDraftKey(row)]?.error"
                     ></p>
                 </div>
 
                 <div class="ndb:flex ndb:items-center ndb:justify-between ndb:gap-3 ndb:border-t ndb:border-zinc-200/80 ndb:bg-zinc-50/70 ndb:px-4 ndb:py-3 ndb:dark:border-zinc-700/80 ndb:dark:bg-zinc-950/30">
-                    <kbd aria-hidden="true" class="ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400"
-                        >⌘/Ctrl + Enter</kbd>
+                    <kbd aria-hidden="true" class="ndb:text-xs ndb:font-semibold ndb:text-zinc-400">⌘/Ctrl + Enter</kbd>
                     <div class="ndb:flex ndb:shrink-0 ndb:gap-2">
                         <button
                             data-ndb-livewire-edit-cancel

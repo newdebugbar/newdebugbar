@@ -6,10 +6,7 @@
         ::aria-pressed="livewireTab === 'activity'"
     >
         <span>Activity</span>
-        <span
-            class="ndb:text-[11px] ndb:font-bold ndb:tabular-nums ndb:opacity-65"
-            x-text="livewireActivity.length"
-        ></span>
+        <span class="ndb:text-xs ndb:font-bold ndb:tabular-nums ndb:opacity-65" x-text="livewireActivity.length"></span>
     </x-newdebugbar::filter-tab>
     <x-newdebugbar::filter-tab
         variant="segmented"
@@ -19,7 +16,7 @@
     >
         <span>Components</span>
         <span
-            class="ndb:text-[11px] ndb:font-bold ndb:tabular-nums ndb:opacity-65"
+            class="ndb:text-xs ndb:font-bold ndb:tabular-nums ndb:opacity-65"
             x-text="livewireComponents.length"
         ></span>
     </x-newdebugbar::filter-tab>

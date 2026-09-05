@@ -32,14 +32,14 @@
     <span class="ndb:col-start-1 ndb:row-start-1 ndb:min-w-0">
         <span data-ndb-model-name class="ndb:block ndb:truncate ndb:text-xs ndb:font-bold">{{ $shortName }}</span>
         <span
-            class="ndb:mt-0.5 ndb:block ndb:truncate ndb:text-[11px] ndb:text-zinc-400"
+            class="ndb:mt-0.5 ndb:block ndb:truncate ndb:text-xs ndb:text-zinc-400"
             title="{{ $connection }} connection, {{ $table }} table"
         >
             {{ $connection }}, {{ $table }}
         </span>
     </span>
 
-    <span class="ndb:col-span-2 ndb:row-start-2 ndb:flex ndb:min-w-0 ndb:flex-wrap ndb:gap-x-4 ndb:gap-y-1 ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400 ndb:sm:hidden">
+    <span class="ndb:col-span-2 ndb:row-start-2 ndb:flex ndb:min-w-0 ndb:flex-wrap ndb:gap-x-4 ndb:gap-y-1 ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400 ndb:sm:hidden">
         <span>
             <span class="ndb:text-zinc-400">Retrieved</span>
             <strong class="ndb:font-semibold ndb:tabular-nums ndb:text-zinc-700 ndb:dark:text-zinc-300">{{ number_format($retrievalCount) }}</strong>

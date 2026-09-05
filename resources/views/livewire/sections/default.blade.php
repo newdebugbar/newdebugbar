@@ -21,12 +21,12 @@
                         class="ndb:group ndb:m-0 ndb:bg-transparent ndb:p-0"
                     >
                         <summary class="ndb:flex ndb:cursor-pointer ndb:list-none ndb:items-center ndb:gap-3 ndb:px-3 ndb:py-3 ndb:text-xs ndb:font-semibold ndb:focus-visible:outline-2 ndb:focus-visible:outline-inset ndb:focus-visible:outline-indigo-500 ndb:sm:px-4">
-                            <span class="ndb:text-[11px] ndb:font-bold ndb:tabular-nums ndb:text-zinc-400">{{ $index + 1 }}</span>
+                            <span class="ndb:text-xs ndb:font-bold ndb:tabular-nums ndb:text-zinc-400">{{ $index + 1 }}</span>
                             <span class="ndb:min-w-0 ndb:flex-1 ndb:truncate">
                                 {{ $item['model'] ?? $item['name'] ?? $item['event'] ?? $item['level'] ?? $item['operation'] ?? $section['label'] }}
                             </span>
-                            <span class="ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400 ndb:group-open:hidden">Show</span>
-                            <span class="ndb:hidden ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400 ndb:group-open:inline">Hide</span>
+                            <span class="ndb:text-xs ndb:font-semibold ndb:text-zinc-400 ndb:group-open:hidden">Show</span>
+                            <span class="ndb:hidden ndb:text-xs ndb:font-semibold ndb:text-zinc-400 ndb:group-open:inline">Hide</span>
                         </summary>
                         <x-newdebugbar::code-block
                             language="json"

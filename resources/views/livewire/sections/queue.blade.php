@@ -166,10 +166,10 @@
                                 {{ number_format($queueCount) }} {{ \Illuminate\Support\Str::plural('job', $queueCount) }}
                                 <span
                                     x-show.important="visibleQueueCount !== queueActivities.length"
-                                    class="ndb:ml-1 ndb:text-[11px] ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                    class="ndb:ml-1 ndb:text-xs ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
                                 ><span data-ndb-queue-visible-count x-text="visibleQueueCount"></span> shown</span>
                             </p>
-                            <p class="ndb:mt-0.5 ndb:text-[11px] ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400">
+                            <p class="ndb:mt-0.5 ndb:text-xs ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400">
                                 {{ implode(', ', $summaryParts) }}
                             </p>
                         </div>
@@ -178,7 +178,7 @@
                                 type="button"
                                 data-ndb-background-refresh
                                 @click="refreshBackgroundActivity(true)"
-                                class="ndb:inline-flex ndb:h-9 ndb:min-h-0 ndb:shrink-0 ndb:items-center ndb:gap-1.5 ndb:rounded-lg ndb:border ndb:border-zinc-200 ndb:bg-transparent ndb:px-2.5 ndb:text-[11px] ndb:font-bold ndb:text-indigo-600 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500 ndb:dark:border-zinc-700 ndb:dark:text-indigo-300"
+                                class="ndb:inline-flex ndb:h-9 ndb:min-h-0 ndb:shrink-0 ndb:items-center ndb:gap-1.5 ndb:rounded-lg ndb:border ndb:border-zinc-200 ndb:bg-transparent ndb:px-2.5 ndb:text-xs ndb:font-bold ndb:text-indigo-600 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500 ndb:dark:border-zinc-700 ndb:dark:text-indigo-300"
                             >
                                 <x-newdebugbar::icon name="activity" size="3.5" />
                                 Check worker
@@ -228,20 +228,20 @@
                                 : 'ndb:hover:bg-zinc-50/80 ndb:dark:hover:bg-zinc-900/60'"
                             class="ndb:grid ndb:h-auto ndb:min-h-0 ndb:w-full ndb:min-w-0 ndb:grid-cols-[4.75rem_minmax(0,1fr)_4.5rem] ndb:items-center ndb:gap-x-2 ndb:border-l-0 ndb:bg-transparent ndb:px-3 ndb:py-2.5 ndb:text-left ndb:text-xs ndb:text-zinc-950 ndb:transition-colors ndb:focus-visible:relative ndb:focus-visible:z-10 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500 ndb:dark:text-white"
                         >
-                            <span class="ndb:row-span-2 ndb:inline-flex ndb:w-fit ndb:rounded-md ndb:px-2 ndb:py-1 ndb:text-[11px] ndb:font-bold {{ $statusClasses[$item['status']] ?? 'ndb:bg-zinc-100 ndb:text-zinc-600 ndb:dark:bg-zinc-900 ndb:dark:text-zinc-300' }}">
+                            <span class="ndb:row-span-2 ndb:inline-flex ndb:w-fit ndb:rounded-md ndb:px-2 ndb:py-1 ndb:text-xs ndb:font-bold {{ $statusClasses[$item['status']] ?? 'ndb:bg-zinc-100 ndb:text-zinc-600 ndb:dark:bg-zinc-900 ndb:dark:text-zinc-300' }}">
                                 {{ $item['status_label'] }}
                             </span>
                             <span
                                 class="ndb:min-w-0 ndb:truncate ndb:text-xs ndb:font-bold"
                                 title="{{ $item['job'] }}"
                             >{{ $item['job_label'] }}</span>
-                            <span class="ndb:text-right ndb:text-[11px] ndb:font-semibold ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400">
+                            <span class="ndb:text-right ndb:text-xs ndb:font-semibold ndb:tabular-nums ndb:text-zinc-500 ndb:dark:text-zinc-400">
                                 {{ $item['kind'] === 'queued' ? $item['delay_label'] : $item['duration_label'] }}
                             </span>
-                            <span class="ndb:min-w-0 ndb:truncate ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400">
+                            <span class="ndb:min-w-0 ndb:truncate ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">
                                 {{ $item['connection'] }}, {{ $item['queue'] }}
                             </span>
-                            <span class="ndb:text-right ndb:text-[11px] ndb:text-zinc-400">{{ $item['attempt'] === null ? '' : 'Attempt '.$item['attempt'] }}</span>
+                            <span class="ndb:text-right ndb:text-xs ndb:text-zinc-400">{{ $item['attempt'] === null ? '' : 'Attempt '.$item['attempt'] }}</span>
                         </button>
                     @endforeach
                 </x-slot:list>
@@ -282,7 +282,7 @@
                                 <div class="ndb:flex ndb:flex-wrap ndb:items-center ndb:gap-2">
                                     <span
                                         data-ndb-queue-detail-status
-                                        class="ndb:inline-flex ndb:justify-self-end ndb:rounded-md ndb:px-2 ndb:py-1 ndb:text-[11px] ndb:font-bold"
+                                        class="ndb:inline-flex ndb:justify-self-end ndb:rounded-md ndb:px-2 ndb:py-1 ndb:text-xs ndb:font-bold"
                                         :class="{
                                             'ndb:bg-red-100 ndb:text-red-700 ndb:dark:bg-red-950 ndb:dark:text-red-300':
                                                 selectedQueueActivity.status === 'failed',
@@ -405,7 +405,7 @@
                                     x-text="selectedQueueActivity.exception_class"
                                 ></p>
                                 <p
-                                    class="ndb:mt-1 ndb:text-[11px] ndb:leading-5 ndb:text-red-700/80 ndb:dark:text-red-300/80"
+                                    class="ndb:mt-1 ndb:text-xs ndb:leading-5 ndb:text-red-700/80 ndb:dark:text-red-300/80"
                                     x-text="
                                         selectedQueueActivity.will_retry && selectedQueueActivity.attempts.length > 0
                                             ? 'Laravel can retry this job. Check the retained worker attempts below.'
@@ -419,7 +419,7 @@
                             <p
                                 data-ndb-queue-after-response
                                 x-show.important="selectedQueueActivity.lifecycle === 'after_response'"
-                                class="ndb:text-[11px] ndb:leading-5 ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                                class="ndb:text-xs ndb:leading-5 ndb:text-zinc-500 ndb:dark:text-zinc-400"
                             >
                                 This job ran after Laravel sent the response<span
                                     x-show.important="selectedQueueActivity.after_response_label"

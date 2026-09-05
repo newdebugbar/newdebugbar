@@ -15,9 +15,9 @@
                         class="ndb:text-xs ndb:font-bold ndb:tabular-nums"
                         x-text="attempt.attempt === null ? `Attempt ${attempt.sequence}` : `Attempt ${attempt.attempt}`"
                     ></span>
-                    <span class="ndb:text-[11px] ndb:font-semibold" x-text="attempt.status_label"></span>
+                    <span class="ndb:text-xs ndb:font-semibold" x-text="attempt.status_label"></span>
                     <span
-                        class="ndb:min-w-0 ndb:break-all ndb:text-[11px] ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                        class="ndb:min-w-0 ndb:break-all ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400"
                         x-text="attempt.exception_class ?? attempt.recorded_at ?? 'No exception recorded'"
                     ></span>
                     <x-newdebugbar::inspector-action

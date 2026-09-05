@@ -58,7 +58,7 @@
                     <p
                         data-ndb-favorites-heading
                         x-show.important="favorites.length > 0"
-                        class="ndb:px-2 ndb:pb-1.5 ndb:pt-1 ndb:text-[11px] ndb:font-bold ndb:uppercase ndb:tracking-[0.14em] ndb:text-zinc-400"
+                        class="ndb:px-2 ndb:pb-1.5 ndb:pt-1 ndb:text-xs ndb:font-bold ndb:uppercase ndb:tracking-[0.14em] ndb:text-zinc-400"
                     >
                         Favorites
                     </p>
@@ -71,7 +71,7 @@
                             <p
                                 data-ndb-sections-heading
                                 x-show.important="favorites.length > 0 && section.key === firstVisibleNonFavoriteKey"
-                                class="ndb:px-2 ndb:pb-1.5 ndb:pt-1 ndb:text-[11px] ndb:font-bold ndb:uppercase ndb:tracking-[0.14em] ndb:text-zinc-400"
+                                class="ndb:px-2 ndb:pb-1.5 ndb:pt-1 ndb:text-xs ndb:font-bold ndb:uppercase ndb:tracking-[0.14em] ndb:text-zinc-400"
                             >
                                 Sections
                             </p>
@@ -128,7 +128,7 @@
                                     <span class="ndb:ml-auto ndb:flex ndb:h-7 ndb:shrink-0 ndb:items-center ndb:gap-1.5">
                                         <span
                                             x-show.important="section.count !== null"
-                                            class="ndb-section-count ndb:inline-flex ndb:items-center ndb:text-[11px] ndb:leading-none ndb:tabular-nums"
+                                            class="ndb-section-count ndb:inline-flex ndb:items-center ndb:text-xs ndb:leading-none ndb:tabular-nums"
                                             :class="selected === section.key ? '' : 'ndb:text-zinc-400'"
                                             x-text="section.count"
                                         ></span>

@@ -143,7 +143,10 @@ trait DefinesTestApplication
                 'trip_id' => 1,
                 'exception' => new \RuntimeException('The rail partner rejected reservation KYO-441.'),
             ]);
-            Log::critical(str_repeat('Critical itinerary integrity warning. ', 24), ['trip_id' => 1]);
+            Log::critical(str_repeat('Critical itinerary integrity warning. ', 24), [
+                'trip_id' => 1,
+                'detail' => str_repeat('Retained diagnostic context. ', 12)."\nFinal retained line.",
+            ]);
 
             foreach (range(1, 18) as $index) {
                 Log::debug('Journey step checked.', ['step' => $index]);
@@ -357,6 +360,13 @@ trait DefinesTestApplication
                     $model->setRawAttributes(['id' => $key], true);
                     Event::dispatch('eloquent.retrieved: '.$modelClass, [$model]);
                 }
+            }
+
+            if (request()->boolean('sources')) {
+                $model = new ProofVersion;
+                $model->setConnection('testing');
+                $model->setRawAttributes(['id' => 2], true);
+                Event::dispatch('eloquent.retrieved: '.ProofVersion::class, [$model]);
             }
 
             if (request()->boolean('queries')) {
@@ -709,6 +719,9 @@ trait DefinesTestApplication
                             pre, code { background: rgb(243, 243, 243); color: rgb(0, 0, 0); }
                             iframe { width: 17px; height: 19px; border: 9px solid rgb(255, 0, 0); }
                             summary { color: rgb(255, 0, 0); font-size: 42px; margin: 23px; }
+                            [data-inspector-disclosure], [data-inspector-disclosure-content], [data-inspector-facts], .disclosure { background: red; border: 13px solid red; font-size: 42px; padding: 50px; }
+                            [data-http-client-body], [data-http-client-headers], [data-http-client-capture-limit], [data-http-client-copy-body], [data-cache-value], [data-redis-source] { background: red; color: green; font-size: 42px; }
+                            [data-model-record-sources], [data-model-write-details], [data-model-write-time], [data-model-changed-fields], [data-log-detail-severity], [data-log-context-payload], [data-log-context-value], [data-log-context-full-value], [data-log-capture-details] { background: red; color: green; padding: 50px; }
                             [data-cache], [data-cache-item], [data-cache-result], [data-cache-filter], [data-cache-search], [data-cache-search-text] { background: rgb(255, 0, 0); border-left: 20px solid rgb(255, 0, 0); color: rgb(0, 128, 0); height: 91px; }
                             [data-http-client], [data-http-client-item], [data-method], [data-host], [data-status], [data-duration], [data-source] { background: rgb(255, 0, 0); border-left: 20px solid rgb(255, 0, 0); color: rgb(0, 128, 0); height: 91px; }
                             [data-request-primary], [data-request-path], [data-request-controller], [data-request-size], .request-step { background: rgb(255, 0, 0); color: rgb(0, 128, 0); font-size: 42px; padding: 50px; }

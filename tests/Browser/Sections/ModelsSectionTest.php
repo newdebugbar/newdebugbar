@@ -3,7 +3,7 @@
 use NewDebugBar\Tests\Support\DebugBarBrowser;
 
 it('presents model activity as a persistent two column inspector', function () {
-    $page = visit('/profiled-models')
+    $page = visit('/profiled-models?sources=1')
         ->resize(1440, 900)
         ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]')
         ->click('[data-ndb-select-section="models"]');
@@ -201,6 +201,7 @@ it('presents model activity as a persistent two column inspector', function () {
         ->assertSee('NewDebugBar\Tests\Fixtures\Models\StudioJob')
         ->assertDontSee('Write events')
         ->assertMissing('[data-ndb-model-write-table]')
+        ->assertMissing('[data-ndb-model-record-sources]')
         ->assertDontSee('were observed for already identified records')
         ->assertMissing('[data-ndb-model-guidance]')
         ->assertScript(<<<'JS'
@@ -240,8 +241,8 @@ it('presents model activity as a persistent two column inspector', function () {
         ->assertScript('document.querySelectorAll("[data-ndb-model-record]").length', 5)
         ->assertScript('document.querySelector("[data-ndb-model-record] p").textContent.trim()', '2')
         ->assertSeeIn('[data-ndb-model-records]', 'How this model was loaded')
-        ->assertSeeIn('[data-ndb-model-records]', 'Each row is one record Laravel loaded during this request.')
-        ->assertSeeIn('[data-ndb-model-records]', 'If the count is above 1, check whether those repeated loads are expected.')
+        ->assertSeeIn('[data-ndb-model-records]', 'Retrieved counts each load of a record.')
+        ->assertSeeIn('[data-ndb-model-records]', 'If it exceeds 1, check whether the repeated loads are expected.')
         ->assertScript(<<<'JS'
             [...document.querySelector('[data-ndb-model-records] > div:nth-child(2) > div:first-child').children]
                 .map((heading) => heading.textContent.trim()).join('|') === 'Identifier|Retrieved|Source'
@@ -271,12 +272,26 @@ it('presents model activity as a persistent two column inspector', function () {
             })()
             JS)
         ->click('[data-ndb-model-record]:first-child [data-ndb-inspector-source-link]')
+        ->assertMissing('[data-ndb-model-record-sources] li')
+        ->click('[data-ndb-model-record]:first-child [data-ndb-model-record-sources] > summary')
+        ->assertCount('[data-ndb-model-record]:first-child [data-ndb-model-record-sources] li', 2)
+        ->assertScript(<<<'JS'
+            (() => {
+                const record = document.querySelector('[data-ndb-model-record]');
+                const expanded = record.querySelector('[data-ndb-model-record-sources]');
+                const source = expanded.querySelector('[data-ndb-inspector-source-link]');
+
+                return expanded.open
+                    && source.textContent.trim() === window.newdebugbarModelRecordSource
+                    && record.scrollWidth <= record.clientWidth + 1;
+            })()
+            JS)
         ->click('[data-ndb-model-detail-tab="source"]')
         ->assertVisible('[data-ndb-model-detail-panel="source"]')
         ->assertScript('document.querySelectorAll("[data-ndb-model-detail-panel]").length', 1)
         ->assertMissing('[data-ndb-model-detail-panel="records"]')
         ->assertVisible('[data-ndb-model-source]:first-of-type')
-        ->click('[data-ndb-model-source-path="application"]')
+        ->click('[data-ndb-model-source]:first-of-type [data-ndb-model-source-path="application"]')
         ->wait(0.05)
         ->assertScript(<<<'JS'
             (() => {
@@ -395,8 +410,8 @@ it('summarizes writes and shows completed operations without lifecycle noise', f
         ->assertVisible('[data-ndb-model-write-table]')
         ->assertVisible('[data-ndb-model-write-operation]')
         ->assertSeeIn('[data-ndb-model-write-table]', 'How this model changed')
-        ->assertSeeIn('[data-ndb-model-write-table]', 'Each row is one create, update, or delete completed during this request.')
-        ->assertSeeIn('[data-ndb-model-write-table]', 'If a write is unexpected, check whether the model is being saved more than once or earlier than intended.')
+        ->assertSeeIn('[data-ndb-model-write-table]', 'Each row is one completed write.')
+        ->assertSeeIn('[data-ndb-model-write-table]', 'If a write is unexpected, inspect its changed fields and application source.')
         ->assertSeeIn('[data-ndb-model-write-operation]', 'Updated')
         ->assertDontSeeIn('[data-ndb-model-write-operation]', 'Updating')
         ->assertDontSeeIn('[data-ndb-model-write-operation]', 'Saved')
@@ -416,7 +431,7 @@ it('summarizes writes and shows completed operations without lifecycle noise', f
                 const heading = [...table.querySelector('div > div:first-child').children];
                 const tableGrid = heading[0].parentElement.parentElement;
                 const rows = [...table.querySelectorAll('[data-ndb-model-write-operation]')];
-                const cells = [...rows[0].children];
+                const cells = [...rows[0].children].filter((cell) => ! cell.matches('[data-ndb-model-write-details]'));
                 const source = cells[2].matches('[data-ndb-inspector-source-link]')
                     ? cells[2]
                     : cells[2].querySelector('[data-ndb-inspector-source-link]');
@@ -446,6 +461,15 @@ it('summarizes writes and shows completed operations without lifecycle noise', f
             JS)
         ->assertDontSee('Write evidence')
         ->assertDontSee('Changed attributes')
+        ->assertMissing('[data-ndb-model-changed-fields]')
+        ->click('[data-ndb-model-write-details] > summary')
+        ->assertSeeIn('[data-ndb-model-changed-fields]', 'status')
+        ->assertSeeIn('[data-ndb-model-changed-fields]', 'approved')
+        ->assertSeeIn('[data-ndb-model-changed-fields]', '[redacted]')
+        ->assertVisible('[data-ndb-model-write-time]')
+        ->assertDontSee('Before')
+        ->click('[data-ndb-model-write-details] > summary')
+        ->assertMissing('[data-ndb-model-changed-fields]')
         ->assertDontSee('private-token')
         ->assertDontSee('updated-private-token')
         ->assertMissing('[data-ndb-model-operation]')

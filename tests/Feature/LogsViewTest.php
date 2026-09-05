@@ -101,3 +101,34 @@ it('renders a truthful empty state when no log records were captured', function 
         ->toContain('data-ndb-log-empty', 'No log records were captured for this request.')
         ->not->toContain('data-ndb-log-controls', 'data-ndb-log-entry');
 });
+
+it('retains full scalar context and gives nested context the full evidence width', function () {
+    $value = str_repeat('Retained diagnostic context. ', 12)."\nFinal retained line.";
+    $analysis = app(LogAnalyzer::class)->analyze([
+        [
+            'level' => 'warning',
+            'message' => 'Inspect retained context.',
+            'context' => [
+                'trip_id' => 41,
+                'detail' => $value,
+                'actor' => ['type' => 'planner', 'id' => 7],
+            ],
+            'at_ms' => 18.432,
+            'occurred_at' => '2026-08-24T16:32:10.123+02:00',
+        ],
+    ]);
+    $html = view('newdebugbar::components.log-detail', ['entry' => $analysis['groups'][0]])->render();
+    $document = new DOMDocument;
+    $previousLibxmlState = libxml_use_internal_errors(true);
+    $document->loadHTML('<?xml encoding="utf-8" ?><!doctype html><html><body>'.$html.'</body></html>');
+    libxml_clear_errors();
+    libxml_use_internal_errors($previousLibxmlState);
+    $xpath = new DOMXPath($document);
+
+    expect((string) $xpath->evaluate('string(//*[@data-ndb-log-context-full-value])'))->toBe($value)
+        ->and($xpath->query('//*[@data-ndb-log-context-payload]/ancestor::dd')->length)->toBe(0)
+        ->and($xpath->query('//*[@data-ndb-log-context-value]/@open')->length)->toBe(0)
+        ->and($xpath->query('//*[@data-ndb-log-capture-details]/@open')->length)->toBe(0)
+        ->and($xpath->query('//*[@data-ndb-log-context-full-value]/ancestor::template')->length)->toBeGreaterThan(0)
+        ->and($html)->toContain('Channel', 'From request start', 'Captured at', 'Final retained line.');
+});

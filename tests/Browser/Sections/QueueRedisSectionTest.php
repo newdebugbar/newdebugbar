@@ -154,8 +154,10 @@ it('shows Redis command and bounded key evidence without primary hashes', functi
                 const operation = header.querySelector('[data-ndb-redis-command]').getBoundingClientRect();
                 const key = header.querySelector('[data-ndb-redis-key-label]').getBoundingClientRect();
                 const source = document.querySelector('[data-ndb-redis-detail-body] [data-ndb-inspector-source-link]');
+                const sourcePanel = document.querySelector('[data-ndb-redis-source]');
                 const facts = document.querySelector('[data-ndb-redis-facts]');
                 const keys = document.querySelector('[data-ndb-redis-key-evidence]');
+                const keyValues = [...keys.querySelectorAll('[data-ndb-redis-key]')];
                 const interfaceFont = getComputedStyle(workspace).fontFamily;
 
                 window.newdebugbarRedisClipboardWrites = [];
@@ -173,10 +175,13 @@ it('shows Redis command and bounded key evidence without primary hashes', functi
                     && document.querySelector('[data-ndb-redis-sort]') === null
                     && listOperations.every((badge) => Math.round(badge.getBoundingClientRect().width) === 64)
                     && listOperations.every((badge) => getComputedStyle(badge).fontFamily === interfaceFont)
-                    && listOperations.every((badge) => Number.parseFloat(getComputedStyle(badge).fontSize) === 11)
                     && source.tagName === 'BUTTON'
                     && getComputedStyle(source).textDecorationLine.includes('underline')
                     && getComputedStyle(source).fontFamily === interfaceFont
+                    && !facts.contains(source)
+                    && sourcePanel.contains(source)
+                    && (keys.compareDocumentPosition(sourcePanel) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
+                    && keyValues.every((value) => getComputedStyle(value).fontFamily === interfaceFont)
                     && getComputedStyle(facts).borderBottomWidth === '0px'
                     && getComputedStyle(keys).borderTopWidth === '1px'
                     && Math.abs((operation.top + operation.height / 2) - (key.top + key.height / 2)) <= 1

@@ -7,7 +7,7 @@
                     x-text="selectedLivewireComponent.title"
                 ></h3>
                 <p
-                    class="ndb:mt-0.5 ndb:truncate ndb:text-[11px] ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                    class="ndb:mt-0.5 ndb:truncate ndb:text-xs ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
                     :title="selectedLivewireComponent.name"
                     x-text="selectedLivewireComponent.name"
                 ></p>
@@ -52,7 +52,7 @@
             <x-newdebugbar::inspector-facts columns="4">
                 <x-newdebugbar::inspector-fact label="State">
                     <x-slot:value
-                        class="ndb:truncate ndb:text-[11px] ndb:font-semibold"
+                        class="ndb:truncate ndb:font-semibold"
                         ::class="selectedLivewireComponent.status === 'failed'
                             ? 'ndb:text-red-700 ndb:dark:text-red-300'
                             : selectedLivewireComponent.status === 'updating'
@@ -68,7 +68,7 @@
                 </x-newdebugbar::inspector-fact>
                 <x-newdebugbar::inspector-fact label="Parent">
                     <x-slot:value
-                        class="ndb:truncate ndb:text-[11px] ndb:font-semibold"
+                        class="ndb:truncate ndb:font-semibold"
                         x-text="
                             selectedLivewireComponent.parentId
                                 ? livewireComponentTitle(selectedLivewireComponent.parentId)
@@ -79,14 +79,14 @@
                 <x-newdebugbar::inspector-fact label="Properties">
                     <x-slot:value
                         data-ndb-livewire-component-property-count
-                        class="ndb:truncate ndb:text-[11px] ndb:font-semibold ndb:tabular-nums"
+                        class="ndb:truncate ndb:font-semibold ndb:tabular-nums"
                         x-text="livewireComponentPropertyCountLabel(selectedLivewireComponent)"
                     ></x-slot:value>
                 </x-newdebugbar::inspector-fact>
                 <x-newdebugbar::inspector-fact label="Changed / editable">
                     <x-slot:value
                         data-ndb-livewire-component-property-summary
-                        class="ndb:truncate ndb:text-[11px] ndb:font-semibold ndb:tabular-nums"
+                        class="ndb:truncate ndb:font-semibold ndb:tabular-nums"
                         x-text="livewireComponentPropertyStateSummary(selectedLivewireComponent)"
                     ></x-slot:value>
                 </x-newdebugbar::inspector-fact>
@@ -103,7 +103,7 @@
                     data-ndb-livewire-property-table
                     class="ndb-scrollbar ndb:mt-3 ndb:overflow-x-auto ndb:border-y ndb:border-zinc-200/90 ndb:dark:border-zinc-800"
                 >
-                    <div class="ndb:hidden ndb:grid-cols-[minmax(10rem,1fr)_minmax(7rem,0.8fr)_minmax(7rem,0.8fr)_5rem_3rem] ndb:gap-3 ndb:border-b ndb:border-zinc-200/90 ndb:bg-zinc-50/75 ndb:px-3 ndb:py-2 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400 ndb:sm:grid ndb:sm:min-w-[36rem] ndb:dark:border-zinc-800 ndb:dark:bg-zinc-900/55">
+                    <div class="ndb:hidden ndb:grid-cols-[minmax(10rem,1fr)_minmax(7rem,0.8fr)_minmax(7rem,0.8fr)_5rem_3rem] ndb:gap-3 ndb:border-b ndb:border-zinc-200/90 ndb:bg-zinc-50/75 ndb:px-3 ndb:py-2 ndb:text-xs ndb:font-semibold ndb:text-zinc-400 ndb:sm:grid ndb:sm:min-w-[36rem] ndb:dark:border-zinc-800 ndb:dark:bg-zinc-900/55">
                         <span>Property</span><span>Client</span><span>Server</span><span>State</span><span></span>
                     </div>
 
@@ -137,34 +137,34 @@
                                     </template>
                                     <code
                                         data-ndb-livewire-property-label
-                                        class="ndb:min-w-0 ndb:truncate ndb:text-[11px] ndb:font-bold"
+                                        class="ndb:min-w-0 ndb:truncate ndb:text-xs ndb:font-bold"
                                         :title="row.path"
                                         x-text="row.label"
                                     ></code>
                                     <span
-                                        class="ndb:shrink-0 ndb:rounded-md ndb:bg-zinc-100 ndb:px-1.5 ndb:py-0.5 ndb:text-[11px] ndb:font-bold ndb:text-zinc-500 ndb:dark:bg-zinc-800 ndb:dark:text-zinc-400"
+                                        class="ndb:shrink-0 ndb:rounded-md ndb:bg-zinc-100 ndb:px-1.5 ndb:py-0.5 ndb:text-xs ndb:font-bold ndb:text-zinc-500 ndb:dark:bg-zinc-800 ndb:dark:text-zinc-400"
                                         x-text="row.phpType ?? row.type"
                                     ></span>
                                 </div>
                                 <div class="ndb:flex ndb:min-w-0 ndb:items-baseline ndb:gap-2 ndb:sm:block">
-                                    <span class="ndb:w-16 ndb:shrink-0 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400 ndb:sm:hidden">Client</span>
+                                    <span class="ndb:w-16 ndb:shrink-0 ndb:text-xs ndb:font-semibold ndb:text-zinc-400 ndb:sm:hidden">Client</span>
                                     <code
-                                        class="ndb:block ndb:min-w-0 ndb:flex-1 ndb:truncate ndb:text-[11px] ndb:sm:w-full"
+                                        class="ndb:block ndb:min-w-0 ndb:flex-1 ndb:truncate ndb:text-xs ndb:sm:w-full"
                                         :title="row.valueSummary"
                                         x-text="row.valueSummary"
                                     ></code>
                                 </div>
                                 <div class="ndb:flex ndb:min-w-0 ndb:items-baseline ndb:gap-2 ndb:sm:block">
-                                    <span class="ndb:w-16 ndb:shrink-0 ndb:text-[11px] ndb:font-semibold ndb:text-zinc-400 ndb:sm:hidden">Server</span>
+                                    <span class="ndb:w-16 ndb:shrink-0 ndb:text-xs ndb:font-semibold ndb:text-zinc-400 ndb:sm:hidden">Server</span>
                                     <code
-                                        class="ndb:block ndb:min-w-0 ndb:flex-1 ndb:truncate ndb:text-[11px] ndb:text-zinc-500 ndb:sm:w-full ndb:dark:text-zinc-400"
+                                        class="ndb:block ndb:min-w-0 ndb:flex-1 ndb:truncate ndb:text-xs ndb:text-zinc-500 ndb:sm:w-full ndb:dark:text-zinc-400"
                                         :title="row.serverSummary"
                                         x-text="row.serverSummary"
                                     ></code>
                                 </div>
                                 <div>
                                     <span
-                                        class="ndb:text-[11px] ndb:font-bold"
+                                        class="ndb:text-xs ndb:font-bold"
                                         :class="row.state === 'Dirty'
                                             ? 'ndb:text-amber-700 ndb:dark:text-amber-300'
                                             : row.state === 'Updating'
@@ -211,7 +211,7 @@
                     <x-slot:value>
                         <span
                             data-ndb-livewire-component-instance
-                            class="ndb:block ndb:truncate ndb:text-[11px] ndb:font-semibold"
+                            class="ndb:block ndb:truncate ndb:text-xs ndb:font-semibold"
                             ::title="selectedLivewireComponent.id"
                             x-text="selectedLivewireComponent.id"
                         ></span>

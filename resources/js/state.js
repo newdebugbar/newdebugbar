@@ -3293,7 +3293,7 @@ export function createNewDebugBar(
     },
 
     setHttpClientDetailTab(tab) {
-      if (!['response', 'request', 'source'].includes(tab)) return;
+      if (!['response', 'request'].includes(tab)) return;
 
       this.httpClientDetailTab = tab;
       this.$nextTick?.(() => {

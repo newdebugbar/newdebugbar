@@ -101,7 +101,7 @@
             <details class="ndb:group ndb:mt-4 ndb:border-t ndb:border-zinc-200/90 ndb:pt-3 ndb:sm:mt-5 ndb:dark:border-zinc-800">
                 <summary class="ndb:flex ndb:cursor-pointer ndb:list-none ndb:items-center ndb:justify-between ndb:gap-3 ndb:text-xs ndb:font-bold ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500">
                     <span>Vendor stack</span>
-                    <span class="ndb:text-[11px] ndb:font-medium ndb:tabular-nums ndb:text-zinc-400">
+                    <span class="ndb:text-xs ndb:font-medium ndb:tabular-nums ndb:text-zinc-400">
                         {{ number_format(count($vendorFrames)) }} {{ \Illuminate\Support\Str::plural('frame', count($vendorFrames)) }}
                     </span>
                 </summary>
@@ -125,7 +125,7 @@
                             class="ndb:border-l-0 ndb:bg-transparent ndb:px-0 ndb:py-3 ndb:first:pt-0 ndb:last:pb-0"
                         >
                             <div class="ndb:flex ndb:min-w-0 ndb:flex-wrap ndb:items-center ndb:justify-between ndb:gap-2">
-                                <p class="ndb:text-[11px] ndb:font-bold ndb:text-zinc-500 ndb:dark:text-zinc-400">
+                                <p class="ndb:text-xs ndb:font-bold ndb:text-zinc-500 ndb:dark:text-zinc-400">
                                     Cause {{ $causeIndex + 1 }}
                                 </p>
                                 @if (isset($cause['file'], $cause['line']))
@@ -137,7 +137,7 @@
                                     </x-newdebugbar::inspector-source-link>
                                 @endif
                             </div>
-                            <code class="ndb:mt-2 ndb:block ndb:min-w-0 ndb:break-words ndb:bg-transparent ndb:font-mono ndb:text-[11px] ndb:font-semibold ndb:text-zinc-900 ndb:dark:text-zinc-100">
+                            <code class="ndb:mt-2 ndb:block ndb:min-w-0 ndb:break-words ndb:bg-transparent ndb:font-mono ndb:text-xs ndb:font-semibold ndb:text-zinc-900 ndb:dark:text-zinc-100">
                                 {{ $cause['class'] ?? 'Throwable' }}
                             </code>
                             <p class="ndb:mt-1 ndb:break-words ndb:text-xs ndb:font-medium ndb:leading-5 ndb:text-zinc-700 ndb:[overflow-wrap:anywhere] ndb:dark:text-zinc-200">
@@ -148,7 +148,7 @@
                 </div>
 
                 @if ($exception['chain_truncated'] ?? false)
-                    <p class="ndb:mt-3 ndb:text-[11px] ndb:font-semibold ndb:text-amber-700 ndb:sm:mt-4 ndb:dark:text-amber-300">
+                    <p class="ndb:mt-3 ndb:text-xs ndb:font-semibold ndb:text-amber-700 ndb:sm:mt-4 ndb:dark:text-amber-300">
                         More causes exist, but only the first five were retained.
                     </p>
                 @endif

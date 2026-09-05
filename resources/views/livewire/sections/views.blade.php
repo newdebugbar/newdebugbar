@@ -54,7 +54,7 @@
                                     >{{ number_format($viewDefaultGroupCount) }}</span>
                                     <span x-text="visibleViewCount === 1 ? 'view' : 'views'">{{ \Illuminate\Support\Str::plural('view', $viewDefaultGroupCount) }}</span>
                                 </strong>
-                                <span class="ndb:mt-0.5 ndb:block ndb:text-[11px] ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400">
+                                <span class="ndb:mt-0.5 ndb:block ndb:text-xs ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400">
                                     <span
                                         data-ndb-view-visible-render-count
                                         x-text="visibleViewRenderCount"
@@ -124,10 +124,10 @@
                             <span class="ndb:text-right ndb:text-xs ndb:font-bold ndb:tabular-nums">
                                 {{ number_format($group['count']) }}
                             </span>
-                            <span class="ndb:min-w-0 ndb:truncate ndb:text-[11px] ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400">
+                            <span class="ndb:min-w-0 ndb:truncate ndb:text-xs ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400">
                                 {{ $group['origin'] === 'application' ? 'Application' : 'Framework' }}
                             </span>
-                            <span class="ndb:text-right ndb:text-[11px] ndb:font-medium ndb:text-zinc-400">
+                            <span class="ndb:text-right ndb:text-xs ndb:font-medium ndb:text-zinc-400">
                                 {{ \Illuminate\Support\Str::plural('render', $group['count']) }}
                             </span>
                         </button>
