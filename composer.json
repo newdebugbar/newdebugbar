@@ -6,7 +6,10 @@
     "license": "Apache-2.0",
     "authors": [
         {
-            "name": "Benjamin Crozat"
+            "name": "Benjamin Crozat",
+            "email": "hello@benjamincrozat.com",
+            "role": "Developer",
+            "homepage": "https://benjamincrozat.com"
         }
     ],
     "require": {
