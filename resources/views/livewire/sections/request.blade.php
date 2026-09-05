@@ -162,25 +162,7 @@
                         <dt class="ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">Middleware</dt>
                         <dd class="ndb:mt-1">
                             @if ($requestMiddleware !== [])
-                                <details data-ndb-request-middleware class="ndb:group">
-                                    <summary class="ndb:flex ndb:w-fit ndb:cursor-pointer ndb:list-none ndb:items-center ndb:gap-2 ndb:rounded-sm ndb:focus-visible:outline-2 ndb:focus-visible:outline-offset-4 ndb:focus-visible:outline-indigo-500">
-                                        <span>{{ count($requestMiddleware) }} middleware</span>
-                                        <x-newdebugbar::icon
-                                            name="chevron-down"
-                                            class="ndb:size-3.5 ndb:text-zinc-400 ndb:transition ndb:group-open:rotate-180"
-                                        />
-                                    </summary>
-                                    <ol class="ndb:mt-3 ndb:space-y-2">
-                                        @foreach ($requestMiddleware as $middleware)
-                                            <li>
-                                                <code
-                                                    data-ndb-language="php"
-                                                    class="ndb:text-xs ndb:[overflow-wrap:anywhere]"
-                                                >{{ $middleware }}</code>
-                                            </li>
-                                        @endforeach
-                                    </ol>
-                                </details>
+                                <x-newdebugbar::request-middleware :middleware="$requestMiddleware" />
                             @else
                                 None
                             @endif

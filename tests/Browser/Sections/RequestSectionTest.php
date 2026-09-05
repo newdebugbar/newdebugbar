@@ -96,7 +96,7 @@ it('keeps expanded request evidence reachable through one scroll owner', functio
     'mobile dark' => [390, 844, 'dark'],
 ]);
 
-it('aligns the request lifecycle and wraps long evidence across viewports', function (int $width, int $height, string $theme) {
+it('keeps request evidence aligned and middleware accessible across viewports', function (int $width, int $height, string $theme) {
     $page = visit('/profiled');
     $page->script("localStorage.setItem('newdebugbar.preferences.v1', JSON.stringify({theme: '$theme'}))");
     $page->refresh()->resize($width, $height);
@@ -106,6 +106,10 @@ it('aligns the request lifecycle and wraps long evidence across viewports', func
     $profile['sections']['request']['payload']['path'] = '/trips/'.str_repeat('very-long-journey-reference-', 8);
     $profile['sections']['request']['payload']['url'] = 'http://newdebugbar.test'.$profile['sections']['request']['payload']['path'];
     $profile['sections']['request']['payload']['action'] = 'App\\Http\\Controllers\\'.str_repeat('LongJourneyWorkspace', 6).'Controller@show';
+    $profile['sections']['request']['payload']['middleware'] = array_map(
+        static fn (int $index): string => 'App\\Http\\Middleware\\EnsureJourneyWorkspaceMembershipForOrganization'.$index,
+        range(1, 12),
+    );
     $store->put($profile);
 
     if ($width < 640) {
@@ -197,6 +201,98 @@ it('aligns the request lifecycle and wraps long evidence across viewports', func
             })()
             JS)
         ->assertScript('document.querySelector("[data-ndb-request-details]").open === false')
+        ->assertAttribute('[data-ndb-request-middleware-trigger]', 'aria-expanded', 'false')
+        ->assertScript(<<<'JS'
+            (() => {
+                const trigger = document.querySelector('[data-ndb-request-middleware-trigger]');
+                const responded = document.querySelector('[data-ndb-request-step="responded"]');
+
+                trigger.scrollIntoView({ block: 'center' });
+                window.newdebugbarRespondedBeforePopover = responded.getBoundingClientRect().top
+                    - document.querySelector('[data-ndb-request-trace]').getBoundingClientRect().top;
+
+                return trigger.getAttribute('aria-controls').startsWith('newdebugbar');
+            })()
+            JS)
+        ->click('[data-ndb-request-middleware-trigger]')
+        ->assertAttribute('[data-ndb-request-middleware-trigger]', 'aria-expanded', 'true')
+        ->assertVisible('[data-ndb-request-middleware-popover]')
+        ->assertCount('[data-ndb-request-middleware-popover] li', 12)
+        ->assertScript(<<<'JS'
+            (() => {
+                const popover = document.querySelector('[data-ndb-request-middleware-popover]');
+                const trigger = document.querySelector('[data-ndb-request-middleware-trigger]');
+                const content = document.querySelector('[data-ndb-inspector-content]');
+                const responded = document.querySelector('[data-ndb-request-step="responded"]');
+                const surface = popover.querySelector('[data-ndb-popover-surface]');
+                const bounds = surface.getBoundingClientRect();
+
+                const checks = {
+                    association: trigger.getAttribute('aria-controls') === popover.id,
+                    stableLayout: Math.abs(responded.getBoundingClientRect().top
+                        - document.querySelector('[data-ndb-request-trace]').getBoundingClientRect().top
+                        - window.newdebugbarRespondedBeforePopover) <= 1,
+                    horizontalBounds: bounds.left >= 0 && bounds.right <= window.innerWidth,
+                    verticalBounds: bounds.top >= 0 && bounds.bottom <= window.innerHeight,
+                    overflow: content.scrollWidth <= content.clientWidth + 1,
+                };
+                const failures = Object.entries(checks).filter(([, passed]) => !passed).map(([name]) => name);
+
+                if (failures.length > 0) {
+                    throw new Error(JSON.stringify({ failures, viewport: [window.innerWidth, window.innerHeight], bounds: bounds.toJSON() }));
+                }
+
+                return true;
+            })()
+            JS)
+        ->assertScript(<<<'JS'
+            (() => {
+                const popover = document.querySelector('[data-ndb-request-middleware-popover]');
+                const scrollOwner = [popover, ...popover.querySelectorAll('*')].find((element) =>
+                    element.clientHeight > 0 && element.scrollHeight > element.clientHeight + 1
+                    && ['auto', 'scroll'].includes(getComputedStyle(element).overflowY),
+                );
+
+                if (scrollOwner) scrollOwner.scrollTop = scrollOwner.scrollHeight;
+
+                const bounds = (scrollOwner ?? popover).getBoundingClientRect();
+                const last = popover.querySelector('li:last-child');
+                const lastBounds = last.getBoundingClientRect();
+
+                return last.textContent.includes('EnsureJourneyWorkspaceMembershipForOrganization12')
+                    && lastBounds.top >= bounds.top - 1
+                    && lastBounds.bottom <= bounds.bottom + 1;
+            })()
+            JS)
+        ->keys('[data-ndb-request-middleware-popover]', 'Escape')
+        ->assertAttribute('[data-ndb-request-middleware-trigger]', 'aria-expanded', 'false')
+        ->assertScript('document.activeElement === document.querySelector("[data-ndb-request-middleware-trigger]")')
+        ->click('[data-ndb-request-middleware-trigger]')
+        ->assertAttribute('[data-ndb-request-middleware-trigger]', 'aria-expanded', 'true')
+        ->assertVisible('[data-ndb-request-middleware-popover]')
+        ->assertScript(<<<'JS'
+            (() => {
+                const popover = document.querySelector('[data-ndb-request-middleware-popover]');
+                const target = [...document.querySelectorAll('[data-ndb-request-step] h3, [data-ndb-request-step] dt, [data-ndb-section-heading]')]
+                    .find((element) => {
+                        const bounds = element.getBoundingClientRect();
+                        const x = bounds.left + bounds.width / 2;
+                        const y = bounds.top + bounds.height / 2;
+                        const visible = document.elementFromPoint(x, y);
+
+                        return bounds.width > 0 && bounds.height > 0
+                            && x > 0 && x < window.innerWidth && y > 0 && y < window.innerHeight
+                            && !popover.contains(visible) && element.contains(visible);
+                    });
+
+                target?.setAttribute('data-ndb-test-outside-target', '');
+
+                return target !== undefined;
+            })()
+            JS)
+        ->click('[data-ndb-test-outside-target]')
+        ->assertAttribute('[data-ndb-request-middleware-trigger]', 'aria-expanded', 'false')
+        ->assertMissing('[data-ndb-request-middleware-popover]')
         ->assertNoJavaScriptErrors();
 })->with([
     'short desktop light' => [1280, 720, 'light'],
@@ -209,18 +305,14 @@ it('aligns the request lifecycle and wraps long evidence across viewports', func
     'mobile dark' => [390, 844, 'dark'],
 ]);
 
-it('opens captured middleware and copies the complete request URL with feedback', function () {
+it('copies the complete request URL with feedback', function () {
     $page = visit('/profiled?destination=kyoto&season=autumn')
         ->resize(1440, 1000)
         ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
 
     DebugBarBrowser::waitForDetails($page);
 
-    $page->assertScript('document.querySelector("[data-ndb-request-middleware]").open === false')
-        ->click('[data-ndb-request-middleware] > summary')
-        ->assertScript('document.querySelector("[data-ndb-request-middleware]").open === true')
-        ->assertSeeIn('[data-ndb-request-middleware]', 'NewDebugBar\\Http\\Middleware\\ProfileRequest')
-        ->assertScript(<<<'JS'
+    $page->assertScript(<<<'JS'
             (() => {
                 window.newdebugbarClipboardWrites = [];
                 window.newdebugbarRequestCopyWidth = document.querySelector('[data-ndb-request-copy]').getBoundingClientRect().width;
@@ -266,5 +358,34 @@ it('opens captured middleware and copies the complete request URL with feedback'
         ->click('[data-ndb-request-detail="query"]')
         ->assertVisible('[data-ndb-request-detail-panel="query"]')
         ->assertSeeIn('[data-ndb-request-detail-panel="query"]', 'kyoto')
+        ->assertNoJavaScriptErrors();
+});
+
+it('returns middleware focus safely through keyboard navigation and the command palette', function () {
+    $page = visit('/profiled')
+        ->resize(1440, 1000)
+        ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
+
+    DebugBarBrowser::waitForDetails($page);
+
+    foreach (['Tab', 'Shift+Tab'] as $key) {
+        $page->click('[data-ndb-request-middleware-trigger]')
+            ->assertVisible('[data-ndb-request-middleware-popover]')
+            ->assertScript('document.activeElement === document.querySelector("[data-ndb-request-middleware-popover] ol")')
+            ->keys('[data-ndb-request-middleware-popover] ol', $key)
+            ->assertAttribute('[data-ndb-request-middleware-trigger]', 'aria-expanded', 'false')
+            ->assertMissing('[data-ndb-request-middleware-popover]')
+            ->assertScript('document.activeElement === document.querySelector("[data-ndb-request-middleware-trigger]")');
+    }
+
+    $page->click('[data-ndb-request-middleware-trigger]')
+        ->assertScript('document.activeElement === document.querySelector("[data-ndb-request-middleware-popover] ol")')
+        ->keys('[data-ndb-request-middleware-popover] ol', 'Meta+Shift+P')
+        ->assertVisible('[role="dialog"][aria-label="Command palette"]')
+        ->assertAttribute('[data-ndb-request-middleware-trigger]', 'aria-expanded', 'false')
+        ->assertMissing('[data-ndb-request-middleware-popover]')
+        ->keys('[data-ndb-palette-search]', 'Escape')
+        ->assertScript('document.activeElement === document.querySelector("[data-ndb-request-middleware-trigger]")')
+        ->assertVisible('[role="dialog"][aria-label="Request inspector"]')
         ->assertNoJavaScriptErrors();
 });

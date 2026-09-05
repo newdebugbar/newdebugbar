@@ -175,7 +175,26 @@ it('keeps host styles and package styles isolated', function () {
                 });
             })()
             JS)
+        ->click('[data-ndb-request-middleware-trigger]')
+        ->assertVisible('[data-ndb-request-middleware-popover]')
+        ->assertScript(<<<'JS'
+            (() => {
+                const root = document.querySelector('#newdebugbar');
+                const trigger = root.querySelector('[data-ndb-request-middleware-trigger]');
+                const popover = root.querySelector('[data-ndb-request-middleware-popover]');
+                const surface = popover.querySelector('[data-ndb-popover-surface]');
+
+                return root.contains(popover)
+                    && getComputedStyle(popover).position === 'fixed'
+                    && popover.getBoundingClientRect().width <= window.innerWidth
+                    && getComputedStyle(trigger).borderWidth === '0px'
+                    && getComputedStyle(surface).borderWidth === '1px'
+                    && getComputedStyle(surface).backgroundColor !== 'rgb(255, 0, 0)'
+                    && popover.querySelectorAll('li').length > 0;
+            })()
+            JS)
         ->click('[data-ndb-section="queries"]')
+        ->assertMissing('[data-ndb-request-middleware-popover]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->assertVisible('[data-ndb-section-panel="queries"]')
         ->click('[data-ndb-query-sort-heading="duration"]')

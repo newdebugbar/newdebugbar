@@ -85,7 +85,7 @@ Document each family together and test the child through the parent that gives i
 
 ## Private section modules
 
-Requests, HTTP Client, Cache, Mail, Notifications, Models, Events, Authorization, Queries, Logs, Livewire, and toolbar chrome own product-specific modules. Their complete workspaces, row renderers, data panels, state coordinators, and tab definitions are integration surfaces, not design-system components. Requests owns `request-step` for lifecycle geometry and `request-trace-icon` for its duotone stage icons.
+Requests, HTTP Client, Cache, Mail, Notifications, Models, Events, Authorization, Queries, Logs, Livewire, and toolbar chrome own product-specific modules. Their complete workspaces, row renderers, data panels, state coordinators, and tab definitions are integration surfaces, not design-system components. Requests owns `request-step` for lifecycle geometry, `request-trace-icon` for its duotone stage icons, and `request-middleware` for the retained middleware list inside the shared anchored popover.
 
 Verify those modules in realistic populated product sections. A private module may use a small fixture in a focused test, but that does not make it a shared component.
 
