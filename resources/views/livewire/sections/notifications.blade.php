@@ -317,7 +317,14 @@
     data-ndb-notifications
     x-init="
         initializeNotifications(
-            JSON.parse(atob($el.querySelector('[data-ndb-notification-payload]').textContent.trim())),
+            JSON.parse(
+                new TextDecoder().decode(
+                    Uint8Array.from(
+                        atob($el.querySelector('[data-ndb-notification-payload]').textContent.trim()),
+                        (character) => character.charCodeAt(0),
+                    ),
+                ),
+            ),
         )
     "
     class="ndb:space-y-4 ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col ndb:lg:space-y-0"

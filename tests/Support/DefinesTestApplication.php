@@ -1074,9 +1074,10 @@ trait DefinesTestApplication
                 fn (): ProfiledNotificationChannel => new ProfiledNotificationChannel,
             );
 
-            $notifiable = new ProfiledNotifiable('elise@example.test');
+            $unicode = request()->boolean('unicode');
+            $notifiable = new ProfiledNotifiable('elise@example.test', name: $unicode ? 'Élise 森 🌸' : 'Elise Martin');
             $notification = new ProfiledNotification(
-                privateValue: 'Kyoto autumn',
+                privateValue: $unicode ? 'Séjour à Kyoto — 京都 🌸' : 'Kyoto autumn',
                 channels: ['mail', 'profiled-sms'],
                 subjectLine: 'Your Kyoto journey is ready to review',
             );

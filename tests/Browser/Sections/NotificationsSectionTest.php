@@ -21,6 +21,19 @@ it('keeps a queued notification pending until its worker runs', function () {
         ->assertNoJavaScriptErrors();
 });
 
+it('preserves Unicode notification names and payload values', function () {
+    visit('/profiled-notifications-rich?unicode=1')
+        ->resize(1440, 1200)
+        ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]')
+        ->click('[data-ndb-select-section="notifications"]')
+        ->assertScript(DebugBarBrowser::waitForDetailsScript())
+        ->assertSeeIn('[data-ndb-notification-item="1"] [data-ndb-notification-list-recipient]', 'Élise 森 🌸')
+        ->assertSeeIn('[data-ndb-notification-recipient]', 'Élise 森 🌸')
+        ->click('[data-ndb-notification-detail-tab="payload"]')
+        ->assertSeeIn('[data-ndb-notification-detail-panel="payload"]', 'Séjour à Kyoto — 京都 🌸')
+        ->assertNoJavaScriptErrors();
+});
+
 it('groups notification attempts in a full-height delivery inspector', function () {
     $page = visit('/profiled-notifications-rich')
         ->resize(1440, 1200)
