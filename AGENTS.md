@@ -6,6 +6,13 @@
 - Match the minimum PHP and Laravel versions supported by Livewire 4.
 - Use `NewDebugBar` or `newdebugbar` as one word in machine-facing names. Use “New Debug Bar” in text written for people.
 
+## Checks before pushing
+
+- Before every push, run `composer validate --strict`, `composer audit`, `composer lint:check`, and `composer test` locally against the final code being pushed. `composer test` runs the full PHP and JavaScript suites, rebuilds the assets, and runs the full browser suite with four workers.
+- Run the PHP and browser suites sequentially. Separate Pest processes share browser-server state and can interfere with each other.
+- Commit any rebuilt assets, run `git diff --check`, and confirm `git diff --exit-code HEAD -- dist` passes. If code changes after verification, rerun the affected checks before pushing.
+- Fix local failures before pushing. Do not skip checks or use GitHub Actions as the first full verification of a change.
+
 ## Product behavior
 
 - Make the full local debugging experience work immediately. Do not hide useful diagnostics behind opt-in flags or masked defaults only because the captured data may be sensitive.
