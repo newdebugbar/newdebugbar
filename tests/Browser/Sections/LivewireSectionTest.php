@@ -112,6 +112,8 @@ it('keeps one workspace while switching between activity and mounted components'
         DebugBarBrowser::selectSectionViaPalette($page, 'livewire');
     }
 
+    DebugBarBrowser::waitForVisibleElement($page, '[data-ndb-section-description]');
+
     $assertStableControls = <<<'JS'
         (() => {
             const workspace = document.querySelector('[data-ndb-livewire-workspace]');
@@ -140,7 +142,7 @@ it('keeps one workspace while switching between activity and mounted components'
             const failures = Object.entries(current).flatMap(([element, properties]) =>
                 Object.entries(properties)
                     .filter(([property, value]) => Math.abs(value - baseline.bounds[element][property]) > 1)
-                    .map(([property]) => `${element}.${property}`),
+                    .map(([property, value]) => `${element}.${property}: ${baseline.bounds[element][property]} -> ${value}`),
             );
             const searchBox = search.getBoundingClientRect();
             const controlsBox = controls.getBoundingClientRect();
@@ -701,7 +703,7 @@ it('centers segmented detail tabs and instantiates only the active evidence pane
             '[data-ndb-livewire-detail-panel="overview"] [data-ndb-inspector-source-link]',
             'app/Livewire/HostCounter.php:29',
         )
-        ->assertVisible('[data-ndb-livewire-detail-panel="overview"] [aria-label="Open related request 1"]')
+        ->assertVisible('[data-ndb-livewire-activity-header] [aria-label="Open related request 1"]')
         ->assertScript(<<<'JS'
             (() => {
                 const tabs = document.querySelector('[data-ndb-livewire-activity-detail] [data-ndb-filter-tabs-variant="segmented"]');

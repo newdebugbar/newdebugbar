@@ -93,15 +93,10 @@
             </x-newdebugbar::inspector-facts>
 
             <section>
-                <x-newdebugbar::inspector-explanation
-                    title="Which values differ from the server?"
-                    description="Client is the value currently in the browser. Server is the latest confirmed value. If they differ unexpectedly, inspect recent activity before editing the property."
-                />
-
                 <div
                     x-show.important="livewirePropertyRows.length > 0"
                     data-ndb-livewire-property-table
-                    class="ndb-scrollbar ndb:mt-3 ndb:overflow-x-auto ndb:border-y ndb:border-zinc-200/90 ndb:dark:border-zinc-800"
+                    class="ndb-scrollbar ndb:overflow-x-auto ndb:border-b ndb:border-zinc-200/90 ndb:dark:border-zinc-800"
                 >
                     <div class="ndb:hidden ndb:grid-cols-[minmax(10rem,1fr)_minmax(7rem,0.8fr)_minmax(7rem,0.8fr)_5rem_3rem] ndb:gap-3 ndb:border-b ndb:border-zinc-200/90 ndb:bg-zinc-50/75 ndb:px-3 ndb:py-2 ndb:text-xs ndb:font-semibold ndb:text-zinc-400 ndb:sm:grid ndb:sm:min-w-[36rem] ndb:dark:border-zinc-800 ndb:dark:bg-zinc-900/55">
                         <span>Property</span><span>Client</span><span>Server</span><span>State</span><span></span>

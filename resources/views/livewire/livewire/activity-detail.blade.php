@@ -13,18 +13,45 @@
             </div>
         </x-slot:title>
         <x-slot:aside>
-            <span
-                data-ndb-livewire-activity-status
-                x-show.important="selectedLivewireActivity.status !== 'complete'"
-                class="ndb:inline-flex ndb:min-h-7 ndb:items-center ndb:justify-self-end ndb:rounded-md ndb:px-2 ndb:text-xs ndb:font-bold"
-                :class="selectedLivewireActivity.status === 'failed' ||
-                selectedLivewireActivity.status === 'failed_validation'
-                    ? 'ndb:bg-red-50 ndb:text-red-700 ndb:dark:bg-red-950/60 ndb:dark:text-red-300'
-                    : selectedLivewireActivity.status === 'updating'
-                      ? 'ndb:bg-indigo-50 ndb:text-indigo-700 ndb:dark:bg-indigo-950/60 ndb:dark:text-indigo-300'
-                      : 'ndb:bg-zinc-100 ndb:text-zinc-600 ndb:dark:bg-zinc-800 ndb:dark:text-zinc-300'"
-                x-text="livewireActivityStatusLabel(selectedLivewireActivity)"
-            ></span>
+            <div class="ndb:flex ndb:max-w-44 ndb:flex-wrap ndb:items-center ndb:justify-end ndb:gap-2">
+                <span
+                    data-ndb-livewire-activity-status
+                    x-show.important="selectedLivewireActivity.status !== 'complete'"
+                    class="ndb:inline-flex ndb:min-h-7 ndb:items-center ndb:justify-self-end ndb:rounded-md ndb:px-2 ndb:text-xs ndb:font-bold"
+                    :class="selectedLivewireActivity.status === 'failed' ||
+                    selectedLivewireActivity.status === 'failed_validation'
+                        ? 'ndb:bg-red-50 ndb:text-red-700 ndb:dark:bg-red-950/60 ndb:dark:text-red-300'
+                        : selectedLivewireActivity.status === 'updating'
+                          ? 'ndb:bg-indigo-50 ndb:text-indigo-700 ndb:dark:bg-indigo-950/60 ndb:dark:text-indigo-300'
+                          : 'ndb:bg-zinc-100 ndb:text-zinc-600 ndb:dark:bg-zinc-800 ndb:dark:text-zinc-300'"
+                    x-text="livewireActivityStatusLabel(selectedLivewireActivity)"
+                ></span>
+                <div
+                    role="group"
+                    aria-label="Related activity requests"
+                    x-show.important="livewireActivityProfileIds(selectedLivewireActivity).length > 0"
+                    class="ndb:flex ndb:max-w-full ndb:flex-wrap ndb:items-center ndb:justify-end ndb:gap-1.5"
+                >
+                    <template
+                        x-for="(profileId, index) in livewireActivityProfileIds(selectedLivewireActivity)"
+                        :key="profileId"
+                    >
+                        <x-newdebugbar::inspector-action
+                            icon="external-link"
+                            @click="openRelatedProfile(profileId, 'request')"
+                            ::aria-label="'Open related request ' + (index + 1)"
+                        >
+                            <span
+                                x-text="
+                                    livewireActivityProfileIds(selectedLivewireActivity).length === 1
+                                        ? 'Open request'
+                                        : `Open request ${index + 1}`
+                                "
+                            ></span>
+                        </x-newdebugbar::inspector-action>
+                    </template>
+                </div>
+            </div>
         </x-slot:aside>
     </x-newdebugbar::inspector-detail-header>
 
@@ -134,63 +161,23 @@
             ></div>
 
             <div
-                x-show.important="
-                    livewireActivitySourceLabel(selectedLivewireActivity) ||
-                    livewireActivityProfileIds(selectedLivewireActivity).length > 0
-                "
+                role="group"
+                aria-label="Activity source"
+                x-show.important="livewireActivitySourceLabel(selectedLivewireActivity)"
+                class="ndb:flex ndb:min-w-0 ndb:items-center ndb:gap-2 ndb:border-b ndb:border-zinc-200/90 ndb:pb-3 ndb:dark:border-zinc-800"
             >
-                <h4 class="ndb:mb-3 ndb:text-xs ndb:font-bold">Evidence</h4>
-                <x-newdebugbar::inspector-facts columns="2">
-                    <x-newdebugbar::inspector-fact
-                        label="Source"
-                        x-show.important="livewireActivitySourceLabel(selectedLivewireActivity)"
-                    >
-                        <x-slot:value>
-                            <x-newdebugbar::inspector-source-link
-                                ::title="livewireActivitySourceLabel(selectedLivewireActivity)"
-                                @click="copyText(livewireActivitySourceLabel(selectedLivewireActivity))"
-                            >
-                                <x-slot:value x-text="livewireActivitySourceLabel(selectedLivewireActivity)"></x-slot:value>
-                            </x-newdebugbar::inspector-source-link>
-                        </x-slot:value>
-                    </x-newdebugbar::inspector-fact>
-
-                    <x-newdebugbar::inspector-fact
-                        label="Request"
-                        x-show.important="livewireActivityProfileIds(selectedLivewireActivity).length > 0"
-                    >
-                        <x-slot:value class="ndb:flex ndb:flex-wrap ndb:gap-1.5">
-                            <template
-                                x-for="(profileId, index) in livewireActivityProfileIds(selectedLivewireActivity)"
-                                :key="profileId"
-                            >
-                                <x-newdebugbar::inspector-action
-                                    icon="external-link"
-                                    @click="openRelatedProfile(profileId, 'request')"
-                                    ::aria-label="'Open related request ' + (index + 1)"
-                                    class="ndb:min-h-0 ndb:bg-transparent ndb:px-0"
-                                >
-                                    <span
-                                        x-text="
-                                            livewireActivityProfileIds(selectedLivewireActivity).length === 1
-                                                ? 'Open request'
-                                                : `Open request ${index + 1}`
-                                        "
-                                    ></span>
-                                </x-newdebugbar::inspector-action>
-                            </template>
-                        </x-slot:value>
-                    </x-newdebugbar::inspector-fact>
-                </x-newdebugbar::inspector-facts>
+                <span class="ndb:shrink-0 ndb:text-xs ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400">Source</span>
+                <x-newdebugbar::inspector-source-link
+                    ::title="livewireActivitySourceLabel(selectedLivewireActivity)"
+                    @click="copyText(livewireActivitySourceLabel(selectedLivewireActivity))"
+                    class="ndb:min-w-0"
+                >
+                    <x-slot:value x-text="livewireActivitySourceLabel(selectedLivewireActivity)"></x-slot:value>
+                </x-newdebugbar::inspector-source-link>
             </div>
 
             <section x-show.important="selectedLivewireActivity.changes.length > 0">
-                <x-newdebugbar::inspector-explanation
-                    title="Which properties changed?"
-                    description="Before is the browser value at the start of the update. Sent is what the browser submitted. If Server is not confirmed or differs, inspect the trace before changing the property again."
-                />
-
-                <div class="ndb:mt-3 ndb:border-y ndb:border-zinc-200/90 ndb:dark:border-zinc-800">
+                <div class="ndb:border-b ndb:border-zinc-200/90 ndb:dark:border-zinc-800">
                     <div class="ndb:hidden ndb:grid-cols-[minmax(8rem,1fr)_minmax(6rem,0.8fr)_minmax(6rem,0.8fr)_minmax(6rem,0.8fr)] ndb:gap-3 ndb:border-b ndb:border-zinc-200/90 ndb:py-2 ndb:text-xs ndb:font-semibold ndb:text-zinc-400 ndb:dark:border-zinc-800 ndb:sm:grid">
                         <span>Property</span><span>Before</span><span>Sent</span><span>Server</span>
                     </div>
