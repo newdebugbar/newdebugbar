@@ -30,10 +30,7 @@ test('Models starts unselected and keeps a selection while opening and closing m
     },
     focus: (options) => rowFocus.push([index, options]),
   });
-  const rows = [
-    modelRow(0, 'studiojob testing studio_jobs'),
-    modelRow(1, 'proofversion testing proof_versions'),
-  ];
+  const rows = [modelRow(0, 'studiojob testing studio_jobs'), modelRow(1, 'proofversion testing proof_versions')];
 
   state.$refs = {
     content: {
@@ -730,30 +727,52 @@ test('mail preview follows canvas resizes and cleans up its observer', () => {
     assert.equal(frame.style.transform, 'translateX(-50%) scale(0.3125)');
 
     const handleMessage = listeners.get('message');
-    handleMessage({ source: {}, data: { type: 'newdebugbar:mail-preview-height', height: 700 } });
+    handleMessage({
+      source: {},
+      data: { type: 'newdebugbar:mail-preview-height', height: 700 },
+    });
     handleMessage({ source: frame.contentWindow, data: undefined });
     handleMessage({
       source: frame.contentWindow,
-      data: { type: 'newdebugbar:mail-preview-height', height: Number.POSITIVE_INFINITY },
+      data: {
+        type: 'newdebugbar:mail-preview-height',
+        height: Number.POSITIVE_INFINITY,
+      },
     });
     handleMessage({
       source: frame.contentWindow,
-      data: { type: 'newdebugbar:mail-preview-scroll', deltaY: 2, deltaMode: 1 },
+      data: {
+        type: 'newdebugbar:mail-preview-scroll',
+        deltaY: 2,
+        deltaMode: 1,
+      },
     });
     handleMessage({
       source: frame.contentWindow,
-      data: { type: 'newdebugbar:mail-preview-scroll', deltaY: 0.5, deltaMode: 2 },
+      data: {
+        type: 'newdebugbar:mail-preview-scroll',
+        deltaY: 0.5,
+        deltaMode: 2,
+      },
     });
     handleMessage({
       source: frame.contentWindow,
-      data: { type: 'newdebugbar:mail-preview-scroll', deltaY: 3, deltaMode: 0 },
+      data: {
+        type: 'newdebugbar:mail-preview-scroll',
+        deltaY: 3,
+        deltaMode: 0,
+      },
     });
     assert.deepEqual(scrolls, [32, 250, 3]);
 
     detailAvailable = false;
     handleMessage({
       source: frame.contentWindow,
-      data: { type: 'newdebugbar:mail-preview-scroll', deltaY: 10, deltaMode: 0 },
+      data: {
+        type: 'newdebugbar:mail-preview-scroll',
+        deltaY: 10,
+        deltaMode: 0,
+      },
     });
     assert.deepEqual(scrolls, [32, 250, 3]);
 
@@ -764,7 +783,9 @@ test('mail preview follows canvas resizes and cleans up its observer', () => {
     assert.equal(frame.style.height, '480px');
     assert.equal(canvas.style.height, '150px');
 
-    frame.__newDebugBarMailPreviewObserver = { disconnect: () => bodyObserverCleanup++ };
+    frame.__newDebugBarMailPreviewObserver = {
+      disconnect: () => bodyObserverCleanup++,
+    };
     state.destroy();
     observers[0].callback();
     assert.equal(bodyObserverCleanup, 1);
@@ -969,7 +990,10 @@ test('query workspace filters selects and keeps explain evidence scoped to the a
         },
       ],
     },
-    { key: 'query-3', executions: [{ execution: 3, explain_available: false }] },
+    {
+      key: 'query-3',
+      executions: [{ execution: 3, explain_available: false }],
+    },
     { key: 'query-4', executions: [{ execution: 4, explain_available: true }] },
   ];
   const queryList = {
@@ -1051,13 +1075,25 @@ test('query workspace filters selects and keeps explain evidence scoped to the a
   assert.equal(state.queryExplainScrollTop, 42);
   await state.openQueryExplain(wire);
   assert.deepEqual(explained, [2]);
-  state.receiveQueryExplain({ execution: 1, error: 'Older execution failed.' });
+  state.receiveQueryExplain({
+    profileId: state.summary.id,
+    execution: 1,
+    error: 'Older execution failed.',
+  });
   assert.equal(state.queryExplainLoading, true);
   assert.equal(records[0].executions[0].explain_error, 'Older execution failed.');
-  state.receiveQueryExplain({ execution: 'invalid' });
   state.receiveQueryExplain({
+    profileId: state.summary.id,
+    execution: 'invalid',
+  });
+  state.receiveQueryExplain({
+    profileId: state.summary.id,
     execution: 2,
-    explain: { mode: 'EXPLAIN QUERY PLAN', driver: 'sqlite', rows: [{ detail: 'SCAN users' }] },
+    explain: {
+      mode: 'EXPLAIN QUERY PLAN',
+      driver: 'sqlite',
+      rows: [{ detail: 'SCAN users' }],
+    },
     error: null,
   });
   assert.equal(state.queryExplain.mode, 'EXPLAIN QUERY PLAN');
@@ -1136,12 +1172,15 @@ test('query workspace filters selects and keeps explain evidence scoped to the a
 
 test('authorization controls filter search selection detail and section navigation', () => {
   const browser = runtime();
-  const state = createNewDebugBar({
-    sections: [
-      { key: 'request', label: 'Requests' },
-      { key: 'authorization', label: 'Authorization' },
-    ],
-  }, browser);
+  const state = createNewDebugBar(
+    {
+      sections: [
+        { key: 'request', label: 'Requests' },
+        { key: 'authorization', label: 'Authorization' },
+      ],
+    },
+    browser,
+  );
   let headingFocused = 0;
   let selectedFocused = 0;
   let detailScrolled = 0;
@@ -1242,8 +1281,20 @@ test('Views defaults to application records and lazily loads only the selected r
       origin: 'application',
       count: 2,
       items: [
-        { render_order: 1, data_key_count: 2, composer_count: 0, composers: [], source_kind: 'template' },
-        { render_order: 2, data_key_count: 1, composer_count: 0, composers: [], source_kind: 'template' },
+        {
+          render_order: 1,
+          data_key_count: 2,
+          composer_count: 0,
+          composers: [],
+          source_kind: 'template',
+        },
+        {
+          render_order: 2,
+          data_key_count: 1,
+          composer_count: 0,
+          composers: [],
+          source_kind: 'template',
+        },
       ],
     },
     {
@@ -1253,7 +1304,13 @@ test('Views defaults to application records and lazily loads only the selected r
       origin: 'framework',
       count: 1,
       items: [
-        { render_order: 3, data_key_count: 3, composer_count: 0, composers: [], source_kind: 'framework' },
+        {
+          render_order: 3,
+          data_key_count: 3,
+          composer_count: 0,
+          composers: [],
+          source_kind: 'framework',
+        },
       ],
     },
   ];
@@ -1347,14 +1404,18 @@ test('Views defaults to application records and lazily loads only the selected r
 test('Views reports retryable lazy-data failures', async () => {
   const state = createNewDebugBar(summary, runtime());
   state.$nextTick = (callback) => callback();
-  state.initializeViews([{
-    id: 'view-1',
-    origin: 'application',
-    items: [{ render_order: 8 }],
-  }]);
+  state.initializeViews([
+    {
+      id: 'view-1',
+      origin: 'application',
+      items: [{ render_order: 8 }],
+    },
+  ]);
   state.selectViewGroup('view-1');
 
-  state.loadSelectedViewData({ loadViewData: async () => Promise.reject(new Error('expired')) });
+  state.loadSelectedViewData({
+    loadViewData: async () => Promise.reject(new Error('expired')),
+  });
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(state.viewDataLoading, false);
   assert.equal(state.viewDataError, true);
@@ -1362,10 +1423,13 @@ test('Views reports retryable lazy-data failures', async () => {
 
 test('timeline controls filter sections and search labels', () => {
   const browser = runtime();
-  const state = createNewDebugBar({
-    ...summary,
-    sections: [...summary.sections, { key: 'timeline', label: 'Timeline' }, { key: 'events', label: 'Events' }],
-  }, browser);
+  const state = createNewDebugBar(
+    {
+      ...summary,
+      sections: [...summary.sections, { key: 'timeline', label: 'Timeline' }, { key: 'events', label: 'Events' }],
+    },
+    browser,
+  );
   let rowFocuses = 0;
   let detailFocuses = 0;
   const item = (id, section, search, key = false) => ({
@@ -1779,4 +1843,42 @@ test('log controls combine severity channel and search without losing record cou
   state.setLogChannel('all');
   assert.equal(state.visibleLogCount, 0);
   assert.equal(state.visibleLogGroupCount, 0);
+});
+
+test('EXPLAIN ignores success and failure from a replaced profile with the same execution', async () => {
+  const firstId = '6ba7b810-9dad-41d1-80b4-00c04fd430c8';
+  const secondId = '550e8400-e29b-41d4-a716-446655440000';
+  const state = createNewDebugBar({ ...summary, id: firstId }, runtime());
+  const records = () => [{ key: 'query-1', executions: [{ execution: 1, explain_available: true }] }];
+  state.initializeQueries(records());
+  let rejectExplain;
+  const pending = state.runQueryExplain({
+    explainQuery: () =>
+      new Promise((resolve, reject) => {
+        rejectExplain = reject;
+      }),
+  });
+
+  state.switchProfile({ ...summary, id: secondId });
+  state.initializeQueries(records());
+  state.beginQueryExplain();
+  state.receiveQueryExplain({
+    profileId: firstId,
+    execution: 1,
+    explain: { rows: ['old profile'] },
+  });
+  assert.equal(state.queryExplain, null);
+  assert.equal(state.queryExplainLoading, true);
+  rejectExplain(new Error('old request failed'));
+  await pending;
+  assert.equal(state.queryExplainError, null);
+  assert.equal(state.queryExplainLoading, true);
+
+  state.receiveQueryExplain({
+    profileId: secondId,
+    execution: 1,
+    explain: { rows: ['selected profile'] },
+  });
+  assert.deepEqual(state.queryExplain.rows, ['selected profile']);
+  assert.equal(state.queryExplainLoading, false);
 });

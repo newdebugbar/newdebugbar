@@ -37,8 +37,9 @@ it('offers runnable SQL and runs manual SQLite explain with the default bindings
         ->call('explainQuery', 1)
         ->assertSet('queryExplains.1.driver', 'sqlite')
         ->assertSet('queryExplainErrors', [])
-        ->assertDispatched('newdebugbar-query-explained', function (string $name, array $params): bool {
+        ->assertDispatched('newdebugbar-query-explained', function (string $name, array $params) use ($id): bool {
             return $name === 'newdebugbar-query-explained'
+                && $params['profileId'] === $id
                 && $params['execution'] === 1
                 && $params['explain']['driver'] === 'sqlite'
                 && $params['error'] === null;

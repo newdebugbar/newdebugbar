@@ -20,7 +20,7 @@
     @newdebugbar-profile-switched.window="switchProfile($event.detail.summary)"
     @newdebugbar-profile-noticed.window="receiveProfile($event.detail.summary)"
     @newdebugbar-profile-refreshed.window="receiveActivityRefresh($event.detail.summary, $event.detail.relatedProfiles)"
-    @newdebugbar-section-loaded.window="receiveSection($event.detail.section)"
+    @newdebugbar-section-loaded.window="receiveSection($event.detail.section, $event.detail.profileId)"
     class="ndb:pointer-events-none ndb:fixed ndb:inset-0 ndb:z-[2147483000] ndb:text-zinc-900 ndb:dark:text-zinc-100"
 >
     <span id="newdebugbar-toolbar-drag-hint" class="ndb:sr-only"

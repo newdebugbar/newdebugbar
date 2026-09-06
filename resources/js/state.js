@@ -1821,7 +1821,7 @@ export function createNewDebugBar(
       Promise.resolve(action.call(scopedWire, target))
         .then(() => {
           if (requestVersion !== this.sectionRequestVersion || profileId !== this.summary.id) return;
-          if (this.loadedSection !== target) this.receiveSection(target);
+          if (this.loadedSection !== target) this.receiveSection(target, profileId);
         })
         .catch(() => {
           if (requestVersion !== this.sectionRequestVersion || profileId !== this.summary.id) return;
@@ -1835,8 +1835,8 @@ export function createNewDebugBar(
         });
     },
 
-    receiveSection(section) {
-      if (!this.sectionKeys.includes(section) || section !== this.selected) return;
+    receiveSection(section, profileId) {
+      if (profileId !== this.summary.id || !this.sectionKeys.includes(section) || section !== this.selected) return;
 
       this.loadedSection = section;
       this.requestedSection = null;
@@ -3858,11 +3858,12 @@ export function createNewDebugBar(
 
       const execution = this.beginQueryExplain();
       if (execution === null) return;
+      const profileId = this.summary.id;
 
       try {
         await wire.explainQuery(execution);
       } catch {
-        this.failQueryExplain(execution);
+        this.failQueryExplain(execution, profileId);
       }
     },
 
@@ -3893,6 +3894,8 @@ export function createNewDebugBar(
     },
 
     receiveQueryExplain(detail = {}) {
+      if (detail.profileId !== this.summary.id) return;
+
       const execution = Number(detail.execution);
       if (!Number.isFinite(execution)) return;
 
@@ -3922,7 +3925,9 @@ export function createNewDebugBar(
       });
     },
 
-    failQueryExplain(execution = this.queryExplainExecution) {
+    failQueryExplain(execution = this.queryExplainExecution, profileId = this.summary.id) {
+      if (profileId !== this.summary.id) return;
+
       const normalizedExecution = Number(execution);
       if (!Number.isFinite(normalizedExecution)) return;
 

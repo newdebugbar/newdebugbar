@@ -259,7 +259,10 @@ test('background refresh is useful-only, bounded, and preserves related navigati
   }
 
   assert.equal(refreshes, 30);
-  assert.equal(islandCalls.every((name) => name === 'section-details'), true);
+  assert.equal(
+    islandCalls.every((name) => name === 'section-details'),
+    true,
+  );
   assert.equal(state.activityPollTimer, null);
 
   state.receiveActivityRefresh({ ...origin, background_pending: false }, [worker]);
@@ -321,13 +324,21 @@ test('background refresh reloads only sections affected by related activity', as
 
   state.selected = 'views';
   state.loadedSection = 'views';
-  state.receiveActivityRefresh({ ...origin, completion_state: 'complete', background_activity_count: 2 });
+  state.receiveActivityRefresh({
+    ...origin,
+    completion_state: 'complete',
+    background_activity_count: 2,
+  });
   await Promise.resolve();
   assert.equal(loads, 1);
 
   state.selected = 'mail';
   state.loadedSection = 'mail';
-  state.receiveActivityRefresh({ ...origin, completion_state: 'complete', background_activity_count: 3 });
+  state.receiveActivityRefresh({
+    ...origin,
+    completion_state: 'complete',
+    background_activity_count: 3,
+  });
   await Promise.resolve();
   assert.equal(loads, 2);
 });
@@ -586,4 +597,17 @@ test('section selection falls back safely and a failed section can retry', async
   assert.equal(state.sectionError, false);
   assert.equal(state.loadedSection, 'queries');
   assert.equal(state.selected, 'queries');
+});
+
+test('section-loaded events ignore another profile even when the section matches', () => {
+  const state = createNewDebugBar({ ...summary, id: 'selected-profile' }, runtime());
+  state.selected = 'queries';
+  state.requestedSection = 'queries';
+  state.sectionLoading = true;
+  state.receiveSection('queries', 'previous-profile');
+  assert.equal(state.loadedSection, null);
+  assert.equal(state.sectionLoading, true);
+  state.receiveSection('queries', 'selected-profile');
+  assert.equal(state.loadedSection, 'queries');
+  assert.equal(state.sectionLoading, false);
 });
