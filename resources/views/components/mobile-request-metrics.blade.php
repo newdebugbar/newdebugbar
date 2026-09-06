@@ -32,7 +32,7 @@
     data-ndb-mobile-request-metrics="{{ $scope }}"
     role="group"
     aria-label="Request metrics"
-    {{ $attributes->class('ndb:grid ndb:w-[7.5rem] ndb:flex-none ndb:grid-cols-3 ndb:items-stretch ndb:min-[360px]:w-[8.25rem]') }}
+    {{ $attributes->class('ndb:grid ndb:w-[8.25rem] ndb:flex-none ndb:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)] ndb:items-stretch ndb:min-[360px]:w-36') }}
 >
     @foreach ($metrics as $metric)
         @if ($metric['section'])

@@ -1,6 +1,38 @@
 <?php
 
+use NewDebugBar\Support\DurationFormatter;
 use NewDebugBar\Tests\Support\DebugBarBrowser;
+
+it('keeps mobile metric values readable across duration formats', function (int $width) {
+    $page = visit('/profiled')
+        ->resize($width, 844)
+        ->assertVisible('[data-ndb-mobile-request-metrics="toolbar"]');
+
+    foreach (['toolbar', 'header'] as $scope) {
+        if ($scope === 'header') {
+            $page->click('[data-ndb-mobile-toolbar-metric-scope="toolbar"][data-ndb-mobile-toolbar-metric="duration"]')
+                ->assertVisible('[data-ndb-mobile-request-metrics="header"]');
+        }
+
+        foreach ([0, 0.0005, 0.5, 27.63, 99.99, 999.99, 1_453.51, 10_000] as $duration) {
+            $label = DurationFormatter::format($duration);
+            $summary = json_encode(['duration_label' => $label, 'query_count' => 999, 'peak_memory_mb' => 128.25], JSON_THROW_ON_ERROR);
+
+            $page->script("Object.assign(Alpine.\$data(document.getElementById('newdebugbar')).summary, {$summary})");
+
+            $page->assertScript("document.querySelector('[data-ndb-mobile-request-metrics=\"{$scope}\"] [data-ndb-mobile-toolbar-summary=\"duration\"]').textContent", $label);
+
+            $page->assertScript(<<<JS
+                (() => {
+                    const metrics = document.querySelector('[data-ndb-mobile-request-metrics="{$scope}"]');
+                    return Array.from(metrics.querySelectorAll('[data-ndb-mobile-toolbar-summary]'))
+                        .filter((value) => value.clientWidth === 0 || value.scrollWidth > value.clientWidth)
+                        .map((value) => ({ metric: value.dataset.ndbMobileToolbarSummary, text: value.textContent, available: value.clientWidth, required: value.scrollWidth }));
+                })()
+                JS, []);
+        }
+    }
+})->with([320, 390]);
 
 it('makes mobile metrics direct actions and preserves drag pinning', function () {
     $page = visit('/profiled')
@@ -24,7 +56,7 @@ it('makes mobile metrics direct actions and preserves drag pinning', function ()
                     && metrics.getAttribute('role') === 'group'
                     && metrics.getAttribute('aria-label') === 'Request metrics'
                     && getComputedStyle(metrics).gridTemplateColumns.split(' ').length === 3
-                    && new Set(widths).size === 1
+                    && widths[1] > widths[0] && widths[0] === widths[2]
                     && request.getBoundingClientRect().width > actions.getBoundingClientRect().width
                     && metricItems.length === 3
                     && metricItems.every((item) => item.getBoundingClientRect().height >= 44)
@@ -146,7 +178,7 @@ it('stays compact below sm and returns to the full toolbar at sm', function () {
                         && values.every((value) => value.scrollWidth <= value.clientWidth + 1)
                         && labels.every((label) => label.scrollWidth <= label.clientWidth + 1)
                         && metrics.getBoundingClientRect().width <= 384
-                        && new Set(widths).size === 1
+                        && widths[1] > widths[0] && widths[0] === widths[2]
                         && buttons.length === 3
                         && buttons.every((button) => button.getBoundingClientRect().height >= 44)
                         && buttons.every((button) => button.querySelector('svg') === null)
@@ -331,7 +363,7 @@ it('keeps the main interactions usable on a phone viewport', function () {
 
                 return requestBox.width >= 100
                     && requestBox.width < toolbarBox.width * 0.42
-                    && metricsBox.width === 132
+                    && metricsBox.width < toolbarBox.width / 2
                     && metricButtons.length === 3
                     && metricButtons.every((button) => button.getBoundingClientRect().height >= 44)
                     && metrics.querySelectorAll('svg').length === 0
