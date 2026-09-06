@@ -1,5 +1,10 @@
 # The New Debug Bar for Laravel
 
+[![Tests](https://img.shields.io/github/actions/workflow/status/newdebugbar/newdebugbar/tests.yml?branch=main&label=tests)](https://github.com/newdebugbar/newdebugbar/actions/workflows/tests.yml)
+[![Total downloads](https://img.shields.io/packagist/dt/newdebugbar/newdebugbar)](https://packagist.org/packages/newdebugbar/newdebugbar)
+[![License](https://img.shields.io/github/license/newdebugbar/newdebugbar)](LICENSE)
+[![Sponsor](https://img.shields.io/badge/support-Sponsor-db61a2)](https://github.com/sponsors/benjamincrozat)
+
 ![Debug Laravel without the guesswork, with the New Debug Bar request inspector](.github/readme/newdebugbar-og.png)
 
 The New Debug Bar is a modern debugging tool for Laravel, built for developers and coding agents. It helps you understand each request and find problems without cluttering your local app.
