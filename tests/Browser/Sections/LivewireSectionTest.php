@@ -29,6 +29,8 @@ it('uses the shared edge-to-edge workspace and renders only the active Livewire 
                 const connectors = items.slice(0, -1).map((item) =>
                     item.querySelector('[data-ndb-livewire-activity-connector]').getBoundingClientRect(),
                 );
+                const cards = buttons.map((button) => button.getBoundingClientRect());
+                const timeline = document.querySelector('[data-ndb-livewire-activity-list]').getBoundingClientRect();
                 const workspaceStyle = getComputedStyle(workspace);
                 const listStyle = getComputedStyle(list);
                 const detailStyle = getComputedStyle(detail);
@@ -49,7 +51,29 @@ it('uses the shared edge-to-edge workspace and renders only the active Livewire 
                     && connectors.every((connector, index) =>
                         Math.abs((connector.left + connector.width / 2) - (dots[index].left + dots[index].width / 2)) <= 0.75
                             && connector.bottom >= dots[index + 1].top
+                            && connector.right < cards[index].left
+                            && connector.right < cards[index + 1].left
                     )
+                    && dots.every((dot, index) => dot.left >= timeline.left + 4
+                        && dot.right + 4 < cards[index].left)
+                    && buttons.every((button, index) => {
+                        const title = button.querySelector('[data-ndb-livewire-activity-title]');
+                        const titleBox = title.getBoundingClientRect();
+                        const firstLineCenter = titleBox.top + parseFloat(getComputedStyle(title).lineHeight) / 2;
+                        const text = [...button.querySelectorAll('[data-ndb-livewire-activity-title], [data-ndb-livewire-activity-component], [data-ndb-livewire-activity-time], [data-ndb-livewire-activity-duration]')]
+                            .filter((element) => element.getClientRects().length > 0);
+
+                        return Math.abs(firstLineCenter - dots[index].top - dots[index].height / 2) <= 1
+                            && title.scrollWidth <= title.clientWidth + 1
+                            && text.every((element) => {
+                                const box = element.getBoundingClientRect();
+
+                                return box.left >= cards[index].left
+                                    && box.right <= cards[index].right + 1
+                                    && box.top >= cards[index].top
+                                    && box.bottom <= cards[index].bottom + 1;
+                            });
+                    })
                     && parseFloat(workspaceStyle.borderTopWidth) === 1
                     && parseFloat(workspaceStyle.borderRightWidth) === 0
                     && parseFloat(workspaceStyle.borderBottomWidth) === 0
@@ -71,45 +95,121 @@ it('uses the shared edge-to-edge workspace and renders only the active Livewire 
         ->assertNoJavaScriptErrors();
 });
 
-it('keeps one workspace while switching between activity and mounted components', function () {
-    $page = visit('/profiled-livewire')
-        ->resize(1024, 900)
-        ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
+it('keeps one workspace while switching between activity and mounted components', function (int $width, int $height, string $theme) {
+    $page = visit('/profiled-livewire');
+    $page->script("localStorage.setItem('newdebugbar.preferences.v1', JSON.stringify({theme: '$theme'}))");
+    $page->refresh()->resize($width, $height);
 
-    DebugBarBrowser::selectSectionViaPalette($page, 'livewire');
+    if ($width < 640) {
+        $page->click('[data-ndb-mobile-toolbar-trigger="actions"]')
+            ->click('[data-ndb-mobile-toolbar-action="inspector"]')
+            ->click('[data-ndb-header-mobile-trigger="actions"]')
+            ->click('[data-ndb-header-mobile-action="palette"]')
+            ->click('[data-ndb-command="section:livewire"]');
+    } else {
+        $page->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
+
+        DebugBarBrowser::selectSectionViaPalette($page, 'livewire');
+    }
+
+    $assertStableControls = <<<'JS'
+        (() => {
+            const workspace = document.querySelector('[data-ndb-livewire-workspace]');
+            const list = workspace.querySelector('[data-ndb-livewire-list]');
+            const tabs = [...workspace.querySelectorAll('[data-ndb-livewire-tab]')];
+            const group = tabs[0].closest('[data-ndb-filter-tabs]');
+            const search = workspace.querySelector('[data-ndb-livewire-search]');
+            const controls = search.closest('[data-ndb-inspector-list-controls]');
+            const mode = tabs.find((tab) => tab.getAttribute('aria-pressed') === 'true').dataset.ndbLivewireTab;
+            const desktop = matchMedia('(min-width: 1024px)').matches;
+            const bounds = (element, properties = ['left', 'top', 'width', 'height']) => {
+                const box = element.getBoundingClientRect();
+
+                return Object.fromEntries(properties.map((property) => [property, box[property]]));
+            };
+            const current = {
+                workspace: bounds(workspace, ['left', 'width']),
+                panel: bounds(list.parentElement, ['left', 'width']),
+                group: bounds(group),
+                activity: bounds(tabs[0]),
+                components: bounds(tabs[1]),
+                search: bounds(search, ['left', 'top', 'height']),
+                list: bounds(list, desktop ? ['left', 'top', 'width', 'height'] : ['left', 'top', 'width']),
+            };
+            const baseline = window.newdebugbarLivewireModeGeometry ??= {workspace, bounds: current, searchWidths: {}};
+            const failures = Object.entries(current).flatMap(([element, properties]) =>
+                Object.entries(properties)
+                    .filter(([property, value]) => Math.abs(value - baseline.bounds[element][property]) > 1)
+                    .map(([property]) => `${element}.${property}`),
+            );
+            const searchBox = search.getBoundingClientRect();
+            const controlsBox = controls.getBoundingClientRect();
+
+            if (workspace !== baseline.workspace) failures.push('workspace replaced');
+            if (current.group.width <= 0 || current.list.width <= 0) failures.push('hidden controls');
+            if (mode in baseline.searchWidths && Math.abs(searchBox.width - baseline.searchWidths[mode]) > 1) {
+                failures.push('search width changed on return');
+            }
+            if (mode === 'components' && (Math.abs(searchBox.left - controlsBox.left) > 1
+                || Math.abs(searchBox.right - controlsBox.right) > 1)) failures.push('component search width');
+            if (list.scrollWidth > list.clientWidth + 1) failures.push('list horizontal overflow');
+            if (failures.length > 0) throw new Error(`Livewire ${mode} controls shifted: ${failures.join(', ')}`);
+
+            baseline.searchWidths[mode] = searchBox.width;
+
+            return true;
+        })()
+        JS;
 
     $page
-        ->assertScript(<<<'JS'
-            (() => {
-                const workspace = document.querySelector('[data-ndb-livewire-workspace]');
-                const list = document.querySelector('[data-ndb-livewire-list]').parentElement.getBoundingClientRect();
-
-                window.__ndbLivewireSplitWidth = {
-                    list: list.width,
-                    total: workspace.getBoundingClientRect().width,
-                };
-
-                return list.width > 0;
-            })()
-            JS)
+        ->assertAttribute('#newdebugbar', 'data-ndb-theme', $theme)
+        ->assertVisible('[data-ndb-livewire-activity-list]')
+        ->assertScript($assertStableControls)
         ->click('[data-ndb-livewire-tab="components"]')
+        ->assertAttribute('[data-ndb-livewire-tab="components"]', 'aria-pressed', 'true')
         ->assertMissing('[data-ndb-livewire-activity]')
         ->assertVisible('[data-ndb-livewire-components]')
         ->assertSeeIn('[data-ndb-livewire-component-list] [data-ndb-livewire-component-property-count]', '3 properties')
-        ->assertSeeIn('[data-ndb-livewire-component-detail] [data-ndb-livewire-component-property-count]', '3 properties')
-        ->assertSeeIn('[data-ndb-livewire-component-property-summary]', '0 changed, 2 editable')
-        ->assertScript(<<<'JS'
-            (() => {
-                const workspace = document.querySelector('[data-ndb-livewire-workspace]');
-                const list = document.querySelector('[data-ndb-livewire-list]').parentElement.getBoundingClientRect();
-                const total = workspace.getBoundingClientRect().width;
+        ->assertScript($assertStableControls);
 
-                return Math.abs(list.width - window.__ndbLivewireSplitWidth.list) <= 0.75
-                    && Math.abs(total - window.__ndbLivewireSplitWidth.total) <= 0.75;
-            })()
-            JS)
+    if ($width < 1024) {
+        $page->click('[data-ndb-livewire-component-select]');
+    }
+
+    $page
+        ->assertSeeIn('[data-ndb-livewire-component-detail] [data-ndb-livewire-component-property-count]', '3 properties')
+        ->assertSeeIn('[data-ndb-livewire-component-property-summary]', '0 changed, 2 editable');
+
+    if ($width < 1024) {
+        $page->click('[data-ndb-livewire-detail-back]');
+    }
+
+    $page
+        ->assertScript($assertStableControls)
+        ->click('[data-ndb-livewire-tab="activity"]')
+        ->assertAttribute('[data-ndb-livewire-tab="activity"]', 'aria-pressed', 'true')
+        ->assertVisible('[data-ndb-livewire-activity-list]')
+        ->assertMissing('[data-ndb-livewire-components]')
+        ->assertScript($assertStableControls)
+        ->keys('[data-ndb-livewire-tab="components"]', 'Enter')
+        ->assertAttribute('[data-ndb-livewire-tab="components"]', 'aria-pressed', 'true')
+        ->assertVisible('[data-ndb-livewire-components]')
+        ->assertScript('document.activeElement === document.querySelector("[data-ndb-livewire-tab=components]")')
+        ->assertScript($assertStableControls)
+        ->keys('[data-ndb-livewire-tab="activity"]', 'Enter')
+        ->assertAttribute('[data-ndb-livewire-tab="activity"]', 'aria-pressed', 'true')
+        ->assertVisible('[data-ndb-livewire-activity-list]')
+        ->assertScript('document.activeElement === document.querySelector("[data-ndb-livewire-tab=activity]")')
+        ->assertScript($assertStableControls)
         ->assertNoJavaScriptErrors();
-});
+})->with([
+    'short desktop light' => [1024, 720, 'light'],
+    'short desktop dark' => [1024, 720, 'dark'],
+    'tall desktop light' => [1440, 1000, 'light'],
+    'tall desktop dark' => [1440, 1000, 'dark'],
+    'mobile light' => [390, 844, 'light'],
+    'mobile dark' => [390, 844, 'dark'],
+]);
 
 it('collapses component branches with an aligned disclosure control', function () {
     $page = visit('/profiled-livewire-nested')
@@ -304,12 +404,26 @@ it('auto-sizes string edits and applies them with platform shortcuts', function 
                     && getComputedStyle(control).fieldSizing === 'content';
             })()
             JS)
-        ->assertAttribute('[data-ndb-livewire-edit-apply]', 'aria-keyshortcuts', 'Meta+Enter Control+Enter')
+        ->assertAttribute($control, 'aria-keyshortcuts', 'Meta+Enter Control+Enter')
+        ->assertScript(<<<'JS'
+            (() => {
+                const popover = document.querySelector('[data-ndb-livewire-property-popover]');
+                const textarea = popover.querySelector('textarea');
+
+                return popover.querySelectorAll('[aria-keyshortcuts]').length === 1
+                    && textarea.parentElement.querySelector('kbd') !== null;
+            })()
+            JS)
         ->type($control, "First line\nSecond line\nThird line\nFourth line\nFifth line")
         ->assertScript(<<<'JS'
             document.querySelector('[data-ndb-livewire-edit-control]').getBoundingClientRect().height
                 > window.__ndbLivewireTextareaHeight + 20
             JS)
+        ->type($control, 'First line')
+        ->keys($control, 'End')
+        ->keys($control, 'Enter')
+        ->assertValue($control, "First line\n")
+        ->assertVisible('[data-ndb-livewire-property-popover]')
         ->type($control, 'mac@example.test')
         ->keys($control, 'Meta+Enter')
         ->assertMissing('[data-ndb-livewire-property-popover]')
@@ -361,7 +475,7 @@ it('opens and applies a component property edit from its popover', function () {
         ->assertVisible('[data-ndb-livewire-property-popover]')
         ->assertVisible('[data-ndb-livewire-edit-key$=":count"]')
         ->assertAttribute('[data-ndb-livewire-edit-key$=":count"]', 'aria-expanded', 'true')
-        ->assertSeeIn('[data-ndb-livewire-edit-apply]', 'Apply to component')
+        ->assertScript('document.querySelector("[data-ndb-livewire-edit-apply]").textContent.trim()', 'Apply')
         ->assertScript(<<<'JS'
             (() => {
                 const dialog = document.querySelector('[data-ndb-livewire-property-popover]');

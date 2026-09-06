@@ -98,7 +98,7 @@ it('offers a compact two column layout for controls inside split panes', functio
         ->toContain("'layout' => 'responsive'")
         ->toContain('$isCompact = $layout === \'compact\'')
         ->toContain('\'ndb:grid-cols-2\' => $hasSecondaryFilter && $isCompact')
-        ->toContain('\'ndb:col-span-2\' => $showSearch && $hasFilter && ($isCompact || ! $hasSecondaryFilter)')
+        ->toContain('\'ndb:col-span-full\' => $showSearch')
         ->and($logs)
         ->toContain('<x-newdebugbar::inspector-list-controls :show-search="true" layout="compact">');
 });

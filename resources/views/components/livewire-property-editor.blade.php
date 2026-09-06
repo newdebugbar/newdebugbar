@@ -38,12 +38,6 @@
                     })
                 "
                 @keydown.escape.stop.prevent="cancelLivewireDraft(row, true)"
-                @keydown.meta.enter.stop.prevent="
-                    applyLivewireDraft(row, document.getElementById($id('newdebugbar-livewire-edit-trigger')))
-                "
-                @keydown.ctrl.enter.stop.prevent="
-                    applyLivewireDraft(row, document.getElementById($id('newdebugbar-livewire-edit-trigger')))
-                "
                 @click.outside="
                     if (livewireDrafts[livewireDraftKey(row)]?.status !== 'updating') {
                         cancelLivewireDraft(row);
@@ -133,13 +127,30 @@
                     </template>
 
                     <template x-if="livewireDrafts[livewireDraftKey(row)]?.type === 'String'">
-                        <textarea
-                            data-ndb-livewire-edit-control
-                            x-model="livewireDrafts[livewireDraftKey(row)].value"
-                            rows="3"
-                            :aria-label="`New value for ${row.path}`"
-                            class="ndb:field-sizing-content ndb:max-h-[min(20rem,50vh)] ndb:min-h-20 ndb:w-full ndb:resize-y ndb:overflow-y-auto ndb:rounded-lg ndb:border ndb:border-zinc-200 ndb:bg-white ndb:px-3 ndb:py-2.5 ndb:text-xs ndb:leading-5 ndb:outline-none ndb:focus:border-indigo-400 ndb:focus:ring-2 ndb:focus:ring-indigo-500/15 ndb:dark:border-zinc-700 ndb:dark:bg-zinc-900"
-                        ></textarea>
+                        <div class="ndb:space-y-2">
+                            <textarea
+                                data-ndb-livewire-edit-control
+                                x-model="livewireDrafts[livewireDraftKey(row)].value"
+                                rows="3"
+                                :aria-label="`New value for ${row.path}`"
+                                aria-keyshortcuts="Meta+Enter Control+Enter"
+                                @keydown.meta.enter.stop.prevent="
+                                    applyLivewireDraft(
+                                        row,
+                                        document.getElementById($id('newdebugbar-livewire-edit-trigger')),
+                                    )
+                                "
+                                @keydown.ctrl.enter.stop.prevent="
+                                    applyLivewireDraft(
+                                        row,
+                                        document.getElementById($id('newdebugbar-livewire-edit-trigger')),
+                                    )
+                                "
+                                class="ndb:field-sizing-content ndb:max-h-[min(20rem,50vh)] ndb:min-h-20 ndb:w-full ndb:resize-y ndb:overflow-y-auto ndb:rounded-lg ndb:border ndb:border-zinc-200 ndb:bg-white ndb:px-3 ndb:py-2.5 ndb:text-xs ndb:leading-5 ndb:outline-none ndb:focus:border-indigo-400 ndb:focus:ring-2 ndb:focus:ring-indigo-500/15 ndb:dark:border-zinc-700 ndb:dark:bg-zinc-900"
+                            ></textarea>
+                            <kbd aria-hidden="true" class="ndb:block ndb:text-xs ndb:font-semibold ndb:text-zinc-400"
+                                >⌘/Ctrl + Enter</kbd>
+                        </div>
                     </template>
 
                     <p
@@ -150,8 +161,7 @@
                     ></p>
                 </div>
 
-                <div class="ndb:flex ndb:items-center ndb:justify-between ndb:gap-3 ndb:border-t ndb:border-zinc-200/80 ndb:bg-zinc-50/70 ndb:px-4 ndb:py-3 ndb:dark:border-zinc-700/80 ndb:dark:bg-zinc-950/30">
-                    <kbd aria-hidden="true" class="ndb:text-xs ndb:font-semibold ndb:text-zinc-400">⌘/Ctrl + Enter</kbd>
+                <div class="ndb:flex ndb:items-center ndb:justify-end ndb:gap-3 ndb:border-t ndb:border-zinc-200/80 ndb:bg-zinc-50/70 ndb:px-4 ndb:py-3 ndb:dark:border-zinc-700/80 ndb:dark:bg-zinc-950/30">
                     <div class="ndb:flex ndb:shrink-0 ndb:gap-2">
                         <button
                             data-ndb-livewire-edit-cancel
@@ -164,7 +174,6 @@
                         <button
                             data-ndb-livewire-edit-apply
                             type="button"
-                            aria-keyshortcuts="Meta+Enter Control+Enter"
                             @click="
                                 applyLivewireDraft(
                                     row,
@@ -176,9 +185,7 @@
                         >
                             <span
                                 x-text="
-                                    livewireDrafts[livewireDraftKey(row)]?.status === 'updating'
-                                        ? 'Applying…'
-                                        : 'Apply to component'
+                                    livewireDrafts[livewireDraftKey(row)]?.status === 'updating' ? 'Applying…' : 'Apply'
                                 "
                             ></span>
                         </button>

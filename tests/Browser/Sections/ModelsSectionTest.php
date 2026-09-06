@@ -77,6 +77,11 @@ it('presents model activity as a persistent two column inspector', function () {
                         && ! modelList.contains(summary)
                         && summary.getBoundingClientRect().bottom < search.getBoundingClientRect().top
                         && document.querySelector('[aria-label="Model activity totals"]') === null,
+                    fullWidthControls: getComputedStyle(controls).gridTemplateColumns.trim().split(/\s+/).length === 1
+                        && [...controls.children].every((child) =>
+                            Math.abs(child.getBoundingClientRect().left - controls.getBoundingClientRect().left) <= 1
+                                && Math.abs(child.getBoundingClientRect().right - controls.getBoundingClientRect().right) <= 1
+                        ),
                     summaryCount: summary.querySelector('[data-ndb-model-summary-count]').textContent.trim() === '5 models'
                         && getComputedStyle(summary.querySelector('[data-ndb-model-visible-count]').parentElement).display === 'none',
                     fullHeight: getComputedStyle(content).display === 'flex'

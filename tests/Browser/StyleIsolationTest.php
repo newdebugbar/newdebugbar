@@ -2,6 +2,39 @@
 
 use NewDebugBar\Tests\Support\DebugBarBrowser;
 
+it('keeps selected segmented text readable on dark hover', function (string $selection) {
+    $page = visit('/profiled-livewire');
+    $page->script("localStorage.setItem('newdebugbar.preferences.v1', JSON.stringify({theme: 'dark'}))");
+    $page->refresh()
+        ->resize(1280, 900)
+        ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
+
+    DebugBarBrowser::selectSectionViaPalette($page, 'livewire');
+
+    $tab = $selection === 'aria-pressed' ? 'activity' : 'components';
+    $selector = '[data-ndb-livewire-tab="'.$tab.'"]';
+    $assertReadable = <<<JS
+        getComputedStyle(document.querySelector('$selector')).color === 'rgb(255, 255, 255)'
+        JS;
+
+    if ($selection === 'aria-selected') {
+        $page->script(<<<JS
+            document.querySelector('$selector').setAttribute('aria-selected', 'true');
+            JS);
+    }
+
+    $page
+        ->assertAttribute('#newdebugbar', 'data-ndb-theme', 'dark')
+        ->assertAttribute($selector, $selection, 'true')
+        ->hover('[data-ndb-livewire-search]')
+        ->assertScript($assertReadable)
+        ->hover($selector)
+        ->assertScript($assertReadable)
+        ->hover('[data-ndb-livewire-search]')
+        ->assertScript($assertReadable)
+        ->assertNoJavaScriptErrors();
+})->with(['aria-pressed', 'aria-selected']);
+
 it('keeps host styles and package styles isolated', function () {
     visit('/hostile-styles')
         ->assertScript("document.documentElement.getAttribute('data-theme') === 'dark'")

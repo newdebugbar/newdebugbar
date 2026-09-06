@@ -7,7 +7,7 @@
                     x-text="selectedLivewireComponent.title"
                 ></h3>
                 <p
-                    class="ndb:mt-0.5 ndb:truncate ndb:text-xs ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
+                    class="ndb:mt-0.5 ndb:truncate ndb:text-xs ndb:font-medium ndb:leading-5 ndb:text-zinc-500 ndb:dark:text-zinc-400"
                     :title="selectedLivewireComponent.name"
                     x-text="selectedLivewireComponent.name"
                 ></p>

@@ -7,13 +7,13 @@
     :class="livewireSelectedActivityId === item.id
         ? 'ndb:bg-indigo-50/65 ndb:dark:bg-indigo-950/20'
         : 'ndb:hover:bg-zinc-50/80 ndb:dark:hover:bg-zinc-900/60'"
-    class="ndb:grid ndb:h-auto ndb:w-full ndb:min-w-0 ndb:grid-cols-[minmax(0,1fr)_4.75rem] ndb:items-center ndb:gap-3 ndb:px-3 ndb:py-2.5 ndb:text-left ndb:transition-colors ndb:focus-visible:relative ndb:focus-visible:z-10 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500"
+    class="ndb:block ndb:h-auto ndb:w-full ndb:min-w-0 ndb:rounded-lg ndb:px-3 ndb:py-2.5 ndb:text-left ndb:transition-colors ndb:focus-visible:relative ndb:focus-visible:z-10 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500"
 >
-    <span class="ndb:min-w-0">
-        <span class="ndb:flex ndb:min-w-0 ndb:items-center ndb:gap-2">
+    <span class="ndb:block ndb:min-w-0">
+        <span class="ndb:flex ndb:min-w-0 ndb:flex-wrap ndb:items-baseline ndb:gap-x-2 ndb:gap-y-1">
             <span
                 data-ndb-livewire-activity-title
-                class="ndb:min-w-0 ndb:truncate ndb:text-xs ndb:font-bold"
+                class="ndb:min-w-0 ndb:break-words ndb:text-sm ndb:font-semibold ndb:leading-5 ndb:[overflow-wrap:anywhere]"
                 x-text="item.title"
             ></span>
             <span
@@ -29,12 +29,12 @@
         <span
             x-show.important="livewireActivityShowsComponent(item)"
             data-ndb-livewire-activity-component
-            class="ndb:mt-0.5 ndb:block ndb:min-w-0 ndb:truncate ndb:text-xs ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400"
+            class="ndb:mt-1 ndb:block ndb:min-w-0 ndb:break-words ndb:text-xs ndb:text-zinc-500 ndb:[overflow-wrap:anywhere] ndb:dark:text-zinc-400"
             x-text="livewireActivityComponentTitle(item)"
         ></span>
     </span>
 
-    <span class="ndb:flex ndb:min-w-0 ndb:flex-col ndb:items-end ndb:gap-0.5 ndb:text-xs ndb:tabular-nums">
+    <span class="ndb:mt-2 ndb:flex ndb:min-w-0 ndb:items-baseline ndb:justify-between ndb:gap-3 ndb:text-xs ndb:tabular-nums">
         <span
             data-ndb-livewire-activity-time
             class="ndb:max-w-full ndb:truncate ndb:font-medium ndb:text-zinc-400"

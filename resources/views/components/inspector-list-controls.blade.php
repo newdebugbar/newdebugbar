@@ -29,8 +29,7 @@
     @isset($leading)
         <div @class([
             'ndb:min-w-0 ndb:self-center',
-            'ndb:col-span-2' => $showSearch && $hasFilter && ($isCompact || ! $hasSecondaryFilter),
-            'ndb:sm:col-span-3' => $showSearch && $hasSecondaryFilter && ! $isCompact,
+            'ndb:col-span-full' => $showSearch,
         ])>
             {{ $leading }}
         </div>
@@ -39,7 +38,8 @@
     @if ($showSearch && isset($search))
         <div @class([
             'ndb:min-w-0',
-            'ndb:col-span-2' => ! $hasFilter || $hasSecondaryFilter,
+            'ndb:col-span-full' => ! $hasFilter && ! $hasSecondaryFilter,
+            'ndb:col-span-2' => $hasSecondaryFilter,
             'ndb:sm:col-span-1' => $hasSecondaryFilter && ! $isCompact,
         ])>
             {{ $search }}

@@ -35,7 +35,7 @@
                 @include('newdebugbar::livewire.livewire.controls')
             </x-slot:controls>
 
-            <x-slot:list data-ndb-livewire-list class="ndb:p-0">
+            <x-slot:list data-ndb-livewire-list class="ndb:divide-y-0 ndb:p-0">
                 <template x-if="livewireTab === 'activity'">
                     <div data-ndb-livewire-activity>
                         @include('newdebugbar::livewire.livewire.activity')
