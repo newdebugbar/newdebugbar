@@ -22,11 +22,11 @@
     <span class="ndb:min-w-0 ndb:flex-1">
         <span
             class="ndb:block ndb:truncate ndb:text-xs ndb:font-semibold"
-            :title="requestTitle(request)"
-            x-text="requestTitle(request)"
+            :title="request.title ?? 'Request'"
+            x-text="request.title ?? 'Request'"
         ></span>
         <span class="ndb:mt-0.5 ndb:flex ndb:flex-wrap ndb:items-center ndb:gap-x-2 ndb:gap-y-0.5 ndb:text-xs ndb:font-medium ndb:text-zinc-400">
-            <span x-text="requestTypeLabel(request.request_type)"></span>
+            <span x-text="request.request_type_label ?? 'Request'"></span>
             <span class="ndb:tabular-nums" x-text="request.duration_label"></span>
             <span
                 class="ndb:tabular-nums"

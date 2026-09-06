@@ -50,8 +50,21 @@ it('summarizes redirect destinations', function () use ($summaryProfile) {
         'response_headers' => ['location' => ['/work-orders']],
     ]));
 
-    expect($summary['activity'])->toBe('Redirected to /work-orders');
+    expect($summary['activity'])->toBe('Redirected to /work-orders')
+        ->and($summary['title'])->toBe('Redirected to /work-orders')
+        ->and($summary['request_type_label'])->toBe('Redirect');
 });
+
+it('prepares request titles and type labels for the request picker', function (string $type, string $label) use ($summaryProfile) {
+    $summary = (new ProfileSummaryPresenter(new Redactor))->present($summaryProfile($type, ['path' => '/patients']));
+
+    expect($summary['request_type_label'])->toBe($label)
+        ->and($summary['title'])->not->toBeEmpty();
+})->with([
+    ['ajax', 'Ajax'], ['artisan', 'Command'], ['cli', 'CLI'], ['download', 'Download'],
+    ['full_page', 'Page'], ['json', 'JSON'], ['queue', 'Worker'], ['stream', 'Stream'],
+    ['test', 'Test'], ['unknown', 'Request'],
+]);
 
 it('formats request and query durations for every toolbar placement', function () use ($summaryProfile) {
     $profile = $summaryProfile('full_page');

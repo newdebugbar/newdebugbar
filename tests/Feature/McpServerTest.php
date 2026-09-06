@@ -909,3 +909,26 @@ it('bounds deeply nested focused values and surfaces malformed profile processin
     NewDebugBarServer::tool(ListDebugProfiles::class)
         ->assertHasErrors(['The debug profile could not be processed.']);
 });
+
+it('exposes the same prepared inspector evidence through bounded MCP paths while retaining captures', function (string $route, string $section, string $records, string $raw) {
+    $id = $this->get($route, ['Accept' => 'text/html'])->assertOk()->headers->get('X-NewDebugBar-Profile');
+    $stored = app(ProfileStore::class)->get($id);
+    $profile = app(ProfilePresenter::class)->present($stored);
+    $payload = $profile['sections'][$section]['payload'];
+    expect($payload[$records])->not->toBeEmpty()
+        ->and($payload[$raw])->not->toBeEmpty();
+
+    $field = $section === 'livewire' ? 'title' : 'search';
+    $path = "/sections/{$section}/payload/{$records}/0/{$field}";
+    $response = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
+        'profile_id' => $id,
+        'path' => $path,
+        'limit' => 1,
+    ])->assertOk());
+
+    expect($response['data']['value'])->toBe($payload[$records][0][$field]);
+})->with([
+    ['/profiled-livewire', 'livewire', 'activity_records', 'activity'],
+    ['/profiled-queued-communications', 'queue', 'records', 'items'],
+    ['/profiled-redis-client', 'redis', 'records', 'items'],
+]);

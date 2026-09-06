@@ -927,82 +927,13 @@ export function createNewDebugBar(
     get livewireActivity() {
       const currentProfileId = PROFILE_PATTERN.test(this.summary?.id ?? '') ? this.summary.id : null;
       const isCurrentLivewireRequest = this.summary?.request_type === 'livewire' && currentProfileId !== null;
-      const serverActivity = this.livewireServerActivity.map((item, index) => ({
-        id: item.id ?? `server-livewire-${index + 1}`,
-        sequence: index + 1,
-        componentId: String(item.component_id ?? ''),
-        componentName: item.component_name ?? '',
-        componentTitle: item.component_title ?? 'Livewire component',
-        title: item.name ?? 'Livewire activity',
-        kind: item.type ?? 'activity',
-        status: item.status ?? 'complete',
-        occurredAt: null,
-        startedAt: item.at_ms ?? null,
-        requestAtMs: item.at_ms ?? null,
-        finishedAt: null,
-        durationMs: item.duration_ms ?? null,
-        initialRenderDurationMs: null,
-        profileIds: [
-          ...new Set([
-            ...(Array.isArray(item.profile_ids) ? item.profile_ids : []),
-            ...(isCurrentLivewireRequest ? [currentProfileId] : []),
-          ]),
-        ],
-        actions: item.method
-          ? [
-              {
-                name: item.method,
-                params: item.params ?? [],
-                metadata: item.metadata ?? {},
-              },
-            ]
-          : [],
-        changes: item.property
-          ? [
-              {
-                path: item.property,
-                before: item.before,
-                submitted: item.submitted,
-                server: item.server,
-              },
-            ]
-          : [],
-        events: item.event
-          ? [
-              {
-                name: item.event,
-                params: item.params ?? {},
-                mode: item.mode ?? 'unknown',
-                declaredTarget: item.declared_target ?? null,
-                observedRecipientIds: [],
-              },
-            ]
-          : [],
-        effects: item.effect ? { [item.effect]: true } : {},
-        phases: [],
-        error: item.message ?? null,
-        callsite: item.callsite ?? null,
-      }));
-
+      const serverActivity = this.livewireServerActivity;
       if (!this.livewireTrace.ready) return serverActivity;
 
-      const renderEvidence = new Map();
-      const lastLifecycleByComponent = new Map();
-      serverActivity.forEach((item) => {
-        const componentId = String(item.componentId);
-        if (item.kind === 'render') {
-          const owner = lastLifecycleByComponent.get(componentId);
-          if (!owner) return;
-
-          const renders = renderEvidence.get(owner.id) ?? [];
-          renders.push(item);
-          renderEvidence.set(owner.id, renders);
-
-          return;
-        }
-
-        lastLifecycleByComponent.set(componentId, item);
-      });
+      const byId = new Map(serverActivity.map((item) => [item.id, item]));
+      const renderEvidence = new Map(
+        serverActivity.map((item) => [item.id, (item.serverRenderIds ?? []).map((id) => byId.get(id)).filter(Boolean)]),
+      );
 
       const consumedServerIds = new Set();
       const hasCurrentProfileActivity =
@@ -1063,8 +994,8 @@ export function createNewDebugBar(
           .filter((at) => at !== null && at !== undefined)
           .map(Number)
           .filter(Number.isFinite);
-        const renderDurations = renders
-          .map((render) => render.durationMs)
+        const renderDurations = evidence
+          .map((item) => item.serverRenderDurationMs)
           .filter((duration) => duration !== null && duration !== undefined)
           .map(Number)
           .filter(Number.isFinite);
@@ -1075,7 +1006,7 @@ export function createNewDebugBar(
           ...item,
           callsite,
           requestAtMs: requestTimes.length > 0 ? Math.min(...requestTimes) : null,
-          initialRenderDurationMs: item.kind === 'mount' && renderDurations.length > 0 ? renderDurations[0] : null,
+          initialRenderDurationMs: item.kind === 'mount' ? (mount?.initialRenderDurationMs ?? null) : null,
           serverRenderDurationMs:
             renderDurations.length > 0 ? renderDurations.reduce((total, duration) => total + duration, 0) : null,
           serverActivityIds: evidence.map((serverItem) => serverItem.id),
@@ -1091,18 +1022,9 @@ export function createNewDebugBar(
 
         const renders = (renderEvidence.get(item.id) ?? []).filter((render) => !consumedServerIds.has(render.id));
         renders.forEach((render) => consumedServerIds.add(render.id));
-        const renderDurations = renders
-          .map((render) => render.durationMs)
-          .filter((duration) => duration !== null && duration !== undefined)
-          .map(Number)
-          .filter(Number.isFinite);
-
         return [
           {
             ...item,
-            initialRenderDurationMs: item.kind === 'mount' && renderDurations.length > 0 ? renderDurations[0] : null,
-            serverRenderDurationMs:
-              renderDurations.length > 0 ? renderDurations.reduce((total, duration) => total + duration, 0) : null,
             serverActivityIds: [item.id],
             serverRenderIds: renders.map((render) => render.id),
             serverMountId: item.kind === 'mount' ? item.id : null,
@@ -2039,27 +1961,6 @@ export function createNewDebugBar(
       });
     },
 
-    requestTitle(profile) {
-      return profile?.activity || profile?.path || 'Request';
-    },
-
-    requestTypeLabel(type) {
-      return (
-        {
-          ajax: 'Ajax',
-          artisan: 'Command',
-          cli: 'CLI',
-          download: 'Download',
-          full_page: 'Page',
-          json: 'JSON',
-          queue: 'Worker',
-          redirect: 'Redirect',
-          stream: 'Stream',
-          test: 'Test',
-        }[type] ?? 'Request'
-      );
-    },
-
     requestStatusClass(status) {
       const code = Number(status);
 
@@ -2261,7 +2162,7 @@ export function createNewDebugBar(
         if (component?.id) byId.set(String(component.id), component);
       });
       this.livewireServerComponents = [...byId.values()];
-      this.livewireServerActivity = Array.isArray(payload.activity) ? payload.activity : [];
+      this.livewireServerActivity = Array.isArray(payload.activity_records) ? payload.activity_records : [];
       trace?.mergeServerComponents?.(payload.components ?? []);
       this.syncLivewireSelection();
     },
@@ -2974,30 +2875,7 @@ export function createNewDebugBar(
     },
 
     initializeQueue(activities) {
-      this.queueActivities = Array.isArray(activities)
-        ? activities.map((activity) => ({
-            ...activity,
-            search: [
-              activity?.job,
-              activity?.job_label,
-              activity?.connection,
-              activity?.queue,
-              activity?.job_id,
-              activity?.status,
-              activity?.communication_type,
-              activity?.communication_class,
-              ...(Array.isArray(activity?.channels) ? activity.channels : []),
-              ...(Array.isArray(activity?.notifiable_types) ? activity.notifiable_types : []),
-              activity?.exception_class,
-              ...(Array.isArray(activity?.attempts)
-                ? activity.attempts.map((attempt) => attempt?.exception_class)
-                : []),
-            ]
-              .filter((value) => value !== null && value !== undefined)
-              .join(' ')
-              .toLowerCase(),
-          }))
-        : [];
+      this.queueActivities = Array.isArray(activities) ? activities : [];
       this.queueFilter = 'all';
       this.queueSearch = '';
       this.queueSelected = this.queueActivities[0]?.execution ?? null;
@@ -3077,21 +2955,7 @@ export function createNewDebugBar(
     },
 
     initializeRedis(commands) {
-      this.redisCommands = Array.isArray(commands)
-        ? commands.map((command) => ({
-            ...command,
-            search: [
-              command?.command,
-              command?.connection,
-              ...(Array.isArray(command?.keys) ? command.keys : []),
-              ...(Array.isArray(command?.key_hashes) ? command.key_hashes : []),
-              command?.exception_class,
-            ]
-              .filter((value) => value !== null && value !== undefined)
-              .join(' ')
-              .toLowerCase(),
-          }))
-        : [];
+      this.redisCommands = Array.isArray(commands) ? commands : [];
       this.redisFilter = 'all';
       this.redisSearch = '';
       this.redisSelected = this.redisCommands[0]?.execution ?? null;

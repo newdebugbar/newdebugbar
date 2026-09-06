@@ -10,7 +10,7 @@
         {{
             base64_encode(json_encode([
                 'components' => $livewirePayload['components'] ?? [],
-                'activity' => $livewirePayload['activity'] ?? [],
+                'activity_records' => $livewirePayload['activity_records'] ?? [],
             ], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE))
         }}
     </script>

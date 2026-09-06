@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import serverActivity from './fixtures/livewire-server-activity.json' with { type: 'json' };
 
 import { createNewDebugBar } from '../../resources/js/state.js';
 import { runtime } from './state-test-support.js';
@@ -202,7 +203,7 @@ function stateHarness(trace = traceHarness()) {
         ],
       },
     ],
-    activity: [],
+    activity_records: serverActivity['empty'],
   });
 
   return { browser, state, trace };
@@ -491,16 +492,7 @@ test('keeps shared requests and repetitive activity as separate inspectable inte
   const { state } = stateHarness(trace);
   assert.deepEqual(
     state.filteredLivewireActivity.map(({ id }) => id),
-    [
-      'poll-3',
-      'action-6',
-      'poll-2',
-      'poll-1',
-      'activity-3',
-      'activity-2',
-      'activity-1',
-      'activity-0',
-    ],
+    ['poll-3', 'action-6', 'poll-2', 'poll-1', 'activity-3', 'activity-2', 'activity-1', 'activity-0'],
   );
   state.selectLivewireActivity('poll-1');
   assert.equal(state.livewireSelectedActivityId, 'poll-1');
@@ -586,26 +578,7 @@ test('keeps related request and failure source evidence on the browser interacti
 
   state.mergeLivewireServer({
     components: [],
-    activity: [
-      {
-        id: 'server-action',
-        component_id: 'root-1',
-        component_title: 'Control Panel',
-        name: 'Save ran',
-        type: 'action',
-        method: 'save',
-      },
-      {
-        id: 'server-failure',
-        component_id: 'root-1',
-        component_title: 'Control Panel',
-        name: 'Control Panel failed validation',
-        type: 'failure',
-        status: 'failed_validation',
-        message: 'The email field is invalid.',
-        callsite: { file: 'app/Livewire/ControlPanel.php', line: 42 },
-      },
-    ],
+    activity_records: serverActivity['server-action'],
   });
 
   const merged = state.livewireActivity.find(({ id }) => id === 'failed-action');
@@ -613,12 +586,12 @@ test('keeps related request and failure source evidence on the browser interacti
   assert.deepEqual(state.livewireActivityProfileIds(merged), [profileId]);
   assert.equal(state.livewireActivitySourceLabel(merged), 'app/Livewire/ControlPanel.php:42');
   assert.equal(state.livewireActivity.filter(({ kind }) => kind === 'failure').length, 0);
-  assert.equal(
-    state.livewireActivity.find(({ id }) => id === 'older-failed-action').serverActivityIds,
-    undefined,
-  );
+  assert.equal(state.livewireActivity.find(({ id }) => id === 'older-failed-action').serverActivityIds, undefined);
   state.livewireSearch = 'ControlPanel.php';
-  assert.deepEqual(state.filteredLivewireActivity.map(({ id }) => id), ['failed-action']);
+  assert.deepEqual(
+    state.filteredLivewireActivity.map(({ id }) => id),
+    ['failed-action'],
+  );
   assert.equal(state.livewireActivitySourceLabel({ callsite: null }), null);
 });
 
@@ -645,18 +618,7 @@ test('keeps current request evidence standalone when its browser interaction was
   state.summary.request_type = 'livewire';
   state.mergeLivewireServer({
     components: [],
-    activity: [
-      {
-        id: 'current-server-failure',
-        component_id: 'root-1',
-        component_title: 'Control Panel',
-        name: 'Control Panel failed validation',
-        type: 'failure',
-        status: 'failed_validation',
-        message: 'The email field is invalid.',
-        callsite: { file: 'app/Livewire/ControlPanel.php', line: 42 },
-      },
-    ],
+    activity_records: serverActivity['current-server-failure'],
   });
 
   const older = state.livewireActivity.find(({ id }) => id === 'older-failed-action');
@@ -1137,28 +1099,7 @@ test('falls back to stored server evidence when browser evidence is unavailable'
         ],
       },
     ],
-    activity: [
-      {
-        id: 'stored-activity',
-        component_id: 'stored-1',
-        component_name: 'benchmark.stored',
-        component_title: 'Stored',
-        name: 'Save ran',
-        type: 'action',
-        status: 'complete',
-        method: 'save',
-        params: [],
-        at_ms: 2,
-        property: 'label',
-        before: 'Old',
-        submitted: 'Stored value',
-        server: 'Stored value',
-        event: 'stored-updated',
-        mode: 'self',
-        declared_target: 'stored-1',
-        effect: 'redirect',
-      },
-    ],
+    activity_records: serverActivity['stored-activity'],
   });
 
   assert.equal(state.livewireComponents[0].status, 'stale');
@@ -1190,53 +1131,7 @@ test('pairs retained initial render evidence with a trace-ready browser mount', 
   state.init();
   state.mergeLivewireServer({
     components: [],
-    activity: [
-      {
-        id: 'root-1-server-1',
-        component_id: 'root-1',
-        component_name: 'benchmark.control-panel',
-        component_title: 'Control Panel',
-        name: 'Control Panel mounted',
-        type: 'mount',
-        status: 'complete',
-        at_ms: 12.345,
-      },
-      {
-        id: 'root-1-server-2',
-        component_id: 'root-1',
-        component_name: 'benchmark.control-panel',
-        component_title: 'Control Panel',
-        name: 'Control Panel rendered',
-        type: 'render',
-        status: 'complete',
-        at_ms: 18.2,
-        duration_ms: 2.75,
-      },
-      {
-        id: 'server-only-server-3',
-        component_id: 'server-only',
-        component_name: 'benchmark.server-only',
-        component_title: 'Server Only',
-        name: 'Warm ran',
-        type: 'action',
-        status: 'complete',
-        method: 'warm',
-        params: [],
-        at_ms: 20,
-        duration_ms: 1.25,
-      },
-      {
-        id: 'server-only-server-4',
-        component_id: 'server-only',
-        component_name: 'benchmark.server-only',
-        component_title: 'Server Only',
-        name: 'Server Only rendered',
-        type: 'render',
-        status: 'complete',
-        at_ms: 22,
-        duration_ms: 0.75,
-      },
-    ],
+    activity_records: serverActivity['root-1-server-1'],
   });
 
   assert.equal(state.livewireActivity.length, 2);
@@ -1330,94 +1225,7 @@ test('reconciles retained lifecycle evidence without dropping browser-only or or
   state.init();
   state.mergeLivewireServer({
     components: [],
-    activity: [
-      {
-        id: 'orphan-render',
-        component_id: 'orphan',
-        name: 'Orphan rendered',
-        type: 'render',
-        at_ms: 1,
-        duration_ms: 0.4,
-      },
-      {
-        id: 'action-1',
-        component_id: 'root-1',
-        name: 'Refresh ran',
-        type: 'action',
-        method: 'refresh',
-        at_ms: 8,
-      },
-      {
-        id: 'action-render-1',
-        component_id: 'root-1',
-        name: 'Control Panel rendered',
-        type: 'render',
-        duration_ms: 1.25,
-      },
-      {
-        id: 'action-2',
-        component_id: 'root-1',
-        name: 'Refresh ran again',
-        type: 'action',
-        method: 'refresh',
-        at_ms: 10,
-      },
-      {
-        id: 'action-render-2',
-        component_id: 'root-1',
-        name: 'Control Panel rendered again',
-        type: 'render',
-        duration_ms: 2,
-      },
-      {
-        id: 'change-1',
-        component_id: 'root-1',
-        name: 'Count changed',
-        type: 'change',
-        property: 'count',
-        at_ms: 12,
-      },
-      {
-        id: 'change-render',
-        component_id: 'root-1',
-        name: 'Control Panel rendered after change',
-        type: 'render',
-      },
-      {
-        id: 'event-1',
-        component_id: 'root-1',
-        name: 'Saved dispatched',
-        type: 'event',
-        event: 'saved',
-        at_ms: 13,
-      },
-      {
-        id: 'received-1',
-        component_id: 'root-1',
-        name: 'Synced received',
-        type: 'event_received',
-        event: 'synced',
-      },
-      {
-        id: 'hydrate-1',
-        component_id: 'root-1',
-        name: 'Control Panel hydrated',
-        type: 'hydrate',
-        at_ms: 13,
-      },
-      {
-        id: 'server-mount',
-        component_id: 'server-only',
-        name: 'Server Only mounted',
-        type: 'mount',
-      },
-      {
-        id: 'server-mount-render',
-        component_id: 'server-only',
-        name: 'Server Only rendered',
-        type: 'render',
-      },
-    ],
+    activity_records: serverActivity['orphan-render'],
   });
 
   const reconciled = Object.fromEntries(state.livewireActivity.map((item) => [item.id, item]));
@@ -1460,5 +1268,8 @@ test('formats sparse Livewire evidence as deliberate unavailable and zero states
   assert.equal(state.livewireActivityDuration({ kind: 'action', durationMs: 12, status: 'complete' }), '12 ms');
   assert.equal(state.livewireComponentPropertyCount(null), 0);
   assert.equal(state.livewireComponentPropertyCountLabel({ properties: [{}] }), '1 property');
-  assert.equal(state.livewireComponentPropertyStateSummary({ id: 'not-selected', properties: [] }), '0 changed, 0 editable');
+  assert.equal(
+    state.livewireComponentPropertyStateSummary({ id: 'not-selected', properties: [] }),
+    '0 changed, 0 editable',
+  );
 });

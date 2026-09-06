@@ -22,6 +22,10 @@ final class ProfilePresenter
         private readonly SectionAnalyzer $sections,
         private readonly TimelineBuilder $timeline,
         private readonly BackgroundActivityPresenter $background,
+        private readonly QueueActivityPresenter $queue,
+        private readonly RedisCommandPresenter $redis,
+        private readonly LivewireActivityPresenter $livewire,
+        private readonly ProfileSummaryPresenter $summaries,
     ) {}
 
     /** @param array<string, mixed> $profile @return array<string, mixed> */
@@ -97,6 +101,26 @@ final class ProfilePresenter
         }
 
         $profile = $this->sections->analyze($profile);
+
+        if (isset($profile['sections']['queue'])) {
+            $profile['sections']['queue']['payload']['records'] = $this->queue->present(
+                (array) ($profile['sections']['queue']['payload']['items'] ?? []),
+                (string) ($profile['id'] ?? ''),
+            );
+        }
+
+        if (isset($profile['sections']['redis'])) {
+            $profile['sections']['redis']['payload']['records'] = $this->redis->present(
+                (array) ($profile['sections']['redis']['payload']['items'] ?? []),
+            );
+        }
+
+        if (isset($profile['sections']['livewire'])) {
+            $profile['sections']['livewire']['payload']['activity_records'] = $this->livewire->present(
+                (array) ($profile['sections']['livewire']['payload']['activity'] ?? []),
+                $this->summaries->present($profile),
+            );
+        }
 
         if (isset($profile['sections']['request'])) {
             $timeline = $this->timeline->build($profile);

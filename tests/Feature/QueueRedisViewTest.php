@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Str;
+use NewDebugBar\Presentation\QueueActivityPresenter;
+use NewDebugBar\Presentation\RedisCommandPresenter;
 
 function inspectorPayload(string $html, string $attribute): array
 {
@@ -66,6 +68,7 @@ it('normalizes queue lifecycle and related worker evidence for one active detail
     ];
     $profile = ['background_activity' => ['pending' => false]];
 
+    $section['payload']['records'] = app(QueueActivityPresenter::class)->present($section['payload']['items'], $profileId);
     $html = view('newdebugbar::livewire.sections.queue', compact('profileId', 'profile', 'section'))->render();
     $items = inspectorPayload($html, 'data-ndb-queue-payload');
 
@@ -131,6 +134,7 @@ it('keeps protected Redis identifiers out of rows and failure timing truthful', 
         ]],
     ];
 
+    $section['payload']['records'] = app(RedisCommandPresenter::class)->present($section['payload']['items']);
     $html = view('newdebugbar::livewire.sections.redis', compact('section'))->render();
     $items = inspectorPayload($html, 'data-ndb-redis-payload');
     $document = new DOMDocument;

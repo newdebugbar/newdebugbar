@@ -44,6 +44,7 @@ test('Queue searches, filters, selects, and restores mobile list focus', () => {
 
   state.initializeQueue([
     {
+      search: 'sendreceipt redis mail',
       execution: 1,
       status_group: 'waiting',
       job: 'SendReceipt',
@@ -51,12 +52,14 @@ test('Queue searches, filters, selects, and restores mobile list focus', () => {
       queue: 'mail',
     },
     {
+      search: 'syncinvoice runtimeexception',
       execution: 2,
       status_group: 'failed',
       job: 'SyncInvoice',
       exception_class: 'RuntimeException',
     },
     {
+      search: 'reindexsearch completed',
       execution: 3,
       status_group: 'completed',
       job: 'ReindexSearch',
@@ -126,12 +129,14 @@ test('Queue preserves retained attempts while filtering and changing the selecti
   state.$nextTick = (callback) => callback();
 
   const linked = {
+    search: 'sendreceipt',
     execution: 1,
     status_group: 'completed',
     job: 'SendReceipt',
     attempts: [{ sequence: 1, profile_id: 'linked-worker' }],
   };
   const unlinked = {
+    search: 'syncinvoice',
     execution: 2,
     status_group: 'failed',
     job: 'SyncInvoice',
@@ -173,6 +178,7 @@ test('Redis builds bounded search state and keeps failed filtering truthful', ()
 
   state.initializeRedis([
     {
+      search: 'get default trip:kyoto',
       execution: 1,
       command: 'GET',
       connection: 'default',
@@ -180,6 +186,7 @@ test('Redis builds bounded search state and keeps failed filtering truthful', ()
       key_hashes: [],
     },
     {
+      search: 'hget sessions 18b0b12c34d56e78 runtimeexception',
       execution: 2,
       command: 'HGET',
       connection: 'sessions',
@@ -188,6 +195,7 @@ test('Redis builds bounded search state and keeps failed filtering truthful', ()
       exception_class: 'RuntimeException',
     },
     {
+      search: 'flushdb maintenance',
       execution: 3,
       command: 'FLUSHDB',
       connection: 'maintenance',

@@ -176,15 +176,6 @@ test('request summaries format useful labels and update existing recent entries'
   state.receiveProfile({ id: 'not-a-profile' });
 
   assert.equal(state.recentProfiles.find((profile) => profile.id === current.id).path, '/updated');
-  assert.equal(state.requestTitle({ activity: 'Search patients', path: '/patients' }), 'Search patients');
-  assert.equal(state.requestTitle({ path: '/patients' }), '/patients');
-  assert.equal(state.requestTitle({}), 'Request');
-  assert.deepEqual(
-    ['ajax', 'artisan', 'cli', 'download', 'full_page', 'json', 'queue', 'redirect', 'stream', 'test', 'unknown'].map(
-      (type) => state.requestTypeLabel(type),
-    ),
-    ['Ajax', 'Command', 'CLI', 'Download', 'Page', 'JSON', 'Worker', 'Redirect', 'Stream', 'Test', 'Request'],
-  );
   assert.deepEqual(
     [200, 302, 422, 500, null].map((status) => state.requestStatusClass(status)),
     [
