@@ -20,6 +20,8 @@ final class DebugBar extends Component
 
     private const TIMELINE_PAGE_SIZE = 50;
 
+    private const TIMELINE_KEY_SECTIONS = ['request', 'queries', 'http_client', 'exceptions', 'authorization', 'validation', 'queue'];
+
     /** @var array<string, string> */
     private const SECTION_DESCRIPTIONS = [
         'authorization' => 'See what Laravel allowed or denied, for which user and arguments, then inspect the policy or Gate and source.',
@@ -56,6 +58,12 @@ final class DebugBar extends Component
 
     #[Locked]
     public int $timelineLimit = self::TIMELINE_PAGE_SIZE;
+
+    #[Locked]
+    public string $timelineFilter = 'key';
+
+    #[Locked]
+    public string $timelineSearch = '';
 
     #[Locked]
     public int $profileLimit = 20;
@@ -96,6 +104,8 @@ final class DebugBar extends Component
 
         if ($this->selectedSection !== $section) {
             $this->timelineLimit = self::TIMELINE_PAGE_SIZE;
+            $this->timelineFilter = 'key';
+            $this->timelineSearch = '';
         }
 
         $this->selectedSection = $section;
@@ -113,9 +123,21 @@ final class DebugBar extends Component
         abort_if($stored === null, 404);
 
         $profile = $presenter->present($stored);
-        $items = (array) ($profile['sections']['timeline']['payload']['items'] ?? []);
+        $items = $this->filteredTimelineItems((array) ($profile['sections']['timeline']['payload']['items'] ?? []));
         $this->timelineLimit = min(count($items), $this->timelineLimit + self::TIMELINE_PAGE_SIZE);
         $this->dispatch('newdebugbar-section-loaded', section: 'timeline', profileId: $this->profileId);
+        $this->dispatch('newdebugbar-content-updated');
+    }
+
+    public function filterTimeline(string $filter, string $search): void
+    {
+        abort_unless($this->sectionLoaded && $this->selectedSection === 'timeline', 422);
+        abort_unless(in_array($filter, ['all', 'key', ...array_keys(self::SECTION_DESCRIPTIONS)], true), 422);
+        abort_if(mb_strlen($search) > 500, 422);
+
+        $this->timelineFilter = $filter;
+        $this->timelineSearch = $search;
+        $this->timelineLimit = self::TIMELINE_PAGE_SIZE;
         $this->dispatch('newdebugbar-content-updated');
     }
 
@@ -245,6 +267,8 @@ final class DebugBar extends Component
         $this->sectionLoaded = false;
         $this->selectedSection = self::DEFAULT_SECTION;
         $this->timelineLimit = self::TIMELINE_PAGE_SIZE;
+        $this->timelineFilter = 'key';
+        $this->timelineSearch = '';
         $this->queryExplains = [];
         $this->queryExplainErrors = [];
         $this->dispatch('newdebugbar-profile-switched', summary: $this->summary);
@@ -265,6 +289,8 @@ final class DebugBar extends Component
             $profile['sections']['timeline']['payload']['available_sections'] = array_values(array_unique(array_column($items, 'section')));
             $profile['sections']['timeline']['payload']['total_item_count'] = count($items);
             $profile['sections']['timeline']['payload']['total_duration_ms'] = max(0.001, ...array_column($items, 'at_ms'));
+            $items = $this->filteredTimelineItems($items);
+            $profile['sections']['timeline']['payload']['matching_item_count'] = count($items);
             $profile['sections']['timeline']['payload']['items'] = array_slice($items, 0, $this->timelineLimit);
             $profile['sections']['timeline']['payload']['has_more'] = count($items) > $this->timelineLimit;
         }
@@ -282,6 +308,27 @@ final class DebugBar extends Component
         }
 
         return $profile;
+    }
+
+    /** @param array<int, array<string, mixed>> $items @return array<int, array<string, mixed>> */
+    private function filteredTimelineItems(array $items): array
+    {
+        $search = mb_strtolower(trim($this->timelineSearch));
+
+        return array_values(array_filter($items, function (array $item) use ($search): bool {
+            $section = $item['section'];
+            $matchesSection = $this->timelineFilter === 'all'
+                || ($this->timelineFilter === 'key' && in_array($section, self::TIMELINE_KEY_SECTIONS, true))
+                || $section === $this->timelineFilter;
+            $source = $item['source'] ?? [];
+            $text = mb_strtolower(implode(' ', [
+                $item['label'],
+                $item['section_label'] ?? str_replace('_', ' ', $section),
+                isset($source['file']) ? $source['file'].':'.($source['line'] ?? 1) : '',
+            ]));
+
+            return $matchesSection && ($search === '' || str_contains($text, $search));
+        }));
     }
 
     public function render(): View

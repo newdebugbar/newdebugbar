@@ -454,6 +454,8 @@ it('paginates long timelines in deterministic batches', function () {
 
     Livewire::test(DebugBar::class, ['profileId' => $id])
         ->call('loadSection', 'timeline')
+        ->assertSet('profile.sections.timeline.payload.matching_item_count', 2)
+        ->call('filterTimeline', 'all', '')
         ->assertSet('timelineLimit', 50)
         ->assertSet('profile.sections.timeline.payload.items', fn (array $items): bool => count($items) === 50)
         ->assertSet('profile.sections.timeline.payload.total_item_count', 122)
@@ -470,7 +472,18 @@ it('paginates long timelines in deterministic batches', function () {
         ->assertSet('profile.sections.timeline.payload.items', fn (array $items): bool => count($items) === 122)
         ->assertSet('profile.sections.timeline.payload.has_more', false)
         ->assertDontSeeHtml('data-ndb-timeline-page-sentinel')
-        ->assertSee('All 122 timeline events are loaded.');
+        ->assertSee('All 122 timeline events are loaded.')
+        ->call('filterTimeline', 'logs', 'event 119')
+        ->assertSet('timelineLimit', 50)
+        ->assertSet('profile.sections.timeline.payload.matching_item_count', 1)
+        ->assertSet('profile.sections.timeline.payload.items.0.id', 'logs-118')
+        ->assertSet('profile.sections.timeline.payload.has_more', false)
+        ->call('filterTimeline', 'logs', 'no such activity')
+        ->assertSet('profile.sections.timeline.payload.items', [])
+        ->assertSeeHtml('data-ndb-timeline-search-field')
+        ->assertSee('No timeline activity matches this search and filter.')
+        ->call('filterTimeline', 'all', '')
+        ->assertSet('profile.sections.timeline.payload.matching_item_count', 122);
 });
 
 it('keeps view data out of section html until its exact render asks', function () {

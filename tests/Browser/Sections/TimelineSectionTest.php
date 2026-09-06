@@ -199,3 +199,15 @@ it('turns the timeline into a mobile chronological drill-in without horizontal o
         ->assertVisible('[data-ndb-timeline-list]')
         ->assertNoJavaScriptErrors();
 });
+
+it('finds timeline evidence beyond the loaded page before scrolling', function () {
+    $page = visit('/profiled-timeline-long');
+    $page->resize(1280, 720)->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
+    $page->click('[data-ndb-select-section="timeline"]');
+    DebugBarBrowser::assertSectionSelected($page, 'timeline');
+    $page->assertScript('document.querySelectorAll("[data-ndb-timeline-item]").length === 50')
+        ->type('[data-ndb-timeline-search-field]', 'final_timeline_number')
+        ->assertVisible('[data-ndb-timeline-item="queries-109"]')
+        ->assertScript('document.querySelectorAll("[data-ndb-timeline-item]").length === 1')
+        ->assertNoJavaScriptErrors();
+});

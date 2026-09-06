@@ -481,10 +481,11 @@ export function createNewDebugBar(
     timelineSelected: null,
     timelineDetailOpen: false,
     timelineLoadingMore: false,
+    timelineFiltering: false,
+    timelineFilterError: false,
     timelinePaginationError: false,
     timelinePaginationCleanup: null,
     timelinePaginationRequest: 0,
-    visibleTimelineCount: summary.section_counts?.timeline ?? 0,
     eventGroups: [],
     eventSource: 'all',
     eventSearch: '',
@@ -1771,7 +1772,7 @@ export function createNewDebugBar(
         this.applyQueryView();
         this.applyViewFilters();
         this.applyAuthorizationFilters();
-        this.applyTimelineFilters();
+        this.syncTimelineSelection();
         this.applyEventFilters();
         this.applyLogFilters();
         this.applyNotificationView();
@@ -2111,8 +2112,9 @@ export function createNewDebugBar(
       this.timelineSelected = null;
       this.timelineDetailOpen = false;
       this.timelineLoadingMore = false;
+      this.timelineFiltering = false;
+      this.timelineFilterError = false;
       this.timelinePaginationError = false;
-      this.visibleTimelineCount = 0;
       this.eventGroups = [];
       this.eventSource = 'all';
       this.eventSearch = '';
@@ -4146,6 +4148,8 @@ export function createNewDebugBar(
       this.stopTimelinePagination();
       this.timelinePaginationRequest += 1;
       this.timelineLoadingMore = false;
+      this.timelineFiltering = false;
+      this.timelineFilterError = false;
       this.timelinePaginationError = false;
     },
 
@@ -4160,7 +4164,12 @@ export function createNewDebugBar(
     },
 
     loadNextTimelinePage(wire = this.$wire) {
-      if (this.timelineLoadingMore || this.timelinePaginationError || this.selected !== 'timeline') {
+      if (
+        this.timelineLoadingMore ||
+        this.timelinePaginationError ||
+        this.timelineFiltering ||
+        this.selected !== 'timeline'
+      ) {
         return Promise.resolve(false);
       }
 
@@ -4219,32 +4228,40 @@ export function createNewDebugBar(
       if (!this.sectionKeys.includes(filter) && !['all', 'key'].includes(filter)) return;
 
       this.timelineFilter = filter;
-      this.applyTimelineFilters();
+      return this.applyTimelineFilters();
     },
 
-    applyTimelineFilters() {
-      const list = this.$refs?.timelineList ?? this.$root?.querySelector?.('[x-ref="timelineList"]');
+    async applyTimelineFilters(wire = this.$wire) {
+      const island = wire?.$island;
+      const scopedWire = typeof island === 'function' ? island.call(wire, 'section-details') : wire;
+      if (typeof scopedWire?.filterTimeline !== 'function') return;
 
-      if (!list?.querySelectorAll) {
-        this.visibleTimelineCount = 0;
-
-        return;
+      this.resetTimelinePagination();
+      const request = this.timelinePaginationRequest;
+      const profileId = this.summary.id;
+      this.timelineFiltering = true;
+      this.timelineFilterError = false;
+      try {
+        await scopedWire.filterTimeline(this.timelineFilter, this.timelineSearch);
+      } catch {
+        if (request === this.timelinePaginationRequest && profileId === this.summary.id)
+          this.timelineFilterError = true;
+      } finally {
+        if (request === this.timelinePaginationRequest && profileId === this.summary.id) {
+          this.timelineFiltering = false;
+          this.$nextTick?.(() => {
+            this.syncTimelineSelection();
+            this.$refs?.timelineList?.scrollTo?.({ top: 0, behavior: 'instant' });
+            const sentinel = this.$root?.querySelector?.('[data-ndb-timeline-page-sentinel]');
+            if (sentinel) this.observeTimelinePageEnd(sentinel, wire);
+          });
+        }
       }
+    },
 
-      const search = this.timelineSearch.toLowerCase().trim();
-      let visible = 0;
-
-      [...list.querySelectorAll('[data-ndb-timeline-item]')].forEach((item) => {
-        const matches =
-          (this.timelineFilter === 'all' ||
-            (this.timelineFilter === 'key' && item.dataset.ndbTimelineKey === 'true') ||
-            item.dataset.ndbTimelineSection === this.timelineFilter) &&
-          (search === '' || item.dataset.ndbTimelineSearchValue?.includes(search));
-        item.hidden = !matches;
-        if (matches) visible++;
-      });
-
-      this.visibleTimelineCount = visible;
+    syncTimelineSelection() {
+      const list = this.$refs?.timelineList;
+      if (!list?.querySelectorAll) return;
 
       if (
         this.timelineSelected &&

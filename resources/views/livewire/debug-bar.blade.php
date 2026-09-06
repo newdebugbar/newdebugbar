@@ -10,7 +10,7 @@
             syncSectionPanels();
             applyViewFilters();
             applyAuthorizationFilters();
-            applyTimelineFilters();
+            syncTimelineSelection();
             applyEventFilters();
             applyLogFilters();
             syncHostLock();

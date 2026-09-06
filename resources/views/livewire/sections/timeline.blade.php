@@ -3,9 +3,9 @@
     $timelineItems = array_values($section['payload']['items'] ?? []);
     $timelineSections = $section['payload']['available_sections'] ?? array_values(array_unique(array_column($timelineItems, 'section')));
     $timelineSourceSections = array_values(array_filter($timelineSections, fn ($timelineSection) => $timelineSection !== 'request'));
-    $timelineKeySections = ['request', 'queries', 'http_client', 'exceptions', 'authorization', 'validation', 'queue'];
     $timelineDuration = (float) ($section['payload']['total_duration_ms'] ?? max(0.001, ...array_column($timelineItems, 'at_ms')));
     $timelineTotal = (int) ($section['payload']['total_item_count'] ?? count($timelineItems));
+    $timelineMatches = (int) ($section['payload']['matching_item_count'] ?? count($timelineItems));
     $timelineLoaded = count($timelineItems);
     $timelineTicks = [0, 25, 50, 75, 100];
     $formatMilliseconds = static fn (?float $value): ?string => $value === null
@@ -17,7 +17,7 @@
     data-ndb-timeline
     class="ndb:text-zinc-950 ndb:dark:text-white ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col"
 >
-    @if ($timelineItems !== [])
+    @if ($timelineTotal > 0)
         <x-newdebugbar::inspector-workspace
             mode="focus"
             frame="top"
@@ -47,11 +47,11 @@
                                     class="ndb:flex ndb:flex-col ndb:items-start ndb:text-xs ndb:text-zinc-700 ndb:dark:text-zinc-200"
                                 >
                                     <strong class="ndb:font-bold">
-                                        <span x-text="visibleTimelineCount"></span>
-                                        matching
+                                        {{ number_format($timelineMatches) }} matching
                                     </strong>
                                     <span class="ndb:mt-0.5 ndb:block ndb:text-xs ndb:text-zinc-500 ndb:dark:text-zinc-400">
-                                        of {{ number_format($timelineLoaded) }} loaded across {{ $formatMilliseconds($timelineDuration) }}
+                                        {{ number_format($timelineLoaded) }} loaded from {{ number_format($timelineTotal) }} captured
+                                        across {{ $formatMilliseconds($timelineDuration) }}
                                     </span>
                                 </p>
                             </x-slot:leading>
@@ -62,7 +62,8 @@
                                     placeholder="Search activity or source"
                                     data-ndb-timeline-search-field
                                     x-model="timelineSearch"
-                                    @input.debounce.100ms="applyTimelineFilters()"
+                                    @input.debounce.200ms="applyTimelineFilters()"
+                                    maxlength="500"
                                 />
                             </x-slot:search>
 
@@ -91,9 +92,20 @@
                     </x-slot:controls>
 
                     <x-slot:list
+                        ::aria-busy="timelineFiltering"
                         data-ndb-timeline-list
                         class="ndb:divide-y ndb:divide-zinc-200/80 ndb:bg-transparent ndb:dark:divide-zinc-800"
                     >
+                        <div x-cloak x-show.important="timelineFilterError" role="alert" class="ndb:p-3 ndb:text-xs">
+                            Timeline could not be filtered.
+                            <button
+                                type="button"
+                                @click="applyTimelineFilters()"
+                                class="ndb:font-semibold ndb:underline"
+                            >
+                                Retry
+                            </button>
+                        </div>
                         <div
                             data-ndb-timeline-waterfall-header
                             class="ndb:sticky ndb:top-0 ndb:z-10 ndb:hidden ndb:grid-cols-[minmax(13rem,0.8fr)_minmax(20rem,2fr)_6rem] ndb:border-b ndb:border-zinc-200/90 ndb:bg-white/95 ndb:text-xs ndb:font-semibold ndb:uppercase ndb:tracking-wider ndb:text-zinc-400 ndb:backdrop-blur-sm ndb:dark:border-zinc-800 ndb:dark:bg-zinc-950/95 ndb:lg:grid"
@@ -133,18 +145,12 @@
                                     'milestone' => 'Request milestone',
                                     default => 'Event',
                                 };
-                                $timelineSearchValue = mb_strtolower(implode(' ', array_filter([
-                                    $item['label'],
-                                    $timelineSectionLabel,
-                                    $timelineSourceLabel,
-                                ])));
                             @endphp
                             <button
                                 type="button"
                                 data-ndb-timeline-item="{{ $item['id'] }}"
                                 data-ndb-timeline-section="{{ $item['section'] }}"
                                 data-ndb-timeline-section-label="{{ $timelineSectionLabel }}"
-                                data-ndb-timeline-key="{{ in_array($item['section'], $timelineKeySections, true) ? 'true' : 'false' }}"
                                 data-ndb-timeline-kind="{{ $timelineKindLabel }}"
                                 data-ndb-timeline-label="{{ $item['label'] }}"
                                 data-ndb-timeline-at="{{ $item['at_ms'] }}"
@@ -154,7 +160,6 @@
                                 data-ndb-timeline-duration="{{ $item['duration_ms'] ?? '' }}"
                                 data-ndb-timeline-duration-label="{{ $timelineDurationLabel }}"
                                 data-ndb-timeline-source="{{ $timelineSourceLabel }}"
-                                data-ndb-timeline-search-value="{{ $timelineSearchValue }}"
                                 wire:key="timeline-item-{{ $item['id'] }}"
                                 aria-controls="newdebugbar-timeline-detail"
                                 @click="selectTimelineItem({{ \Illuminate\Support\Js::from($item['id']) }})"
@@ -206,9 +211,11 @@
                             </button>
                         @endforeach
 
-                        <div x-show.important="visibleTimelineCount === 0" class="ndb:p-3">
-                            <x-newdebugbar::empty-state label="No timeline activity matches this search and filter." />
-                        </div>
+                        @if ($timelineItems === [])
+                            <div class="ndb:p-3">
+                                <x-newdebugbar::empty-state label="No timeline activity matches this search and filter." />
+                            </div>
+                        @endif
 
                         @if ($section['payload']['has_more'] ?? false)
                             <div
@@ -226,7 +233,7 @@
                                     x-show.important="! timelineLoadingMore && ! timelinePaginationError"
                                     class="ndb:text-xs ndb:font-semibold ndb:text-zinc-400"
                                 >
-                                    Showing {{ number_format($timelineLoaded) }} of {{ number_format($timelineTotal) }} timeline
+                                    Showing {{ number_format($timelineLoaded) }} of {{ number_format($timelineMatches) }} timeline
                                     events. More activity loads as you scroll.
                                 </span>
                                 <span
@@ -239,7 +246,7 @@
                                         aria-hidden="true"
                                         class="ndb:size-3 ndb:animate-spin ndb:rounded-full ndb:border-2 ndb:border-zinc-300 ndb:border-t-indigo-500 ndb:dark:border-zinc-700 ndb:dark:border-t-indigo-400"
                                     ></span>
-                                    Loading up to {{ number_format(min(50, $timelineTotal - $timelineLoaded)) }} more
+                                    Loading up to {{ number_format(min(50, $timelineMatches - $timelineLoaded)) }} more
                                     timeline events…
                                 </span>
                                 <span
@@ -259,12 +266,12 @@
                                     </button>
                                 </span>
                             </div>
-                        @elseif ($timelineTotal > 50)
+                        @elseif ($timelineMatches > 50)
                             <p
                                 data-ndb-timeline-complete
                                 class="ndb:px-3 ndb:py-3 ndb:text-center ndb:text-xs ndb:font-semibold ndb:text-zinc-400"
                             >
-                                All {{ number_format($timelineTotal) }} timeline events are loaded.
+                                All {{ number_format($timelineMatches) }} timeline events are loaded.
                             </p>
                         @endif
                     </x-slot:list>

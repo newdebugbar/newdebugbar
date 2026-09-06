@@ -1421,7 +1421,7 @@ test('Views reports retryable lazy-data failures', async () => {
   assert.equal(state.viewDataError, true);
 });
 
-test('timeline controls filter sections and search labels', () => {
+test('timeline filters request the full capture and preserve detail navigation', async () => {
   const browser = runtime();
   const state = createNewDebugBar(
     {
@@ -1454,7 +1454,9 @@ test('timeline controls filter sections and search labels', () => {
   });
   const query = item('queries-0', 'queries', 'select users', true);
   const event = item('events-0', 'events', 'clinic ready');
-  const rows = [query, event];
+  let rows = [query, event];
+  const requests = [];
+  state.$wire = { filterTimeline: async (...args) => requests.push(args) };
   state.$refs = {
     timelineList: {
       querySelectorAll(selector) {
@@ -1466,15 +1468,11 @@ test('timeline controls filter sections and search labels', () => {
   };
   state.$nextTick = (callback) => callback();
 
-  state.applyTimelineFilters();
-  assert.equal(state.timelineFilter, 'key');
-  assert.equal(query.hidden, false);
-  assert.equal(event.hidden, true);
-
-  state.setTimelineFilter('queries');
-  assert.equal(query.hidden, false);
-  assert.equal(event.hidden, true);
-  assert.equal(state.visibleTimelineCount, 1);
+  await state.setTimelineFilter('queries');
+  assert.deepEqual(requests, [['queries', '']]);
+  // The response morph supplies only the matching page.
+  rows = [query];
+  state.syncTimelineSelection();
 
   state.selectTimelineItem('queries-0');
   assert.equal(state.timelineDetailOpen, true);
@@ -1496,16 +1494,21 @@ test('timeline controls filter sections and search labels', () => {
   assert.equal(rowFocuses, 1);
 
   state.timelineSearch = 'MISSING';
-  state.applyTimelineFilters();
-  assert.equal(query.hidden, true);
-  assert.equal(state.visibleTimelineCount, 0);
+  await state.applyTimelineFilters();
+  assert.deepEqual(requests.at(-1), ['queries', 'MISSING']);
+  rows = [];
+  state.syncTimelineSelection();
+  assert.equal(state.timelineSelected, null);
+  assert.equal(state.timelineDetailOpen, false);
 
   state.setTimelineFilter('unknown');
   assert.equal(state.timelineFilter, 'queries');
-
-  state.$refs = {};
-  state.applyTimelineFilters();
-  assert.equal(state.visibleTimelineCount, 0);
+  state.$wire.filterTimeline = async () => {
+    throw new Error('unavailable');
+  };
+  await state.applyTimelineFilters();
+  assert.equal(state.timelineFiltering, false);
+  assert.equal(state.timelineFilterError, true);
 });
 
 test('timeline loads bounded pages near the scroll end and exposes retry state', async () => {

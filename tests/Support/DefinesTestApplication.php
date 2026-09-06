@@ -115,7 +115,7 @@ trait DefinesTestApplication
 
         $router->middleware(ProfileRequest::class)->get('/profiled-timeline-long', function () {
             foreach (range(1, 110) as $number) {
-                DB::select('select ? as timeline_number', [$number]);
+                DB::select($number === 110 ? 'select ? as final_timeline_number' : 'select ? as timeline_number', [$number]);
             }
 
             return response(<<<'HTML'
