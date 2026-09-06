@@ -2,6 +2,7 @@
 @if ($profile !== [] && is_array($section))
     <div
         data-ndb-loaded-section="{{ $sectionKey }}"
+        x-data="createSection(@js($sectionKey), @js($profileId))"
         wire:key="profile-section-{{ $profileId }}-{{ $sectionKey }}"
         x-cloak
         x-show.important="loadedSection === @js($sectionKey) || requestedSection === @js($sectionKey)"

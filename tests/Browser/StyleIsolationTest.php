@@ -473,6 +473,7 @@ it('keeps host styles and package styles isolated', function () {
         ->assertScript(<<<'JS'
             (() => {
                 const row = document.querySelector('[data-ndb-mail-item]');
+                const payload = document.querySelector('[data-ndb-mail-payload]');
                 const frame = document.querySelector('[data-ndb-mail-preview-frame]');
                 const actions = document.querySelector('[data-ndb-mail-actions]');
                 const metadata = document.querySelector('[data-ndb-mail-metadata]');
@@ -484,6 +485,8 @@ it('keeps host styles and package styles isolated', function () {
                 const tabIcons = [...document.querySelectorAll('[data-ndb-mail-detail-tab-icon]')];
 
                 return getComputedStyle(row).borderLeftWidth === '0px'
+                    && payload.tagName === 'SCRIPT'
+                    && getComputedStyle(payload).display === 'none'
                     && frame.getBoundingClientRect().width > 300
                     && getComputedStyle(frame).borderLeftWidth === '1px'
                     && getComputedStyle(actions).borderLeftWidth === '0px'

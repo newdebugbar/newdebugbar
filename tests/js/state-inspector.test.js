@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createNewDebugBar, STORAGE_KEY } from '../../resources/js/state.js';
+import { createNewDebugBar } from '../../resources/js/state.js';
+import { STORAGE_KEY } from '../../resources/js/shell/preferences.js';
 import { runtime, summary } from './state-test-support.js';
 
 test('the inspector moves focus to shrink and returns it when closed', () => {
@@ -43,12 +44,15 @@ test('prevented escape events do not close the inspector', () => {
 test('the request action reuses an open inspector and opens a closed one', () => {
   const browser = runtime();
   const opener = {};
-  const state = createNewDebugBar({
-    sections: [
-      { key: 'request', label: 'Request' },
-      { key: 'queries', label: 'Queries' },
-    ],
-  }, browser);
+  const state = createNewDebugBar(
+    {
+      sections: [
+        { key: 'request', label: 'Request' },
+        { key: 'queries', label: 'Queries' },
+      ],
+    },
+    browser,
+  );
   state.$root = { querySelectorAll: () => [] };
   state.$wire = { loadSection: async () => {} };
   state.$nextTick = (callback) => callback();
@@ -119,9 +123,24 @@ test('mobile section navigation manages focus and layered dismissal', () => {
   let selectedFocused = 0;
   let headingFocused = 0;
   let openerFocused = 0;
-  const opener = { focus() { active = opener; openerFocused++; } };
-  const selectedButton = { focus() { active = selectedButton; selectedFocused++; } };
-  const heading = { focus() { active = heading; headingFocused++; } };
+  const opener = {
+    focus() {
+      active = opener;
+      openerFocused++;
+    },
+  };
+  const selectedButton = {
+    focus() {
+      active = selectedButton;
+      selectedFocused++;
+    },
+  };
+  const heading = {
+    focus() {
+      active = heading;
+      headingFocused++;
+    },
+  };
   const browser = runtime();
   browser.activeElement = () => active;
   const state = createNewDebugBar(summary, browser);
@@ -167,18 +186,42 @@ test('mobile toolbar menus manage focus and hand off to overlays', () => {
   let menuItemFocused = 0;
   let paletteFocused = 0;
   let shrinkFocused = 0;
-  const actionsOpener = { focus() { active = actionsOpener; actionsFocused++; } };
-  const metricOpener = { focus() { active = metricOpener; } };
-  const menuItem = { focus() { active = menuItem; menuItemFocused++; } };
-  const paletteSearch = { focus() { active = paletteSearch; paletteFocused++; } };
-  const shrink = { focus() { active = shrink; shrinkFocused++; } };
+  const actionsOpener = {
+    focus() {
+      active = actionsOpener;
+      actionsFocused++;
+    },
+  };
+  const metricOpener = {
+    focus() {
+      active = metricOpener;
+    },
+  };
+  const menuItem = {
+    focus() {
+      active = menuItem;
+      menuItemFocused++;
+    },
+  };
+  const paletteSearch = {
+    focus() {
+      active = paletteSearch;
+      paletteFocused++;
+    },
+  };
+  const shrink = {
+    focus() {
+      active = shrink;
+      shrinkFocused++;
+    },
+  };
   const browser = runtime();
   browser.activeElement = () => active;
   const state = createNewDebugBar(summary, browser);
   state.$wire = { loadSection: async () => {} };
   state.$refs = { paletteSearch };
   state.$root = {
-    querySelector: (selector) => selector.includes('data-ndb-mobile-toolbar-menu') ? menuItem : shrink,
+    querySelector: (selector) => (selector.includes('data-ndb-mobile-toolbar-menu') ? menuItem : shrink),
     querySelectorAll: () => [],
   };
   state.$nextTick = (callback) => callback();
@@ -246,21 +289,33 @@ test('theme menus expose explicit choices and manage layered focus', () => {
   let active = null;
   let openerFocused = 0;
   let paletteFocused = 0;
-  const opener = { focus() { active = opener; openerFocused++; } };
+  const opener = {
+    focus() {
+      active = opener;
+      openerFocused++;
+    },
+  };
   const option = (theme) => ({
     dataset: { ndbThemeOption: theme },
-    focus() { active = this; },
+    focus() {
+      active = this;
+    },
   });
   const options = [option('system'), option('light'), option('dark')];
   const menu = { querySelectorAll: () => options };
   const emptyMenu = { querySelectorAll: () => [] };
-  const paletteSearch = { focus() { active = paletteSearch; paletteFocused++; } };
+  const paletteSearch = {
+    focus() {
+      active = paletteSearch;
+      paletteFocused++;
+    },
+  };
   const browser = runtime();
   browser.activeElement = () => active;
   const state = createNewDebugBar(summary, browser);
   state.$refs = { paletteSearch };
   state.$root = {
-    querySelector: (selector) => selector.includes('data-ndb-theme-menu') ? menu : null,
+    querySelector: (selector) => (selector.includes('data-ndb-theme-menu') ? menu : null),
   };
   state.$nextTick = (callback) => callback();
 
@@ -325,8 +380,20 @@ test('modal focus wraps at both edges', () => {
   const browser = runtime();
   browser.activeElement = () => active;
   const state = createNewDebugBar(summary, browser);
-  const first = { hidden: false, getClientRects: () => [{}], focus() { active = first; } };
-  const last = { hidden: false, getClientRects: () => [{}], focus() { active = last; } };
+  const first = {
+    hidden: false,
+    getClientRects: () => [{}],
+    focus() {
+      active = first;
+    },
+  };
+  const last = {
+    hidden: false,
+    getClientRects: () => [{}],
+    focus() {
+      active = last;
+    },
+  };
   const container = {
     contains: (element) => [first, last].includes(element),
     querySelectorAll: () => [first, last],

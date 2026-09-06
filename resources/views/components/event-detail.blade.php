@@ -171,7 +171,7 @@
                         icon="external-link"
                         data-ndb-event-related-section
                         x-show.important="selectedEvent.related_section"
-                        @click="navigateToSection(selectedEvent.related_section.key)"
+                        @click="inspector.navigateToSection(selectedEvent.related_section.key)"
                         class="ndb:mt-4 ndb:sm:mt-6"
                     >
                         <span x-text="selectedEvent.related_section ? 'Open ' + selectedEvent.related_section.label : ''"></span>

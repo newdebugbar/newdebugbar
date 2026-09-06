@@ -1,11 +1,7 @@
 {{-- Renders current-page Livewire activity and mounted components in one shared workspace. --}}
 @php($livewirePayload = $section['payload'] ?? ['components' => [], 'activity' => []])
 
-<div
-    data-ndb-livewire
-    x-init="mergeLivewireServer(JSON.parse(atob($el.querySelector('[data-ndb-livewire-payload]').textContent.trim())))"
-    class="ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col"
->
+<div data-ndb-livewire x-init="refresh()" class="ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col">
     <script type="application/json" data-ndb-livewire-payload>
         {{
             base64_encode(json_encode([

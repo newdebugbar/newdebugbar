@@ -221,11 +221,7 @@
 
 <div
     data-ndb-authorization
-    x-init="
-        initializeAuthorization(
-            JSON.parse(atob($el.querySelector('[data-ndb-authorization-payload]').textContent.trim())),
-        )
-    "
+    x-init="refresh()"
     class="ndb:space-y-4 ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col ndb:lg:space-y-0"
 >
     <script type="application/json" data-ndb-authorization-payload>

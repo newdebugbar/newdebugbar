@@ -23,7 +23,7 @@
                     <x-newdebugbar::inspector-action
                         icon="external-link"
                         x-show.important="attempt.profile_id"
-                        @click="openRelatedProfile(attempt.profile_id, 'queue')"
+                        @click="inspector.openRelatedProfile(attempt.profile_id, 'queue')"
                         class="ndb:h-9 ndb:min-h-0 ndb:bg-transparent"
                     >Open worker</x-newdebugbar::inspector-action>
                 </article>

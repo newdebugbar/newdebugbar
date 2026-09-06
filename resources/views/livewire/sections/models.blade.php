@@ -6,7 +6,7 @@
 
 <div
     data-ndb-models
-    x-init="initializeModels({{ $modelCount }})"
+    x-init="refresh()"
     class="ndb:text-zinc-950 ndb:[&_code]:bg-transparent ndb:[&_dd]:bg-transparent ndb:[&_dl]:bg-transparent ndb:[&_dt]:bg-transparent ndb:dark:text-white ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col"
 >
     @if ($modelGroups !== [])

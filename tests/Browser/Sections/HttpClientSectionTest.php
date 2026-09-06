@@ -263,7 +263,7 @@ it('filters, selects, and inspects outbound HTTP evidence', function () {
             JS)
         ->assertScript(<<<'JS'
             (() => {
-                const state = document.getElementById('newdebugbar')._x_dataStack?.[0];
+                const state = Alpine.$data(document.querySelector('[data-ndb-loaded-section="http_client"]'));
 
                 window.newdebugbarExpectedClipboard = {
                     curl: state?.selectedHttpClientRequest?.curl,
@@ -389,7 +389,7 @@ it('filters, selects, and inspects outbound HTTP evidence', function () {
         ->wait(0.05)
         ->assertScript(<<<'JS'
             (() => {
-                const state = document.getElementById('newdebugbar')._x_dataStack?.[0];
+                const state = Alpine.$data(document.querySelector('[data-ndb-loaded-section="http_client"]'));
 
                 return window.newdebugbarFallbackClipboard
                     === state.formatHttpClientEvidence(state.selectedHttpClientRequest.request.body);

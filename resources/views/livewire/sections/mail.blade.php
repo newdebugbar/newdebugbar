@@ -190,9 +190,13 @@
 
 <div
     data-ndb-mail
-    x-init="initializeMail({{ \Illuminate\Support\Js::encode($mailItems) }})"
+    x-init="refresh()"
     class="ndb:space-y-4 ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col ndb:lg:space-y-0"
 >
+    <script type="application/json" data-ndb-mail-payload>
+        {{ base64_encode(\Illuminate\Support\Js::encode($mailItems)) }}
+    </script>
+
     @if ($mailItems !== [])
         <x-newdebugbar::inspector-workspace frame="top" data-ndb-mail-workspace>
             <x-newdebugbar::inspector-list-panel detail-open="mailDetailOpen" list-ref="mailList">
@@ -438,7 +442,7 @@
                                                 type="button"
                                                 data-ndb-mail-related-profile
                                                 @click="
-                                                    openRelatedProfile(
+                                                    inspector.openRelatedProfile(
                                                         selectedMailMessage.related_profile_id,
                                                         selectedMailMessage.related_section,
                                                     )

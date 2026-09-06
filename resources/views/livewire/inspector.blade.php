@@ -113,7 +113,7 @@
                                     :aria-label="isFavorite(section.key)
                                         ? section.label + '. Drag to reorder. Shift and arrow keys also reorder.'
                                         : section.label"
-                                    @click="selectSection(section.key)"
+                                    @click="inspector.selectSection(section.key)"
                                     @keydown.shift.arrow-up.prevent="moveFavorite(section.key, -1)"
                                     @keydown.shift.arrow-down.prevent="moveFavorite(section.key, 1)"
                                     class="ndb:flex ndb:h-9 ndb:min-w-0 ndb:flex-1 ndb:items-center ndb:gap-2 ndb:rounded-lg ndb:px-2.5 ndb:text-left ndb:text-xs ndb:font-semibold ndb:transition ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500"

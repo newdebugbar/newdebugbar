@@ -300,7 +300,7 @@
                                 <x-newdebugbar::inspector-action
                                     icon="external-link"
                                     data-ndb-timeline-open-section
-                                    @click="selectSection(selectedTimelineItem.section)"
+                                    @click="inspector.selectSection(selectedTimelineItem.section)"
                                 >
                                     Open section
                                 </x-newdebugbar::inspector-action>

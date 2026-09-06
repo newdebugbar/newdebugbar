@@ -14,7 +14,7 @@
 
 <div
     data-ndb-redis
-    x-init="initializeRedis(JSON.parse(atob($el.querySelector('[data-ndb-redis-payload]').textContent.trim())))"
+    x-init="refresh()"
     class="ndb:border-l-0 ndb:bg-transparent ndb:text-zinc-950 ndb:dark:text-white ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col"
 >
     <script type="application/json" data-ndb-redis-payload>

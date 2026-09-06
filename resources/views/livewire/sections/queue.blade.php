@@ -34,7 +34,7 @@
 
 <div
     data-ndb-queue
-    x-init="initializeQueue(JSON.parse(atob($el.querySelector('[data-ndb-queue-payload]').textContent.trim())))"
+    x-init="refresh()"
     class="ndb:border-l-0 ndb:bg-transparent ndb:text-zinc-950 ndb:dark:text-white ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col"
 >
     <script type="application/json" data-ndb-queue-payload>
@@ -187,7 +187,7 @@
                                         data-ndb-queue-profile-link
                                         x-show.important="selectedQueueActivity.related_profile_id"
                                         @click="
-                                            openRelatedProfile(
+                                            inspector.openRelatedProfile(
                                                 selectedQueueActivity.related_profile_id,
                                                 selectedQueueActivity.related_section,
                                             )

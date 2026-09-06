@@ -22,7 +22,7 @@
 @endphp
 
 @if ($groups !== [])
-    <div x-init="initializeLogs()" class="ndb:flex ndb:min-h-0 ndb:flex-1 ndb:flex-col">
+    <div x-init="refresh()" class="ndb:flex ndb:min-h-0 ndb:flex-1 ndb:flex-col">
         <x-newdebugbar::inspector-workspace frame="top" data-ndb-log-workspace>
             <x-newdebugbar::inspector-list-panel detail-open="logDetailOpen" list-ref="logList">
                 <x-slot:controls data-ndb-log-controls>

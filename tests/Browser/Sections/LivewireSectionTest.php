@@ -321,7 +321,7 @@ it('keeps the property editor usable in a narrow dark inspector', function () {
 
     $page->script(<<<'JS'
         (() => {
-            const state = Alpine.$data(document.getElementById('newdebugbar'));
+            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-section="livewire"]'));
             state.livewireTrace = {
                 ...state.livewireTrace,
                 activity: state.livewireTrace.activity.map((item) => ({ ...item, status: 'failed' })),
@@ -680,7 +680,7 @@ it('centers segmented detail tabs and instantiates only the active evidence pane
 
     $page->script(<<<'JS'
         (() => {
-            const state = Alpine.$data(document.getElementById('newdebugbar'));
+            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-section="livewire"]'));
             const selected = state.livewireSelectedActivityId;
             state.livewireTrace = {
                 ...state.livewireTrace,
@@ -726,7 +726,7 @@ it('centers segmented detail tabs and instantiates only the active evidence pane
 
     $page->script(<<<'JS'
         (() => {
-            const state = Alpine.$data(document.getElementById('newdebugbar'));
+            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-section="livewire"]'));
             const selected = state.livewireSelectedActivityId;
             state.livewireTrace = {
                 ...state.livewireTrace,

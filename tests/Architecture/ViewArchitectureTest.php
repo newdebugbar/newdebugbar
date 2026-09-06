@@ -47,7 +47,7 @@ it('keeps Timeline on shared inspector geometry with namespaced behavior hooks',
 it('keeps Views on one shared workspace with merged lazy detail evidence', function () {
     $root = dirname(__DIR__, 2);
     $views = file_get_contents($root.'/resources/views/livewire/sections/views.blade.php');
-    $state = file_get_contents($root.'/resources/js/state.js');
+    $state = file_get_contents($root.'/resources/js/sections/views.js');
 
     expect($views)
         ->toContain(

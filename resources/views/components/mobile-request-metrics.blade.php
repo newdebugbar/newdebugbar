@@ -40,7 +40,7 @@
                 type="button"
                 data-ndb-mobile-toolbar-metric="{{ $metric['key'] }}"
                 data-ndb-mobile-toolbar-metric-scope="{{ $scope }}"
-                @click="inspectorOpen ? selectSection(@js($metric['section'])) : openInspector(@js($metric['section']))"
+                @click="inspectorOpen ? inspector.selectSection(@js($metric['section'])) : openInspector(@js($metric['section']))"
                 aria-label="{{ $metric['ariaLabel'] }}"
                 class="ndb:relative ndb:flex ndb:min-h-11 ndb:min-w-0 ndb:flex-col ndb:items-center ndb:justify-center ndb:rounded-lg ndb:transition-colors ndb:hover:bg-zinc-100/80 ndb:focus-visible:z-10 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500 ndb:dark:hover:bg-white/10"
             >

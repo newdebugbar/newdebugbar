@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createNewDebugBar, STORAGE_KEY } from '../../resources/js/state.js';
+import { createNewDebugBar } from '../../resources/js/state.js';
+import { STORAGE_KEY } from '../../resources/js/shell/preferences.js';
 import { runtime, summary, toolbarHarness } from './state-test-support.js';
 
 test('moves the compact toolbar to the edge with less host dialog overlap', () => {
@@ -35,14 +36,7 @@ test('moves the compact toolbar to the edge with less host dialog overlap', () =
 });
 
 test('restores and commands every supported toolbar anchor', () => {
-  const placements = [
-    'top-left',
-    'top',
-    'top-right',
-    'bottom-left',
-    'bottom',
-    'bottom-right',
-  ];
+  const placements = ['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'];
 
   placements.forEach((placement) => {
     const { state } = toolbarHarness({ toolbarAnchor: placement });
@@ -56,14 +50,7 @@ test('restores and commands every supported toolbar anchor', () => {
   });
 
   const state = createNewDebugBar(summary, runtime());
-  const commandPlacements = [
-    'top',
-    'bottom',
-    'top-left',
-    'top-right',
-    'bottom-left',
-    'bottom-right',
-  ];
+  const commandPlacements = ['top', 'bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right'];
 
   assert.deepEqual(
     state.allCommands.filter((command) => command.id.startsWith('toolbar:')).map((command) => command.id),

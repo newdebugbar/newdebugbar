@@ -161,7 +161,7 @@
 
 <div
     data-ndb-queries
-    x-init="initializeQueries(JSON.parse(atob($el.querySelector('[data-ndb-query-payload]').textContent.trim())))"
+    x-init="refresh()"
     @newdebugbar-query-explained.window="receiveQueryExplain($event.detail)"
     class="ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col"
 >

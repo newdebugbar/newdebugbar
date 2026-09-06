@@ -22,7 +22,7 @@
                     data-ndb-notification-profile-link
                     x-show.important="selectedNotification.related_profile_id"
                     @click="
-                        openRelatedProfile(
+                        inspector.openRelatedProfile(
                             selectedNotification.related_profile_id,
                             selectedNotification.related_section,
                         )

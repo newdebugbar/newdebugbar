@@ -70,7 +70,7 @@
             <x-newdebugbar::inspector-action
                 icon="external-link"
                 data-ndb-exception-context-action
-                @click="navigateToSection('request')"
+                @click="inspector.navigateToSection('request')"
             >
                 {{ $profileActionLabel }}
             </x-newdebugbar::inspector-action>

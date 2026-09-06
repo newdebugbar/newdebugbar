@@ -38,7 +38,7 @@
                     >
                         <x-newdebugbar::inspector-action
                             icon="external-link"
-                            @click="openRelatedProfile(profileId, 'request')"
+                            @click="inspector.openRelatedProfile(profileId, 'request')"
                             ::aria-label="'Open related request ' + (index + 1)"
                         >
                             <span

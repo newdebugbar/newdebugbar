@@ -19,7 +19,7 @@
 
 <div
     data-ndb-views
-    x-init="initializeViews(JSON.parse(atob($el.querySelector('[data-ndb-view-payload]').textContent.trim())))"
+    x-init="refresh()"
     class="ndb:text-zinc-950 ndb:dark:text-white ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col"
 >
     <script type="application/json" data-ndb-view-payload>

@@ -1,4 +1,5 @@
-import { createNewDebugBar, STORAGE_KEY } from '../../resources/js/state.js';
+import { createNewDebugBar } from '../../resources/js/state.js';
+import { STORAGE_KEY } from '../../resources/js/shell/preferences.js';
 
 export function runtime(saved = null) {
   const values = new Map(saved ? [[STORAGE_KEY, JSON.stringify(saved)]] : []);
@@ -97,4 +98,23 @@ export function toolbarHarness(saved = null) {
   });
 
   return { browser, capture, pointer, state, toolbar };
+}
+
+// Supplies the parent Livewire scope used by a mounted Alpine section.
+export function sectionHarness(section, summary, browser, recentProfiles = [], profileLimit = 20, trace = null) {
+  const shell = createNewDebugBar(summary, browser, recentProfiles, profileLimit, trace);
+  shell.selected = section;
+  shell.loadedSection = section;
+  shell.inspectorOpen = true;
+  const state = shell.createSection(section);
+  for (const magic of ['$wire', '$nextTick']) {
+    Object.defineProperty(state, magic, {
+      configurable: true,
+      get: () => shell[magic],
+      set: (value) => {
+        shell[magic] = value;
+      },
+    });
+  }
+  return { state, shell };
 }

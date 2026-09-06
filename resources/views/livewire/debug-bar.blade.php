@@ -8,11 +8,7 @@
         $nextTick(() => {
             syncSectionHeading();
             syncSectionPanels();
-            applyViewFilters();
-            applyAuthorizationFilters();
-            syncTimelineSelection();
-            applyEventFilters();
-            applyLogFilters();
+            refreshSection();
             syncHostLock();
             window.newDebugBarHighlight?.($root);
         })

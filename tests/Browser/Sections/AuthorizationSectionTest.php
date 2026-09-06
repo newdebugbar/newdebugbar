@@ -148,7 +148,7 @@ it('scans filters searches and inspects authorization evidence on desktop', func
             JS)
         ->assertScript(<<<'JS'
             (() => {
-                const state = document.getElementById('newdebugbar')._x_dataStack?.[0];
+                const state = Alpine.$data(document.querySelector('[data-ndb-loaded-section="authorization"]'));
 
                 window.newdebugbarAuthorizationClipboard = [];
                 Object.defineProperty(window.navigator, 'clipboard', {

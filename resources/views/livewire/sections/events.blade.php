@@ -11,7 +11,7 @@
 
 <div
     data-ndb-events
-    x-init="initializeEvents(JSON.parse(atob($el.querySelector('[data-ndb-event-payload]').textContent.trim())))"
+    x-init="refresh()"
     class="ndb:space-y-4 ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col ndb:lg:space-y-0"
 >
     <script type="application/json" data-ndb-event-payload>

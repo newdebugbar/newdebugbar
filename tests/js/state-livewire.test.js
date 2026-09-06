@@ -2,8 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import serverActivity from './fixtures/livewire-server-activity.json' with { type: 'json' };
 
-import { createNewDebugBar } from '../../resources/js/state.js';
-import { runtime } from './state-test-support.js';
+import { runtime, sectionHarness } from './state-test-support.js';
 
 const livewireSummary = {
   id: '550e8400-e29b-41d4-a716-446655440000',
@@ -148,7 +147,7 @@ function traceHarness(
 
 function stateHarness(trace = traceHarness()) {
   const browser = runtime();
-  const state = createNewDebugBar({ ...livewireSummary }, browser, [], 20, trace);
+  const { state, shell } = sectionHarness('livewire', { ...livewireSummary }, browser, [], 20, trace);
   state.$root = { querySelectorAll: () => [], querySelector: () => null };
   state.$nextTick = (callback) => callback();
   state.init();
@@ -206,11 +205,11 @@ function stateHarness(trace = traceHarness()) {
     activity_records: serverActivity['empty'],
   });
 
-  return { browser, state, trace };
+  return { browser, state, shell, trace };
 }
 
 test('orders several roots and nested instances while preserving stable instance identity', () => {
-  const { state } = stateHarness();
+  const { state, shell } = stateHarness();
 
   assert.deepEqual(
     state.livewireComponents.map(({ id, depth }) => [id, depth]),
@@ -261,7 +260,7 @@ test('collapses every component branch without hiding search matches', () => {
     activity,
     dropped: { components: 0, activity: 0 },
   });
-  const { state } = stateHarness(trace);
+  const { state, shell } = stateHarness(trace);
   const root = state.livewireComponents.find(({ id }) => id === 'root-1');
   const child = state.livewireComponents.find(({ id }) => id === 'child-1');
   const pulse = state.livewireComponents.find(({ id }) => id === 'grandchild-1');
@@ -333,7 +332,7 @@ test('collapses every component branch without hiding search matches', () => {
 });
 
 test('filters activity and moves between activity and component details', () => {
-  const { state } = stateHarness();
+  const { state, shell } = stateHarness();
 
   assert.equal(state.livewireSelectedActivityId, 'activity-3');
   assert.deepEqual(
@@ -419,7 +418,7 @@ test('filters activity and moves between activity and component details', () => 
 
 test('keeps the newest visible activity selected until the developer chooses another item', () => {
   const trace = traceHarness();
-  const { state } = stateHarness(trace);
+  const { state, shell } = stateHarness(trace);
   const fourth = {
     ...activity[2],
     id: 'activity-4',
@@ -489,7 +488,7 @@ test('keeps shared requests and repetitive activity as separate inspectable inte
     ],
     dropped: { components: 0, activity: 0 },
   });
-  const { state } = stateHarness(trace);
+  const { state, shell } = stateHarness(trace);
   assert.deepEqual(
     state.filteredLivewireActivity.map(({ id }) => id),
     ['poll-3', 'action-6', 'poll-2', 'poll-1', 'activity-3', 'activity-2', 'activity-1', 'activity-0'],
@@ -535,7 +534,7 @@ test('keeps every interaction in a bundled request separate', () => {
     activity: [...activity, ...requestActivity],
     dropped: { components: 0, activity: 0 },
   });
-  const { state } = stateHarness(trace);
+  const { state, shell } = stateHarness(trace);
   assert.deepEqual(
     state.filteredLivewireActivity.slice(0, 3).map(({ id }) => id),
     ['request-child-2', 'request-child-1', 'request-action'],
@@ -573,8 +572,8 @@ test('keeps related request and failure source evidence on the browser interacti
     ],
     dropped: { components: 0, activity: 0 },
   });
-  const { state } = stateHarness(trace);
-  state.summary.request_type = 'livewire';
+  const { state, shell } = stateHarness(trace);
+  shell.summary.request_type = 'livewire';
 
   state.mergeLivewireServer({
     components: [],
@@ -614,8 +613,8 @@ test('keeps current request evidence standalone when its browser interaction was
     ],
     dropped: { components: 0, activity: 1 },
   });
-  const { state } = stateHarness(trace);
-  state.summary.request_type = 'livewire';
+  const { state, shell } = stateHarness(trace);
+  shell.summary.request_type = 'livewire';
   state.mergeLivewireServer({
     components: [],
     activity_records: serverActivity['current-server-failure'],
@@ -631,7 +630,7 @@ test('keeps current request evidence standalone when its browser interaction was
 });
 
 test('explains activity, phases, component links, and property states in plain language', () => {
-  const { state } = stateHarness();
+  const { state, shell } = stateHarness();
   const item = {
     ...activity[1],
     status: 'failed_validation',
@@ -668,7 +667,7 @@ test('explains activity, phases, component links, and property states in plain l
 });
 
 test('uses distinct plain-language explanations for every captured Livewire outcome', () => {
-  const { state } = stateHarness();
+  const { state, shell } = stateHarness();
   const item = (values) => ({
     ...activity[2],
     status: 'complete',
@@ -794,7 +793,7 @@ test('resets Livewire selection when browser navigation starts a new page sessio
     activity,
     dropped: { components: 0, activity: 0 },
   });
-  const { state } = stateHarness(trace);
+  const { state, shell } = stateHarness(trace);
   state.selectLivewireActivity('activity-1');
 
   trace.emit({
@@ -811,7 +810,7 @@ test('resets Livewire selection when browser navigation starts a new page sessio
 });
 
 test('builds an expandable typed property tree with proven edit eligibility', () => {
-  const { state } = stateHarness();
+  const { state, shell } = stateHarness();
   let rows = state.livewirePropertyRows;
 
   assert.deepEqual(
@@ -856,7 +855,7 @@ test('uses the current canonical component snapshot as the latest server value',
     activity,
     dropped: { components: 0, activity: 0 },
   });
-  const { state } = stateHarness(trace);
+  const { state, shell } = stateHarness(trace);
 
   let count = state.livewirePropertyRows.find(({ path }) => path === 'count');
   assert.equal(count.serverValue, 8);
@@ -873,7 +872,7 @@ test('uses the current canonical component snapshot as the latest server value',
 });
 
 test('summarizes arrays, empty strings, booleans, and unknown client values', () => {
-  const { state } = stateHarness();
+  const { state, shell } = stateHarness();
   const selected = state.livewireTrace.components.find(({ id }) => id === 'root-1');
   selected.properties.push(
     { path: 'items', type: 'Array', value: ['Only item'] },
@@ -928,7 +927,7 @@ test('summarizes arrays, empty strings, booleans, and unknown client values', ()
 });
 
 test('keeps property edits as drafts until an explicit successful apply', async () => {
-  const { state, trace } = stateHarness();
+  const { state, shell, trace } = stateHarness();
   const count = state.livewirePropertyRows.find(({ path }) => path === 'count');
   state.editLivewireProperty(count);
   const key = state.livewireDraftKey(count);
@@ -971,7 +970,7 @@ test('keeps property edits as drafts until an explicit successful apply', async 
 });
 
 test('clears property drafts only when leaving their component context', () => {
-  const { state } = stateHarness();
+  const { state, shell } = stateHarness();
   const count = state.livewirePropertyRows.find(({ path }) => path === 'count');
   state.editLivewireProperty(count);
   const key = state.livewireDraftKey(count);
@@ -988,7 +987,7 @@ test('clears property drafts only when leaving their component context', () => {
 });
 
 test('keeps a closing draft alive until Alpine removes its popover', () => {
-  const { state } = stateHarness();
+  const { state, shell } = stateHarness();
   const count = state.livewirePropertyRows.find(({ path }) => path === 'count');
   const ticks = [];
   state.$nextTick = (callback) => ticks.push(callback);
@@ -1005,7 +1004,7 @@ test('keeps a closing draft alive until Alpine removes its popover', () => {
 });
 
 test('toggles a property editor without replacing its trigger', () => {
-  const { state } = stateHarness();
+  const { state, shell } = stateHarness();
   const count = state.livewirePropertyRows.find(({ path }) => path === 'count');
   const key = state.livewireDraftKey(count);
 
@@ -1053,7 +1052,7 @@ test('returns focus to the stable property editor after applying', () => {
 });
 
 test('supports boolean, float, string, and null replacement controls', () => {
-  const { state } = stateHarness();
+  const { state, shell } = stateHarness();
   const optional = state.livewirePropertyRows.find(({ path }) => path === 'optional');
   state.editLivewireProperty(optional);
   const draft = state.livewireDrafts[state.livewireDraftKey(optional)];
@@ -1078,7 +1077,7 @@ test('falls back to stored server evidence when browser evidence is unavailable'
     activity: [],
     dropped: { components: 0, activity: 0 },
   });
-  const state = createNewDebugBar(livewireSummary, runtime(), [], 20, trace);
+  const { state, shell } = sectionHarness('livewire', livewireSummary, runtime(), [], 20, trace);
   state.$root = { querySelectorAll: () => [], querySelector: () => null };
   state.$nextTick = (callback) => callback();
   state.init();
@@ -1125,7 +1124,7 @@ test('pairs retained initial render evidence with a trace-ready browser mount', 
     activity: [browserMount],
     dropped: { components: 0, activity: 0 },
   });
-  const state = createNewDebugBar(livewireSummary, runtime(), [], 20, trace);
+  const { state, shell } = sectionHarness('livewire', livewireSummary, runtime(), [], 20, trace);
   state.$root = { querySelectorAll: () => [], querySelector: () => null };
   state.$nextTick = (callback) => callback();
   state.init();
@@ -1219,7 +1218,7 @@ test('reconciles retained lifecycle evidence without dropping browser-only or or
     activity: traceActivity,
     dropped: { components: 0, activity: 0 },
   });
-  const state = createNewDebugBar(livewireSummary, runtime(), [], 20, trace);
+  const { state, shell } = sectionHarness('livewire', livewireSummary, runtime(), [], 20, trace);
   state.$root = { querySelectorAll: () => [], querySelector: () => null };
   state.$nextTick = (callback) => callback();
   state.init();
@@ -1257,7 +1256,7 @@ test('reconciles retained lifecycle evidence without dropping browser-only or or
 });
 
 test('formats sparse Livewire evidence as deliberate unavailable and zero states', () => {
-  const { state } = stateHarness();
+  const { state, shell } = stateHarness();
 
   assert.equal(state.livewireInitialRenderDuration({ initialRenderDurationMs: null }), 'Not captured');
   assert.equal(state.livewireInitialRenderDuration({ initialRenderDurationMs: 'invalid' }), 'Not captured');

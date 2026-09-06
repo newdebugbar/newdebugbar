@@ -4,11 +4,7 @@
     $cacheSummary = $section['summary'] ?? [];
 @endphp
 
-<div
-    data-ndb-cache
-    x-init="initializeCache(JSON.parse(atob($el.querySelector('[data-ndb-cache-payload]').textContent.trim())))"
-    class="ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col"
->
+<div data-ndb-cache x-init="refresh()" class="ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col">
     <script type="application/json" data-ndb-cache-payload>
         {{ base64_encode(json_encode($cacheItems, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE)) }}
     </script>

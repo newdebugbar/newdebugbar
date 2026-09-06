@@ -30,17 +30,12 @@ test('a new application profile keeps a matching section and resets stale sectio
   state.selected = 'logs';
   state.inspectorOpen = true;
   state.loadedSection = 'logs';
-  state.viewGroups = [{ id: 'view-1' }];
-  state.viewFilter = 'framework';
-  state.viewSearch = 'pagination';
-  state.viewSelected = 'view-1';
-  state.viewDetailOpen = true;
-  state.eventSource = 'framework';
-  state.eventSearch = 'booted';
-  state.httpClientSort = 'duration';
-  state.httpClientSortDirection = 'desc';
-  state.modelSort = 'retrieved';
-  state.modelSortDirection = 'desc';
+  const oldViews = state.createSection('views');
+  oldViews.viewGroups = [{ id: 'view-1' }];
+  oldViews.viewFilter = 'framework';
+  oldViews.viewSearch = 'pagination';
+  oldViews.viewSelected = 'view-1';
+  oldViews.viewDetailOpen = true;
 
   state.switchProfile({
     ...summary,
@@ -52,17 +47,13 @@ test('a new application profile keeps a matching section and resets stale sectio
   assert.equal(state.summary.path, '/api/jobs');
   assert.equal(state.selected, 'logs');
   assert.equal(state.loadedSection, 'logs');
-  assert.deepEqual(state.viewGroups, []);
-  assert.equal(state.viewFilter, 'application');
-  assert.equal(state.viewSearch, '');
-  assert.equal(state.viewSelected, null);
-  assert.equal(state.viewDetailOpen, false);
-  assert.equal(state.eventSource, 'all');
-  assert.equal(state.eventSearch, '');
-  assert.equal(state.httpClientSort, 'execution');
-  assert.equal(state.httpClientSortDirection, 'asc');
-  assert.equal(state.modelSort, 'capture');
-  assert.equal(state.modelSortDirection, 'asc');
+  const views = state.createSection('views');
+  assert.notEqual(views, oldViews);
+  assert.deepEqual(views.viewGroups, []);
+  assert.equal(views.viewFilter, 'application');
+  assert.equal(views.viewSearch, '');
+  assert.equal(views.viewSelected, null);
+  assert.equal(views.viewDetailOpen, false);
   assert.equal(sectionsLoaded, 1);
 
   state.inspectorOpen = false;

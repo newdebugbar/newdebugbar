@@ -40,7 +40,10 @@
             x-show.important="selectedMailMessage.related_profile_id"
             @click="
                 $el.closest('details').open = false;
-                openRelatedProfile(selectedMailMessage.related_profile_id, selectedMailMessage.related_section);
+                inspector.openRelatedProfile(
+                    selectedMailMessage.related_profile_id,
+                    selectedMailMessage.related_section,
+                );
             "
             type="button"
             role="menuitem"
