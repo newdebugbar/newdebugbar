@@ -6,12 +6,16 @@
 - Match the minimum PHP and Laravel versions supported by Livewire 4.
 - Use `NewDebugBar` or `newdebugbar` as one word in machine-facing names. Use “New Debug Bar” in text written for people.
 
-## Checks before pushing
+## Local checks before pushing
 
-- Before every push, run `composer validate --strict`, `composer audit`, `composer lint:check`, and `composer test` locally against the final code being pushed. `composer test` runs the full PHP and JavaScript suites, rebuilds the assets, and runs the full browser suite with four workers.
-- Run the PHP and browser suites sequentially. Separate Pest processes share browser-server state and can interfere with each other.
-- Commit any rebuilt assets, run `git diff --check`, and confirm `git diff --exit-code HEAD -- dist` passes. If code changes after verification, rerun the affected checks before pushing.
-- Fix local failures before pushing. Do not skip checks or use GitHub Actions as the first full verification of a change.
+- Format changed files before verification, then check their formatting. Use Pint for PHP and Blade, and the project's Prettier tooling for JavaScript, CSS, JSON, and Markdown where applicable. Do not reformat unrelated files.
+- Choose the smallest complete set of checks for the changed behavior and its consumers. Start with relevant test files or filters. Run broader affected suites for dependency, shared bootstrap, test/build configuration, or cross-cutting changes, or when a focused failure points to wider impact.
+- For internal backend changes, run the relevant PHP tests. Include MCP parity tests when profile data or diagnostic contracts change. Run JavaScript or browser tests only when the change also affects their inputs or behavior; a PHP change to rendered markup, UI state, or shared response data can require them.
+- For JavaScript, Blade, or CSS changes, run the relevant JavaScript, browser, and PHP rendering tests as applicable. Rebuild assets when their source changes, and perform the rendered checks required below for affected interfaces.
+- Run multi-file Pest selections in parallel with `--parallel --processes=4`. A focused single-file run may stay serial when worker overhead provides no benefit. Use the native Node test runner's concurrency for JavaScript tests.
+- Do not overlap separate Pest invocations in the same checkout: they share browser-server state. Parallel workers within one invocation are supported. Independent JavaScript checks may run alongside PHP checks after formatting and dependency installation finish.
+- For documentation-only changes, check formatting and affected links or examples; do not run application suites. Run `composer validate --strict` when Composer files change and `composer audit` when PHP dependencies change.
+- Before pushing, ensure the relevant checks passed against the final changes, commit any rebuilt assets, and run `git diff --check`. When assets were rebuilt, confirm `git diff --exit-code HEAD -- dist` passes. Rerun affected checks after further code changes. Fix relevant failures locally; do not push unverified changes and use GitHub Actions as their first check.
 
 ## Product behavior
 
