@@ -24,7 +24,7 @@ it('keeps related request actions in the activity header and source details comp
         $page->click('[data-ndb-livewire-activity-item][aria-pressed="true"]');
     }
 
-    $page->assertVisible('[data-ndb-livewire-detail-panel="overview"]');
+    $page->assertVisible('[data-ndb-livewire-activity-evidence]');
 
     $page->script(<<<'JS'
         (() => {
@@ -202,7 +202,7 @@ it('keeps related request actions in the activity header and source details comp
     $setEvidence(null, []);
 
     $page
-        ->assertVisible('[data-ndb-livewire-detail-panel="overview"]')
+        ->assertVisible('[data-ndb-livewire-activity-evidence]')
         ->assertCount($requests, 0)
         ->assertScript(<<<'JS'
             document.querySelector('[role="group"][aria-label="Activity source"]').getClientRects().length === 0

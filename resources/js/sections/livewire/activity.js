@@ -1,5 +1,6 @@
 import { PROFILE_PATTERN } from '../../shell/requests.js';
 import { formatDuration } from '../../duration.js';
+import { createTraceHelp } from './trace-help.js';
 
 /** Owns livewire activity inspector state and interactions. */
 export function createActivity(context) {
@@ -13,6 +14,7 @@ export function createActivity(context) {
     livewireClock: browser.now?.() ?? Date.now(),
     livewireClockTimer: null,
     livewireClockRunning: false,
+    livewireTraceHelp: createTraceHelp,
 
     get livewireActivity() {
       const currentProfileId = PROFILE_PATTERN.test(shell.summary?.id ?? '') ? shell.summary.id : null;
@@ -184,7 +186,6 @@ export function createActivity(context) {
       if (!this.livewireActivity.some((item) => item.id === id)) return;
       this.livewireSelectedActivityId = id;
       this.livewireActivitySelectionPinned = true;
-      this.livewireDetailTab = 'overview';
       this.livewireDetailOpen = true;
       this.$nextTick?.(() => browser.highlight?.());
     },
@@ -307,28 +308,49 @@ export function createActivity(context) {
     },
 
     livewireActivityPhaseGroups(item) {
-      const phases = item?.phases ?? [];
-      const requestNames = new Set(['Queued', 'Sent', 'Responded', 'Streamed']);
-      const request = phases.filter((phase) => requestNames.has(phase.name));
-      const browserPhases = phases.filter((phase) => !requestNames.has(phase.name));
+      const groups = [];
 
-      return [
-        { name: 'Request', phases: request },
-        { name: 'Browser', phases: browserPhases },
-      ].filter((group) => group.phases.length > 0);
+      (item?.phases ?? []).forEach((phase, index) => {
+        const kind = ['Queued', 'Sent'].includes(phase.name) ? 'send' : 'receive';
+        if (groups.at(-1)?.kind === 'send' && ['Responded', 'Streamed'].includes(phase.name)) {
+          // Explain the server's role without inventing a server timestamp.
+          groups.push({ kind: 'server', label: 'Server', start: `server-${index}`, steps: [] });
+        }
+        if (groups.at(-1)?.kind !== kind) {
+          groups.push({ kind, label: 'Browser', start: index, steps: [] });
+        }
+        groups.at(-1).steps.push({ phase, index });
+      });
+
+      return groups;
+    },
+
+    livewirePhaseLabel(name) {
+      return (
+        {
+          Queued: 'Update queued',
+          Sent: 'Request sent',
+          Responded: 'Response received',
+          Streamed: 'Partial response received',
+          Synced: 'Component data updated',
+          Effects: 'Response effects applied',
+          Morphed: 'Page HTML updated',
+          Rendered: 'Ready to display',
+        }[name] ?? name
+      );
     },
 
     livewirePhaseDescription(name) {
       return (
         {
-          Queued: 'Livewire prepared the update.',
-          Sent: 'The browser sent the request.',
-          Responded: 'The server response arrived.',
-          Streamed: 'A streamed response chunk arrived.',
-          Synced: 'Server state replaced the browser baseline.',
-          Effects: 'Livewire applied returned effects and events.',
-          Morphed: 'Livewire updated the page HTML.',
-          Rendered: 'The browser finished this render pass.',
+          Queued: 'The update is waiting to be sent to the server.',
+          Sent: 'The browser sends the update to the server.',
+          Responded: 'The server’s reply arrives in the browser.',
+          Streamed: 'Part of the reply arrives before the full response.',
+          Synced: 'Livewire updates the component’s data with the server’s changes.',
+          Effects: 'Livewire handles extra instructions, such as events or redirects.',
+          Morphed: 'Livewire updates the parts of the page’s HTML that changed.',
+          Rendered: 'The browser reaches the next frame, ready to draw the updated page.',
         }[name] ?? 'Livewire recorded this phase.'
       );
     },

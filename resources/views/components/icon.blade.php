@@ -74,6 +74,10 @@
             <path d="M10.3 4.1 2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 4.1a2 2 0 0 0-3.4 0Z"
             /><path d="M12 9v4M12 17h.01" />
             @break
+        @case ('info')
+            <circle cx="12" cy="12" r="9"
+            /><path d="M12 11v6M12 7h.01" />
+            @break
         @case ('check')
             <path d="m5 12 4 4L19 6" />
             @break
@@ -111,6 +115,11 @@
         @case ('download')
             <path d="M12 3v12M7 10l5 5 5-5" />
             <path d="M4 19h16" />
+            @break
+        @case ('server')
+            <rect x="3" y="3" width="18" height="7" rx="2" />
+            <rect x="3" y="14" width="18" height="7" rx="2" />
+            <path d="M7 6.5h.01M7 17.5h.01M11 6.5h6M11 17.5h6" />
             @break
         @case ('monitor')
             <rect x="2" y="3" width="20" height="14" rx="2"

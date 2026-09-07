@@ -413,17 +413,12 @@ it('composes Livewire as one shared inspector workspace with focused details', f
     foreach ([$activityDetail, $componentDetail] as $detail) {
         expect($detail)
             ->toContain('<x-newdebugbar::inspector-detail-header')
-            ->toContain('<x-newdebugbar::inspector-detail-tabs')
-            ->toContain('variant="segmented"')
             ->toContain('<x-newdebugbar::inspector-facts');
     }
 
     expect($activityDetail)
-        ->toContain('data-ndb-livewire-detail-panel="overview"')
-        ->toContain('data-ndb-livewire-detail-panel="trace"')
         ->toContain('livewireActivitySourceLabel(selectedLivewireActivity)')
-        ->toContain("openRelatedProfile(profileId, 'request')")
-        ->toContain('<x-newdebugbar::inspector-explanation');
+        ->toContain("openRelatedProfile(profileId, 'request')");
 
     expect(file_get_contents($views.'/livewire/livewire/activity.blade.php'))
         ->toContain('aria-label="Livewire activity timeline"')
@@ -432,6 +427,8 @@ it('composes Livewire as one shared inspector workspace with focused details', f
         ->toContain('data-ndb-livewire-activity-dot');
 
     expect($componentDetail)
+        ->toContain('<x-newdebugbar::inspector-detail-tabs')
+        ->toContain('variant="segmented"')
         ->toContain('data-ndb-livewire-detail-panel="properties"')
         ->toContain('data-ndb-livewire-detail-panel="source"')
         ->toContain('<x-newdebugbar::livewire-property-editor')
@@ -777,7 +774,6 @@ it('uses centered segmented controls across inspector detail panels', function (
     foreach ([
         'components/event-detail.blade.php',
         'components/http-client-detail-tabs.blade.php',
-        'livewire/livewire/activity-detail.blade.php',
         'livewire/livewire/component-detail.blade.php',
         'components/model-group-detail.blade.php',
         'components/notification-detail.blade.php',

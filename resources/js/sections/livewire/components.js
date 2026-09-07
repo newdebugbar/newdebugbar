@@ -157,7 +157,6 @@ export function createComponents(context) {
       this.livewireSelectedActivityId = id;
       this.livewireActivitySelectionPinned = true;
       this.livewireTab = 'activity';
-      this.livewireDetailTab = 'overview';
       this.livewireDetailOpen = true;
       this.livewireSearch = '';
       this.$nextTick?.(() => browser.highlight?.());

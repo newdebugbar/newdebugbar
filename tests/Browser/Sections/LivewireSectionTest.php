@@ -667,7 +667,7 @@ it('clears stale details when activity or component searches have no matches', f
         ->assertNoJavaScriptErrors();
 });
 
-it('centers segmented detail tabs and instantiates only the active evidence panel', function () {
+it('centers component detail tabs and instantiates only the selected component panel', function () {
     $page = visit('/profiled-livewire')
         ->resize(1024, 900)
         ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
@@ -675,81 +675,19 @@ it('centers segmented detail tabs and instantiates only the active evidence pane
     DebugBarBrowser::selectSectionViaPalette($page, 'livewire');
 
     $page
-        ->assertVisible('[data-ndb-livewire-detail-panel="overview"]')
-        ->assertMissing('[data-ndb-livewire-detail-panel="trace"]');
-
-    $page->script(<<<'JS'
-        (() => {
-            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-section="livewire"]'));
-            const selected = state.livewireSelectedActivityId;
-            state.livewireTrace = {
-                ...state.livewireTrace,
-                activity: state.livewireTrace.activity.map((item) =>
-                    item.id === selected
-                        ? {
-                            ...item,
-                            profileIds: [state.summary.id],
-                            callsite: { file: 'app/Livewire/HostCounter.php', line: 29 },
-                        }
-                        : item,
-                ),
-            };
-        })()
-        JS);
-
-    $page
-        ->assertVisible('[data-ndb-livewire-detail-panel="overview"] [data-ndb-inspector-source-link]')
-        ->assertSeeIn(
-            '[data-ndb-livewire-detail-panel="overview"] [data-ndb-inspector-source-link]',
-            'app/Livewire/HostCounter.php:29',
-        )
-        ->assertVisible('[data-ndb-livewire-activity-header] [aria-label="Open related request 1"]')
+        ->click('[data-ndb-livewire-tab="components"]')
+        ->assertVisible('[data-ndb-livewire-detail-panel="properties"]')
         ->assertScript(<<<'JS'
             (() => {
-                const tabs = document.querySelector('[data-ndb-livewire-activity-detail] [data-ndb-filter-tabs-variant="segmented"]');
+                const tabs = document.querySelector('[data-ndb-livewire-component-detail] [data-ndb-filter-tabs-variant="segmented"]');
                 const detail = document.querySelector('[data-ndb-livewire-detail-pane]');
-                const source = document.querySelector('[data-ndb-livewire-detail-panel="overview"] [data-ndb-inspector-source-link]');
-                const title = document.querySelector('[data-ndb-livewire-activity-header] h3');
                 const tabsBox = tabs.getBoundingClientRect();
                 const detailBox = detail.getBoundingClientRect();
 
-                return Math.abs(
-                    (tabsBox.left + tabsBox.width / 2)
-                    - (detailBox.left + detailBox.width / 2),
-                ) <= 0.75
-                    && getComputedStyle(source).fontFamily === getComputedStyle(title).fontFamily;
+                return Math.abs((tabsBox.left + tabsBox.width / 2)
+                    - (detailBox.left + detailBox.width / 2)) <= 0.75;
             })()
             JS)
-        ->click('[data-ndb-livewire-detail-tab="trace"]')
-        ->assertMissing('[data-ndb-livewire-detail-panel="overview"]')
-        ->assertVisible('[data-ndb-livewire-detail-panel="trace"]');
-
-    $page->script(<<<'JS'
-        (() => {
-            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-section="livewire"]'));
-            const selected = state.livewireSelectedActivityId;
-            state.livewireTrace = {
-                ...state.livewireTrace,
-                activity: state.livewireTrace.activity.map((item) =>
-                    item.id === selected ? { ...item, phases: [] } : item,
-                ),
-            };
-            state.livewireDetailTab = 'overview';
-        })()
-        JS);
-
-    $page
-        ->assertScript(<<<'JS'
-            (() => {
-                const trace = document.querySelector('[data-ndb-livewire-detail-tab="trace"]');
-
-                return trace.getClientRects().length === 0
-                    && document.querySelector('[data-ndb-livewire-detail-panel="trace"]') === null
-                    && document.querySelector('[data-ndb-livewire-detail-panel="overview"]') !== null;
-            })()
-            JS)
-        ->click('[data-ndb-livewire-tab="components"]')
-        ->assertVisible('[data-ndb-livewire-detail-panel="properties"]')
         ->assertMissing('[data-ndb-livewire-detail-panel="source"]')
         ->click('[data-ndb-livewire-detail-tab="source"]')
         ->assertMissing('[data-ndb-livewire-detail-panel="properties"]')

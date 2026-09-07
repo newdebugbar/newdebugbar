@@ -2,6 +2,65 @@
 
 use NewDebugBar\Tests\Support\DebugBarBrowser;
 
+it('isolates Livewire timeline steps and their help from host styles', function () {
+    $page = visit('/profiled-livewire')
+        ->resize(1280, 900)
+        ->click('[data-testid="host-counter"] button')
+        ->assertSeeIn('[data-testid="host-counter-value"]', '1')
+        ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
+
+    $page->script(<<<'JS'
+        (() => {
+            const style = document.createElement('style');
+            style.textContent = `
+                .timeline, [data-livewire-trace], [data-livewire-phase], [data-livewire-phase-name],
+                [data-livewire-phase-time], [data-livewire-activity-evidence],
+                [data-livewire-phase-group], [data-livewire-phase-node], [data-livewire-phase-connector],
+                [id^="livewire-phase"], [data-ndb-livewire-phase-group], [data-ndb-livewire-phase-node],
+                [data-ndb-livewire-phase-connector], [data-ndb-livewire-phase], [role="tooltip"] {
+                    background: red; border: 8px solid red; color: green; font-size: 42px; padding: 50px;
+                }
+                [data-livewire-phase-trigger], [data-ndb-livewire-phase-trigger] {
+                    width: 1200px; height: 91px; background: red;
+                }
+                [data-livewire-phase-help], [data-ndb-livewire-phase-help] { width: 1200px; }
+            `;
+            document.head.append(style);
+        })()
+        JS);
+
+    DebugBarBrowser::selectSectionViaPalette($page, 'livewire');
+
+    $page
+        ->click('[data-ndb-livewire-phase="Queued"] [data-ndb-livewire-phase-trigger]')
+        ->assertVisible('[data-ndb-livewire-phase-help]')
+        ->assertScript(<<<'JS'
+            (() => {
+                const phase = document.querySelector('[data-ndb-livewire-phase]');
+                const trigger = phase.querySelector('[data-ndb-livewire-phase-trigger]');
+                const help = document.querySelector('[data-ndb-livewire-phase-help]');
+                const icon = trigger.querySelector('svg').getBoundingClientRect();
+                const triggerBox = trigger.getBoundingClientRect();
+                const helpBox = help.getBoundingClientRect();
+
+                return [phase, help].every((el) => {
+                    const style = getComputedStyle(el);
+                    return style.backgroundColor !== 'rgb(255, 0, 0)'
+                        && style.color !== 'rgb(0, 128, 0)'
+                        && parseFloat(style.fontSize) < 42
+                        && parseFloat(style.paddingLeft) < 50;
+                })
+                    && triggerBox.width >= 28 && triggerBox.width < 91
+                    && triggerBox.height >= 28 && triggerBox.height < 91
+                    && icon.width === 14 && icon.height === 14
+                    && helpBox.width > 0 && helpBox.width < 400
+                    && helpBox.left >= 0 && helpBox.right <= window.innerWidth
+                    && help.closest('#newdebugbar') !== null;
+            })()
+            JS)
+        ->assertNoJavaScriptErrors();
+});
+
 it('keeps selected segmented text readable on dark hover', function (string $selection) {
     $page = visit('/profiled-livewire');
     $page->script("localStorage.setItem('newdebugbar.preferences.v1', JSON.stringify({theme: 'dark'}))");

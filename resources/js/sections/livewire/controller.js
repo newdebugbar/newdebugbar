@@ -56,7 +56,7 @@ export function createController(context) {
 
     livewireTab: 'activity',
     livewireSearch: '',
-    livewireDetailTab: 'overview',
+    livewireDetailTab: 'properties',
     livewireDetailOpen: false,
     livewireTrace: {
       ready: false,
@@ -105,16 +105,14 @@ export function createController(context) {
       if (!['activity', 'components'].includes(tab)) return;
       this.closeLivewireDrafts();
       this.livewireTab = tab;
-      this.livewireDetailTab = tab === 'activity' ? 'overview' : 'properties';
+      this.livewireDetailTab = 'properties';
       this.livewireDetailOpen = false;
       this.livewireSearch = '';
       this.syncLivewireSelection();
     },
 
     setLivewireDetailTab(tab) {
-      const allowed = this.livewireTab === 'activity' ? ['overview', 'trace'] : ['properties', 'source'];
-      if (!allowed.includes(tab)) return;
-      if (tab === 'trace' && (this.selectedLivewireActivity?.phases?.length ?? 0) === 0) return;
+      if (this.livewireTab !== 'components' || !['properties', 'source'].includes(tab)) return;
 
       this.livewireDetailTab = tab;
       this.$nextTick?.(() => browser.highlight?.());

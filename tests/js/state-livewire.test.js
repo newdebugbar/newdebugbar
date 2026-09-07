@@ -339,7 +339,6 @@ test('filters activity and moves between activity and component details', () => 
     state.filteredLivewireActivity.map(({ id }) => id),
     ['activity-3', 'activity-2', 'activity-1'],
   );
-  assert.equal(state.livewireDetailTab, 'overview');
   state.setLivewireActivityType('mutation');
   assert.deepEqual(
     state.filteredLivewireActivity.map(({ id }) => id),
@@ -356,7 +355,14 @@ test('filters activity and moves between activity and component details', () => 
   assert.equal(state.livewireActivityComponentTitle(activity[2]), 'Metric Card');
   assert.equal(state.livewireActivityShowsComponent(activity[0]), false);
   assert.equal(state.livewireActivityShowsComponent(activity[1]), true);
-  assert.equal(state.livewireActivityShowsComponent({ ...activity[2], kind: 'poll', title: 'Polled component' }), true);
+  assert.equal(
+    state.livewireActivityShowsComponent({
+      ...activity[2],
+      kind: 'poll',
+      title: 'Polled component',
+    }),
+    true,
+  );
   assert.equal(state.livewireDuration(state.selectedLivewireActivity), '8.25 ms');
   assert.equal(state.livewireDuration(activity[2]), 'In progress');
   assert.equal(state.livewireDuration({ status: 'complete', durationMs: null }), '—');
@@ -376,24 +382,11 @@ test('filters activity and moves between activity and component details', () => 
   assert.equal(state.livewireSelectedComponentId, 'root-1');
   state.setLivewireDetailTab('source');
   assert.equal(state.livewireDetailTab, 'source');
-  state.setLivewireDetailTab('trace');
+  state.setLivewireDetailTab('invalid');
   assert.equal(state.livewireDetailTab, 'source');
   state.inspectLivewireComponentActivity();
   assert.equal(state.livewireTab, 'activity');
-  assert.equal(state.livewireDetailTab, 'overview');
   assert.equal(state.livewireSelectedActivityId, 'activity-2');
-  state.setLivewireDetailTab('trace');
-  assert.equal(state.livewireDetailTab, 'overview');
-  state.livewireTrace = {
-    ...state.livewireTrace,
-    activity: state.livewireTrace.activity.map((item) =>
-      item.id === 'activity-2' ? { ...item, phases: [{ name: 'Queued', at: item.startedAt }] } : item,
-    ),
-  };
-  state.setLivewireDetailTab('trace');
-  assert.equal(state.livewireDetailTab, 'trace');
-  state.setLivewireDetailTab('source');
-  assert.equal(state.livewireDetailTab, 'trace');
   state.inspectLivewireComponent('child-1');
   assert.equal(state.livewireTab, 'components');
   assert.equal(state.livewireDetailTab, 'properties');
@@ -409,7 +402,6 @@ test('filters activity and moves between activity and component details', () => 
   assert.equal(state.livewireSelectedComponentId, 'child-1');
   state.selectLivewireActivity('activity-1');
   assert.equal(state.livewireSelectedActivityId, 'activity-1');
-  assert.equal(state.livewireDetailTab, 'overview');
   state.selectLivewireActivity('missing');
   assert.equal(state.livewireSelectedActivityId, 'activity-1');
   state.setLivewireTab('invalid');
@@ -648,15 +640,6 @@ test('explains activity, phases, component links, and property states in plain l
     state.livewireActivitySummary(item),
     'Control Panel tried to change count, but the update did not finish.',
   );
-  assert.deepEqual(
-    state.livewireActivityPhaseGroups(item).map((group) => [group.name, group.phases.map(({ name }) => name)]),
-    [
-      ['Request', ['Queued', 'Responded']],
-      ['Browser', ['Synced', 'Rendered']],
-    ],
-  );
-  assert.equal(state.livewirePhaseDescription('Morphed'), 'Livewire updated the page HTML.');
-  assert.equal(state.livewirePhaseDescription('Other'), 'Livewire recorded this phase.');
   assert.equal(state.livewireActivityComponent(activity[1]).id, 'root-1');
   assert.equal(state.livewireActivityComponent({ componentId: 'missing' }), null);
   assert.equal(state.livewirePropertyStateLabel({ state: 'Unknown' }), 'Not confirmed');
@@ -847,7 +830,11 @@ test('uses the current canonical component snapshot as the latest server value',
   components[0].properties[0].value = 8;
   components[0].serverProperties = [
     { path: 'count', type: 'Integer', value: 8 },
-    { path: 'settings', type: 'Array', value: structuredClone(components[0].properties[1].value) },
+    {
+      path: 'settings',
+      type: 'Array',
+      value: structuredClone(components[0].properties[1].value),
+    },
   ];
   const trace = traceHarness({
     ready: true,
@@ -1263,12 +1250,28 @@ test('formats sparse Livewire evidence as deliberate unavailable and zero states
   assert.equal(state.livewireMountTime({ requestAtMs: null }), 'Not captured');
   assert.equal(state.livewireMountTime({ requestAtMs: 'invalid' }), 'Not captured');
   assert.equal(state.livewireActivityTime({ kind: 'action', occurredAt: 0 }), 'Current request');
-  assert.equal(state.livewireActivityDuration({ kind: 'mount', initialRenderDurationMs: null }), 'Render —');
-  assert.equal(state.livewireActivityDuration({ kind: 'action', durationMs: 12, status: 'complete' }), '12 ms');
+  assert.equal(
+    state.livewireActivityDuration({
+      kind: 'mount',
+      initialRenderDurationMs: null,
+    }),
+    'Render —',
+  );
+  assert.equal(
+    state.livewireActivityDuration({
+      kind: 'action',
+      durationMs: 12,
+      status: 'complete',
+    }),
+    '12 ms',
+  );
   assert.equal(state.livewireComponentPropertyCount(null), 0);
   assert.equal(state.livewireComponentPropertyCountLabel({ properties: [{}] }), '1 property');
   assert.equal(
-    state.livewireComponentPropertyStateSummary({ id: 'not-selected', properties: [] }),
+    state.livewireComponentPropertyStateSummary({
+      id: 'not-selected',
+      properties: [],
+    }),
     '0 changed, 0 editable',
   );
 });
