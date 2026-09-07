@@ -199,48 +199,6 @@ test('counts requests as unread until a successful selection and keeps viewed re
   assert.deepEqual(state.viewedProfileIds, [state.summary.id]);
 });
 
-test('request copy feedback expires after three seconds and repeated copies replace its timer', async () => {
-  const browser = runtime();
-  const schedule = browser.schedule;
-  const delays = [];
-  const copies = [];
-  browser.schedule = (callback, delay) => {
-    delays.push(delay);
-    return schedule(callback);
-  };
-  browser.writeClipboard = async (value) => copies.push(value);
-  const state = createNewDebugBar(summary, browser);
-  const feedback = state.requestCopyFeedback('https://example.test/trips?season=autumn');
-
-  await feedback.copyRequestUrl();
-  assert.equal(feedback.copyFeedback, 'Copied');
-  await feedback.copyRequestUrl();
-  assert.equal(browser.timers.size, 1);
-  assert.deepEqual(delays, [3000, 3000]);
-  assert.deepEqual(copies, ['https://example.test/trips?season=autumn', 'https://example.test/trips?season=autumn']);
-  browser.runTimers();
-  assert.equal(feedback.copyFeedback, '');
-
-  browser.writeClipboard = async () => false;
-  await feedback.copyRequestUrl();
-  assert.equal(feedback.copyFeedback, 'Copy failed');
-  feedback.destroy();
-  assert.equal(browser.timers.size, 0);
-
-  let finish;
-  browser.writeClipboard = () =>
-    new Promise((resolve) => {
-      finish = resolve;
-    });
-  const pendingFeedback = state.requestCopyFeedback('/another-request');
-  const pending = pendingFeedback.copyRequestUrl();
-  pendingFeedback.destroy();
-  finish(true);
-  await pending;
-  assert.equal(pendingFeedback.copyFeedback, '');
-  assert.equal(browser.timers.size, 0);
-});
-
 test('request summaries format useful labels and update existing recent entries', () => {
   const current = {
     ...summary,

@@ -111,7 +111,7 @@
                                 <x-newdebugbar::inspector-action
                                     icon="copy"
                                     data-ndb-query-copy-sql
-                                    @click="copyText(selectedQuery.display_sql)"
+                                    copy-expression="selectedQuery.display_sql"
                                 >
                                     Copy query
                                 </x-newdebugbar::inspector-action>
@@ -156,7 +156,7 @@
                                     <x-newdebugbar::inspector-source-link
                                         ::title="selectedQuery.source_available ? 'Copy ' + selectedQuery.source_label : null"
                                         ::disabled="! selectedQuery.source_available"
-                                        @click="copyText(selectedQuery.source_label)"
+                                        copy-expression="selectedQuery.source_label"
                                     >
                                         <x-slot:value x-text="selectedQuery.source_label"></x-slot:value>
                                     </x-newdebugbar::inspector-source-link>

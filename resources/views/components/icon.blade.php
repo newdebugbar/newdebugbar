@@ -44,7 +44,11 @@
             <rect x="5" y="5" width="14" height="14" rx="1" />
             @break
         @case ('shrink')
+        @case ('minus')
             <path d="M5 12h14" />
+            @break
+        @case ('plus')
+            <path d="M5 12h14M12 5v14" />
             @break
         @case ('close')
             <path d="m6 6 12 12M18 6 6 18" />

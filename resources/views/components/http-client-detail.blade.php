@@ -39,7 +39,7 @@
                                 <x-slot:value>
                                     <x-newdebugbar::inspector-source-link
                                         ::aria-label="'Copy source ' + selectedHttpClientRequest.callsite_label"
-                                        @click="copyText(selectedHttpClientRequest.callsite_label)"
+                                        copy-expression="selectedHttpClientRequest.callsite_label"
                                     >
                                         <x-slot:value
                                             data-ndb-http-client-detail-source

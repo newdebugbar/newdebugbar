@@ -1,5 +1,6 @@
 import { DEFAULT_SECTION } from './navigation.js';
 import { formatDuration } from '../duration.js';
+import { createCopyControl } from './copy.js';
 
 /** Owns inspector shell behavior. */
 export function createInspector(context) {
@@ -292,6 +293,10 @@ export function createInspector(context) {
         const blur = () => activeElement?.blur?.();
         browser.afterPaint ? browser.afterPaint(blur) : blur();
       });
+    },
+
+    copyControl() {
+      return createCopyControl((value) => this.copyText(value), browser);
     },
 
     async copyText(value) {

@@ -237,7 +237,7 @@
                                 <x-slot:value>
                                     <template x-if="selectedViewRender.source_label">
                                         <x-newdebugbar::inspector-source-link
-                                            @click="copyText(selectedViewRender.source_label)"
+                                            copy-expression="selectedViewRender.source_label"
                                             ::title="selectedViewRender.source_label"
                                         >
                                             <x-slot:value x-text="selectedViewRender.source_label"></x-slot:value>
@@ -261,7 +261,7 @@
                                                 ></p>
                                                 <template x-if="composer.source_label">
                                                     <x-newdebugbar::inspector-source-link
-                                                        @click="copyText(composer.source_label)"
+                                                        copy-expression="composer.source_label"
                                                         ::title="composer.source_label"
                                                         class="ndb:mt-0.5 ndb:text-zinc-500 ndb:dark:text-zinc-400"
                                                     >

@@ -85,10 +85,7 @@
                 tone="received"
             >
                 <x-slot:primary>
-                    <div
-                        x-data="requestCopyFeedback(@js($requestUrl))"
-                        class="ndb:flex ndb:min-w-0 ndb:items-start ndb:gap-3"
-                    >
+                    <div class="ndb:flex ndb:min-w-0 ndb:items-start ndb:gap-3">
                         <x-newdebugbar::inspector-operation-badge
                             data-ndb-request-method
                             class="ndb:mt-1 ndb:leading-4"
@@ -102,31 +99,12 @@
                         @if ($requestUrl !== '')
                             <x-newdebugbar::icon-button
                                 data-ndb-request-copy
+                                name="copy"
+                                :copy="$requestUrl"
                                 :color-only="true"
                                 aria-label="Copy request URL"
-                                x-bind:aria-label="copyFeedback || 'Copy request URL'"
-                                @click="copyRequestUrl()"
-                                class="ndb:relative ndb:size-7 ndb:shrink-0 ndb:rounded-md"
-                            >
-                                <x-newdebugbar::icon
-                                    name="copy"
-                                    size="4"
-                                    x-show.important="copyFeedback !== 'Copied'"
-                                />
-                                <x-newdebugbar::icon
-                                    name="check"
-                                    size="4"
-                                    x-show.important="copyFeedback === 'Copied'"
-                                />
-                                <span
-                                    x-cloak
-                                    x-show.important="copyFeedback"
-                                    x-text="copyFeedback"
-                                    role="status"
-                                    aria-live="polite"
-                                    class="ndb:pointer-events-none ndb:absolute ndb:bottom-full ndb:left-1/2 ndb:mb-1 ndb:-translate-x-1/2 ndb:rounded-md ndb:bg-zinc-900 ndb:px-2 ndb:py-1 ndb:text-xs ndb:whitespace-nowrap ndb:text-white ndb:dark:bg-zinc-100 ndb:dark:text-zinc-900"
-                                ></span>
-                            </x-newdebugbar::icon-button>
+                                class="ndb:size-7 ndb:shrink-0 ndb:rounded-md"
+                            />
                         @endif
                     </div>
                 </x-slot:primary>
@@ -291,13 +269,12 @@
                                     class="ndb:text-xs ndb:font-semibold ndb:tabular-nums ndb:text-zinc-400"
                                 >{{ $requestDetailGroup['count'] }}</span>
                             </div>
-                            <button
-                                type="button"
-                                @click="copyText(@js(json_encode($requestDetailGroup['items'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)))"
+                            <x-newdebugbar::copy-button
+                                :copy="json_encode($requestDetailGroup['items'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)"
                                 class="ndb:shrink-0 ndb:text-xs ndb:font-bold ndb:text-indigo-600 ndb:focus-visible:outline-2 ndb:focus-visible:outline-offset-2 ndb:focus-visible:outline-indigo-500 ndb:dark:text-indigo-300"
                             >
                                 Copy all
-                            </button>
+                            </x-newdebugbar::copy-button>
                         </div>
 
                         <div class="ndb:mt-3 ndb:overflow-x-auto">

@@ -15,7 +15,7 @@
         <x-newdebugbar::inspector-action
             icon="code"
             data-ndb-http-client-copy-curl
-            @click="copyText(selectedHttpClientRequest.curl)"
+            copy-expression="selectedHttpClientRequest.curl"
         >
             Copy safe cURL
         </x-newdebugbar::inspector-action>
@@ -30,7 +30,7 @@
                             <x-newdebugbar::inspector-action
                                 icon="copy"
                                 data-ndb-http-client-copy-body="request"
-                                @click="copyText(formatHttpClientEvidence(selectedHttpClientRequest.request?.body))"
+                                copy-expression="formatHttpClientEvidence(selectedHttpClientRequest.request?.body)"
                             >
                                 Copy body
                             </x-newdebugbar::inspector-action>

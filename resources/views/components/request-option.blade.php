@@ -15,6 +15,13 @@
           : 'ndb:hover:bg-zinc-100/70 ndb:dark:hover:bg-white/10'"
 >
     <span
+        data-ndb-request-unread
+        class="ndb:size-1.5 ndb:shrink-0 ndb:rounded-full ndb:bg-blue-500"
+        :class="requestIsUnread(request) ? 'ndb:opacity-100' : 'ndb:opacity-0'"
+    >
+        <span class="ndb:sr-only" x-text="requestIsUnread(request) ? 'Unread' : ''"></span>
+    </span>
+    <span
         data-ndb-request-method
         class="ndb:flex ndb:w-12 ndb:shrink-0 ndb:items-center ndb:justify-center ndb:rounded-md ndb:bg-zinc-100/70 ndb:py-0.5 ndb:text-xs ndb:font-bold ndb:uppercase ndb:tracking-wide ndb:text-zinc-600 ndb:dark:bg-white/10 ndb:dark:text-white"
         x-text="request.method"

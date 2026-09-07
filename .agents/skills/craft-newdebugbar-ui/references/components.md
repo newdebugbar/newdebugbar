@@ -110,6 +110,10 @@ They should reuse the shared field, badge, fact, source, code, explanation, and 
 - `inspector-explanation` is appropriate only when captured evidence needs interpretation or a conditional next check. Its question-title rule does not apply to ordinary headers, identity, or evidence labels.
 - Code and evidence components receive retained values. They do not infer a source, result, or problem from adjacent data.
 
+## Copy feedback
+
+`copy-button` owns the shared three-second feedback and resets when its value changes. Labels change to “Copied”; icon-only controls show a checkmark and bubble. Use `copy` for a PHP value or `copy-expression` for an Alpine value. The `icon-button`, `inspector-action`, and `inspector-source-link` components accept both props and retain their own styles.
+
 ## Adding or changing a component
 
 In one change:

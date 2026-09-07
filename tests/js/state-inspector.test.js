@@ -441,3 +441,74 @@ test('clipboard failures stay inside the debug bar', async () => {
   delete browser.writeClipboard;
   assert.equal(await state.copyText('select 4'), false);
 });
+
+test('copy feedback expires after three seconds and repeated copies replace its timer', async () => {
+  const browser = runtime();
+  const schedule = browser.schedule;
+  const delays = [];
+  const copies = [];
+  browser.schedule = (callback, delay) => {
+    delays.push(delay);
+    return schedule(callback);
+  };
+  browser.writeClipboard = async (value) => copies.push(value);
+  const state = createNewDebugBar(summary, browser);
+  const feedback = state.copyControl();
+
+  await feedback.copyWithFeedback('https://example.test/trips?season=autumn');
+  assert.equal(feedback.copyStatus, 'Copied');
+  await feedback.copyWithFeedback('https://example.test/trips?season=autumn');
+  assert.equal(browser.timers.size, 1);
+  assert.deepEqual(delays, [3000, 3000]);
+  assert.deepEqual(copies, ['https://example.test/trips?season=autumn', 'https://example.test/trips?season=autumn']);
+  browser.runTimers();
+  assert.equal(feedback.copyStatus, '');
+
+  browser.writeClipboard = async () => false;
+  await feedback.copyWithFeedback('https://example.test/trips?season=autumn');
+  assert.equal(feedback.copyStatus, 'Copy failed');
+  feedback.destroy();
+  assert.equal(browser.timers.size, 0);
+
+  let finish;
+  browser.writeClipboard = () =>
+    new Promise((resolve) => {
+      finish = resolve;
+    });
+  const pendingFeedback = state.copyControl();
+  const pending = pendingFeedback.copyWithFeedback('/another-request');
+  pendingFeedback.destroy();
+  finish(true);
+  await pending;
+  assert.equal(pendingFeedback.copyStatus, '');
+  assert.equal(browser.timers.size, 0);
+});
+
+test('copy feedback follows the current value and ignores replaced clipboard operations', async () => {
+  const browser = runtime();
+  const finishes = [];
+  browser.writeClipboard = () => new Promise((resolve) => finishes.push(resolve));
+  const state = createNewDebugBar(summary, browser);
+  const control = state.copyControl();
+  control.syncCopyValue('select 1');
+  const first = control.copyWithFeedback('select 1');
+  const repeated = control.copyWithFeedback('select 1');
+  finishes[1](true);
+  await repeated;
+  assert.equal(control.copyStatus, 'Copied');
+  finishes[0](false);
+  await first;
+  assert.equal(control.copyStatus, 'Copied');
+  assert.equal(browser.timers.size, 1);
+  control.syncCopyValue('select 1');
+  assert.equal(control.copyStatus, 'Copied');
+  control.syncCopyValue('select 2');
+  assert.equal(control.copyStatus, '');
+  assert.equal(browser.timers.size, 0);
+  const pending = control.copyWithFeedback('select 2');
+  control.syncCopyValue('select 3');
+  finishes[2](true);
+  await pending;
+  assert.equal(control.copyStatus, '');
+  assert.equal(browser.timers.size, 0);
+});

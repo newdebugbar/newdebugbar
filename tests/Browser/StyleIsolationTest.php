@@ -2,6 +2,29 @@
 
 use NewDebugBar\Tests\Support\DebugBarBrowser;
 
+it('isolates unread request dots from host styles', function () {
+    $page = visit('/hostile-styles')->resize(1024, 720);
+    $page->script("fetch('/api/plain-json?unread=1')");
+    $page->assertSeeIn('[data-ndb-request-badge="toolbar"]', '1')
+        ->click('[data-ndb-request-picker-trigger="toolbar"]')
+        ->assertScript(<<<'JS'
+            (() => {
+                const dots = [...document.querySelectorAll('#newdebugbar-request-list-toolbar [data-ndb-request-unread]')];
+                return dots.length === 2
+                    && dots.every((dot) => {
+                        const box = dot.getBoundingClientRect();
+                        const style = getComputedStyle(dot);
+                        return box.width === 6 && box.height === 6
+                            && style.backgroundColor !== 'rgb(255, 0, 0)'
+                            && parseFloat(style.borderTopWidth) === 0
+                            && parseFloat(style.borderRadius) >= 3;
+                    })
+                    && dots.filter((dot) => getComputedStyle(dot).opacity === '1').length === 1;
+            })()
+            JS)
+        ->assertNoJavaScriptErrors();
+});
+
 it('isolates Livewire timeline steps and their help from host styles', function () {
     $page = visit('/profiled-livewire')
         ->resize(1280, 900)

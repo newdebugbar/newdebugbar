@@ -67,7 +67,7 @@
                             <x-newdebugbar::inspector-action
                                 icon="copy"
                                 data-ndb-http-client-copy-body="response"
-                                @click="copyText(formatHttpClientEvidence(selectedHttpClientRequest.response?.body))"
+                                copy-expression="formatHttpClientEvidence(selectedHttpClientRequest.response?.body)"
                             >
                                 Copy body
                             </x-newdebugbar::inspector-action>

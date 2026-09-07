@@ -59,7 +59,6 @@ it('composes Redis from the shared inspector workspace grammar', function () {
         ->toContain('<x-newdebugbar::inspector-source-panel')
         ->toContain('data-ndb-redis-source')
         ->toContain('<x-newdebugbar::inspector-source-link')
-        ->toContain('copyText(selectedRedisCommand.source_label)')
         ->toContain('Why are these identifiers protected?')
         ->toContain('data-ndb-redis-payload')
         ->toContain(':bordered="false"')

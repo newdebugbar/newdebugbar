@@ -29,7 +29,6 @@ it('keeps Timeline on shared inspector geometry with namespaced behavior hooks',
             '<x-newdebugbar::select-field',
             'data-ndb-timeline-page-sentinel',
             'observeTimelinePageEnd($el, $wire)',
-            'copyText(selectedTimelineItem.source)',
         )
         ->not->toContain(
             'data-section=',
@@ -59,8 +58,7 @@ it('keeps Views on one shared workspace with merged lazy detail evidence', funct
             '<x-newdebugbar::inspector-detail-pane',
             '<x-newdebugbar::inspector-detail-header',
             '<x-newdebugbar::inspector-source-fact',
-            'copyText(selectedViewRender.source_label)',
-            'copyText(composer.source_label)',
+            '<x-newdebugbar::inspector-source-link',
             '<template x-if="selectedViewGroup">',
             '<template x-if="selectedViewRender.composers.length > 0">',
             'data-ndb-view-detail-content',

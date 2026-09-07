@@ -339,7 +339,7 @@
                                 <x-slot:value>
                                     <template x-if="selectedTimelineItem.source">
                                         <x-newdebugbar::inspector-source-link
-                                            @click="copyText(selectedTimelineItem.source)"
+                                            copy-expression="selectedTimelineItem.source"
                                             ::title="selectedTimelineItem.source"
                                         >
                                             <x-slot:value x-text="selectedTimelineItem.source"></x-slot:value>

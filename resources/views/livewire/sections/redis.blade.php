@@ -231,14 +231,7 @@
                                         x-show.important="
                                             selectedRedisCommand.keys.length || selectedRedisCommand.key_hashes.length
                                         "
-                                        @click="
-                                            copyText(
-                                                (selectedRedisCommand.keys.length
-                                                    ? selectedRedisCommand.keys
-                                                    : selectedRedisCommand.key_hashes
-                                                ).join('\n'),
-                                            )
-                                        "
+                                        copy-expression="(selectedRedisCommand.keys.length ? selectedRedisCommand.keys : selectedRedisCommand.key_hashes).join('\n')"
                                         class="ndb:shrink-0"
                                         ><span
                                             x-text="selectedRedisCommand.keys.length ? 'Copy keys' : 'Copy identifiers'"
@@ -327,7 +320,7 @@
                                         <x-newdebugbar::inspector-source-link
                                             ::title="'Copy ' + selectedRedisCommand.source_label"
                                             ::aria-label="'Copy Redis source ' + selectedRedisCommand.source_label"
-                                            @click="copyText(selectedRedisCommand.source_label)"
+                                            copy-expression="selectedRedisCommand.source_label"
                                         >
                                             <x-slot:value x-text="selectedRedisCommand.source_label"></x-slot:value>
                                         </x-newdebugbar::inspector-source-link>

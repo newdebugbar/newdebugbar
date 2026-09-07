@@ -28,7 +28,7 @@
         <x-newdebugbar::inspector-action
             icon="link"
             data-ndb-http-client-copy-url
-            @click="copyText(selectedHttpClientRequest.url)"
+            copy-expression="selectedHttpClientRequest.url"
             class="ndb:shrink-0"
         >
             Copy URL

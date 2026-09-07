@@ -30,7 +30,7 @@
                     <x-newdebugbar::inspector-action
                         icon="copy"
                         data-ndb-authorization-copy-evidence
-                        @click="copyText(selectedAuthorizationDecision.copy_evidence)"
+                        copy-expression="selectedAuthorizationDecision.copy_evidence"
                     >
                         Copy evidence
                     </x-newdebugbar::inspector-action>
@@ -178,7 +178,7 @@
                                 <x-newdebugbar::inspector-source-link
                                     class="ndb:mt-1"
                                     data-ndb-authorization-copy-handler-source
-                                    @click="copyText(selectedAuthorizationDecision.handler_source_label)"
+                                    copy-expression="selectedAuthorizationDecision.handler_source_label"
                                     ::title="selectedAuthorizationDecision.handler_source_label"
                                 >
                                     <x-slot:value x-text="selectedAuthorizationDecision.handler_source_label"></x-slot:value>
@@ -197,7 +197,7 @@
                             <x-slot:value>
                                 <x-newdebugbar::inspector-source-link
                                     data-ndb-authorization-copy-callsite
-                                    @click="copyText(selectedAuthorizationDecision.callsite_label)"
+                                    copy-expression="selectedAuthorizationDecision.callsite_label"
                                     ::title="selectedAuthorizationDecision.callsite_label"
                                 >
                                     <x-slot:value x-text="selectedAuthorizationDecision.callsite_label"></x-slot:value>

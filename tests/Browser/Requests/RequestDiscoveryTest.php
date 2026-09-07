@@ -154,10 +154,13 @@ it('collects background requests in the split button without changing the host p
                 const methods = options.map((option) => option.querySelector('[data-ndb-request-method]'));
                 const statuses = options.map((option) => option.querySelector('[data-ndb-request-status]'));
                 const indicators = options.map((option) => option.querySelector('[data-ndb-request-current]'));
+                const unread = options.map((option) => option.querySelector('[data-ndb-request-unread]'));
                 const badge = document.querySelector('[data-ndb-request-badge="toolbar"]');
                 const activeMethod = document.querySelector('[data-ndb-toolbar="request"] > span:first-child');
 
-                return state.laterRequestCount === 3
+                return unread.filter((dot) => getComputedStyle(dot).opacity === '1').length === 3
+                    && unread.every((dot) => dot.getBoundingClientRect().width === 6 && dot.getBoundingClientRect().height === 6)
+                    && state.laterRequestCount === 3
                     && options.length >= 4
                     && groups.map((group) => group.dataset.ndbRequestGroup).join(',') === 'current,later'
                     && groups[0].querySelector('[data-ndb-request-option]').dataset.ndbProfileId === window.__newDebugBarActiveProfile
@@ -251,6 +254,8 @@ it('collects background requests in the split button without changing the host p
 
                 return current?.dataset.ndbProfileId === window.__newDebugBarActiveProfile
                     && selectedLater !== null
+                    && getComputedStyle(current.querySelector('[data-ndb-request-unread]')).opacity === '0'
+                    && getComputedStyle(selectedLater.querySelector('[data-ndb-request-unread]')).opacity === '0'
                     && Alpine.$data(document.getElementById('newdebugbar')).selected === 'request';
             })()
             JS)
@@ -271,7 +276,11 @@ it('collects background requests in the split button without changing the host p
             ->assertScript('Alpine.$data(document.getElementById("newdebugbar")).unreadRequestCount', $remaining)
             ->assertScript('document.querySelector(\'[data-ndb-request-picker-trigger="header"]\').disabled === false')
             ->click('[data-ndb-request-picker-trigger="header"]')
-            ->assertCount('#newdebugbar-request-list-header [data-ndb-request-group="later"] [data-ndb-request-option]', 3);
+            ->assertCount('#newdebugbar-request-list-header [data-ndb-request-group="later"] [data-ndb-request-option]', 3)
+            ->assertScript(
+                "[...document.querySelectorAll('#newdebugbar-request-list-header [data-ndb-request-unread]')].filter((dot) => getComputedStyle(dot).opacity === '1').length",
+                $remaining,
+            );
     }
 
     $page

@@ -19,16 +19,16 @@
                 @click.stop="toggleLivewireComponent(component)"
                 :aria-expanded="! livewireComponentCollapsed(component)"
                 :aria-label="`${livewireComponentCollapsed(component) ? 'Expand' : 'Collapse'} ${component.title}`"
-                class="ndb:my-auto ndb:grid ndb:size-5 ndb:shrink-0 ndb:place-items-center ndb:rounded ndb:border ndb:border-zinc-200 ndb:bg-zinc-100 ndb:text-zinc-500 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500 ndb:hover:bg-zinc-200 ndb:hover:text-zinc-700 ndb:dark:border-zinc-700 ndb:dark:bg-zinc-800 ndb:dark:text-zinc-400 ndb:dark:hover:bg-zinc-700 ndb:dark:hover:text-zinc-200"
+                class="ndb:mx-1 ndb:my-auto ndb:grid ndb:size-5 ndb:shrink-0 ndb:place-items-center ndb:rounded ndb:border ndb:border-zinc-200 ndb:bg-zinc-100 ndb:text-zinc-500 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500 ndb:hover:bg-zinc-200 ndb:hover:text-zinc-700 ndb:dark:border-zinc-700 ndb:dark:bg-zinc-800 ndb:dark:text-zinc-400 ndb:dark:hover:bg-zinc-700 ndb:dark:hover:text-zinc-200"
             >
-                <x-newdebugbar::icon
-                    name="chevron-down"
-                    size="3"
-                    class="ndb:transition"
-                    ::class="livewireComponentCollapsed(component) ? 'ndb:-rotate-90' : ''"
-                />
+                <x-newdebugbar::icon name="plus" size="3" x-show.important="livewireComponentCollapsed(component)" />
+                <x-newdebugbar::icon name="minus" size="3" x-show.important="! livewireComponentCollapsed(component)" />
             </button>
-            <span x-show.important="! component.hasChildren" aria-hidden="true" class="ndb:w-5 ndb:shrink-0"></span>
+            <span
+                x-show.important="! component.hasChildren"
+                aria-hidden="true"
+                class="ndb:mx-1 ndb:w-5 ndb:shrink-0"
+            ></span>
 
             <button
                 data-ndb-livewire-component-select

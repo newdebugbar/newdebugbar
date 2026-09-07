@@ -1,5 +1,4 @@
 import { DEFAULT_SECTION } from './navigation.js';
-import { createRequestCopyFeedback } from './request-copy.js';
 
 export const PROFILE_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -30,7 +29,11 @@ export function createRequests(context) {
     },
 
     get unreadRequestCount() {
-      return this.laterRequestProfiles.filter((profile) => !this.viewedProfileIds.includes(profile.id)).length;
+      return this.laterRequestProfiles.filter((profile) => this.requestIsUnread(profile)).length;
+    },
+
+    requestIsUnread(profile) {
+      return profile.id !== this.currentRequestId && !this.viewedProfileIds.includes(profile.id);
     },
 
     get currentRequestProfile() {
@@ -55,10 +58,6 @@ export function createRequests(context) {
       if (this.unreadRequestCount === 0) return 'Choose request';
 
       return `Choose request, ${this.unreadRequestCount} unread ${this.unreadRequestCount === 1 ? 'request' : 'requests'}`;
-    },
-
-    requestCopyFeedback(requestUrl) {
-      return createRequestCopyFeedback(requestUrl, (value) => this.copyText(value), browser);
     },
 
     rememberProfile(summary) {

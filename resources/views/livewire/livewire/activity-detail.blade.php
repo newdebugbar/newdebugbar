@@ -144,7 +144,7 @@
             <span class="ndb:shrink-0 ndb:text-xs ndb:font-medium ndb:text-zinc-500 ndb:dark:text-zinc-400">Source</span>
             <x-newdebugbar::inspector-source-link
                 ::title="livewireActivitySourceLabel(selectedLivewireActivity)"
-                @click="copyText(livewireActivitySourceLabel(selectedLivewireActivity))"
+                copy-expression="livewireActivitySourceLabel(selectedLivewireActivity)"
                 class="ndb:min-w-0"
             >
                 <x-slot:value x-text="livewireActivitySourceLabel(selectedLivewireActivity)"></x-slot:value>

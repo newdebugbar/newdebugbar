@@ -236,7 +236,6 @@ it('collapses component branches with an aligned disclosure control', function (
                 const toggleBox = toggle.getBoundingClientRect();
                 const selectBox = select.getBoundingClientRect();
                 const titleBox = title.getBoundingClientRect();
-                const iconStyle = getComputedStyle(icon);
 
                 return Math.abs(toggleBox.width - 20) <= 0.5
                     && Math.abs(toggleBox.height - 20) <= 0.5
@@ -244,29 +243,18 @@ it('collapses component branches with an aligned disclosure control', function (
                         (toggleBox.top + toggleBox.height / 2)
                         - (selectBox.top + selectBox.height / 2),
                     ) <= 1
-                    && Math.abs(titleBox.left - toggleBox.right - 8) <= 1
+                    && Math.abs(titleBox.left - toggleBox.right - 12) <= 1
                     && parseFloat(getComputedStyle(toggle).borderRadius) > 0
                     && getComputedStyle(toggle).backgroundColor !== 'rgba(0, 0, 0, 0)'
                     && icon.getBoundingClientRect().width === 12
-                    && icon.getBoundingClientRect().height === 12
-                    && iconStyle.rotate !== 'none';
+                    && icon.getBoundingClientRect().height === 12;
             })()
             JS)
         ->click($rootToggle)
         ->assertCount('[data-ndb-livewire-component-row]', 2)
         ->assertAttribute($rootToggle, 'aria-expanded', 'true')
-        ->assertScript(<<<'JS'
-            getComputedStyle(
-                document.querySelector('[data-ndb-livewire-component-toggle] svg'),
-            ).rotate === 'none'
-            JS)
         ->click($rootToggle)
         ->assertCount('[data-ndb-livewire-component-row]', 1)
-        ->assertScript(<<<'JS'
-            getComputedStyle(
-                document.querySelector('[data-ndb-livewire-component-toggle] svg'),
-            ).rotate !== 'none'
-            JS)
         ->assertScript(<<<'JS'
             (() => {
                 const detail = document.querySelector('[data-ndb-livewire-detail-pane]');

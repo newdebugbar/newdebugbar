@@ -36,7 +36,7 @@
                     ></code>
                     <x-newdebugbar::inspector-source-link
                         class="ndb:mt-0.5"
-                        @click="copyText(frame.file + ':' + frame.line)"
+                        copy-expression="frame.file + ':' + frame.line"
                         ::aria-label="'Copy source ' + frame.file + ':' + frame.line"
                     >
                         <x-slot:value x-text="frame.file + ':' + frame.line"></x-slot:value>

@@ -53,7 +53,7 @@
                     <template x-if="selectedCacheOperation.callsite?.file">
                         <x-newdebugbar::inspector-source-link
                             ::aria-label="'Copy source ' + selectedCacheOperation.source_label"
-                            @click="copyText(selectedCacheOperation.source_label)"
+                            copy-expression="selectedCacheOperation.source_label"
                         >
                             <x-slot:value
                                 ::title="selectedCacheOperation.source_label"

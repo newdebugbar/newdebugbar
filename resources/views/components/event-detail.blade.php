@@ -288,7 +288,7 @@
                                     <x-newdebugbar::inspector-source-link
                                         data-ndb-event-copy-dispatch-source
                                         ::data-ndb-event-copy-dispatch-source-index="index"
-                                        @click="copyText(source.file + ':' + source.line)"
+                                        copy-expression="source.file + ':' + source.line"
                                         ::aria-label="'Copy dispatch source ' + source.file + ':' + source.line"
                                     >
                                         <x-slot:value x-text="source.file + ':' + source.line"></x-slot:value>
