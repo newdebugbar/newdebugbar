@@ -69,7 +69,6 @@
             "/.github",
             "/.gitignore",
             "/.phpunit.cache",
-            "/.workbench",
             "/AGENTS.md",
             "/composer.lock",
             "/node_modules",
@@ -80,7 +79,6 @@
             "/phpunit.xml.dist",
             "/resources/css",
             "/resources/js",
-            "/scripts",
             "/tests",
             "/vite.config.js",
             "/vendor"

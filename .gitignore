@@ -1,7 +1,6 @@
 .DS_Store
 /.phpunit.cache
 /.phpunit.result.cache
-/.workbench
 /coverage
 /node_modules
 /vendor
