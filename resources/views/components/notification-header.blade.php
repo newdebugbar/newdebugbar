@@ -110,7 +110,11 @@
                     x-text="selectedNotification.execution_mode_label"
                 ></x-slot:value>
             </x-newdebugbar::inspector-fact>
-            <x-newdebugbar::inspector-fact label="Source" data-ndb-notification-fact>
+            <x-newdebugbar::inspector-fact
+                label="Source"
+                data-ndb-notification-fact
+                x-show.important="selectedNotification.callsite?.file"
+            >
                 <x-newdebugbar::inspector-source-link
                     ::title="selectedNotification.callsite_label"
                     @click="setNotificationDetailTab('source')"

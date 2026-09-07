@@ -148,7 +148,10 @@
                             empty-label="No application stack was captured for this query."
                             class="ndb:border-t ndb:border-zinc-200/90 ndb:dark:border-zinc-800"
                         >
-                            <x-newdebugbar::inspector-source-fact label="Source">
+                            <x-newdebugbar::inspector-source-fact
+                                label="Source"
+                                x-show.important="selectedQuery.source_available"
+                            >
                                 <x-slot:value>
                                     <x-newdebugbar::inspector-source-link
                                         ::title="selectedQuery.source_available ? 'Copy ' + selectedQuery.source_label : null"

@@ -245,6 +245,10 @@ it('collapses component branches with an aligned disclosure control', function (
                         - (selectBox.top + selectBox.height / 2),
                     ) <= 1
                     && Math.abs(titleBox.left - toggleBox.right - 8) <= 1
+                    && parseFloat(getComputedStyle(toggle).borderRadius) > 0
+                    && getComputedStyle(toggle).backgroundColor !== 'rgba(0, 0, 0, 0)'
+                    && icon.getBoundingClientRect().width === 12
+                    && icon.getBoundingClientRect().height === 12
                     && iconStyle.rotate !== 'none';
             })()
             JS)
@@ -348,17 +352,6 @@ it('keeps the property editor usable in a narrow dark inspector', function () {
         ->click('[data-ndb-livewire-tab="components"]')
         ->click('[data-ndb-livewire-component-select]')
         ->assertScript($assertMobileBackInset)
-        ->assertScript(<<<'JS'
-            (() => {
-                const primary = document
-                    .querySelector('[data-ndb-livewire-component-header] [data-ndb-inspector-detail-header-primary]')
-                    .getBoundingClientRect();
-                const action = document.querySelector('[data-ndb-livewire-view-activity]').getBoundingClientRect();
-
-                return action.width < primary.width
-                    && Math.abs(action.right - primary.right) <= 1;
-            })()
-            JS)
         ->click('[data-ndb-livewire-edit-key$=":count"]')
         ->assertVisible('[data-ndb-livewire-property-popover]')
         ->assertVisible('[data-ndb-livewire-edit-key$=":count"]');

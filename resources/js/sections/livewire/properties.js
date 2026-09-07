@@ -308,6 +308,13 @@ export function createProperties(context) {
       return String(draft.value);
     },
 
+    applyLivewireDraftOnEnter(row, trigger, event) {
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey || event.isComposing) return;
+
+      event.preventDefault();
+      return this.applyLivewireDraft(row, trigger);
+    },
+
     async applyLivewireDraft(row, trigger = null) {
       const key = this.livewireDraftKey(row);
       const draft = this.livewireDrafts[key];

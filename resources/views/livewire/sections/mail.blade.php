@@ -331,6 +331,7 @@
                                 <x-newdebugbar::filter-tab
                                     variant="segmented"
                                     data-ndb-mail-detail-tab="{{ $tab }}"
+                                    x-show.important="{{ $tab === 'source' ? 'selectedMailHasSource' : 'true' }}"
                                     @click="setMailDetailTab({{ \Illuminate\Support\Js::from($tab) }})"
                                     ::aria-pressed="mailDetailTab === {{ \Illuminate\Support\Js::from($tab) }}"
                                     aria-label="{{ $label }}"

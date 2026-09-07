@@ -128,10 +128,17 @@
 <template x-if="mailDetailTab === 'source'">
     <div data-ndb-mail-detail-panel="source">
         <x-newdebugbar::inspector-source-panel frames="selectedMailMessage.stack">
-            <x-newdebugbar::inspector-source-fact label="Mailable or notification" :code="true">
-                <x-slot:value x-text="selectedMailMessage.source || 'No source class was captured.'"></x-slot:value>
+            <x-newdebugbar::inspector-source-fact
+                label="Mailable or notification"
+                :code="true"
+                x-show.important="selectedMailMessage.source"
+            >
+                <x-slot:value x-text="selectedMailMessage.source"></x-slot:value>
             </x-newdebugbar::inspector-source-fact>
-            <x-newdebugbar::inspector-source-fact label="Triggered at">
+            <x-newdebugbar::inspector-source-fact
+                label="Triggered at"
+                x-show.important="selectedMailMessage.callsite?.file"
+            >
                 <x-slot:value x-text="selectedMailMessage.callsite_label"></x-slot:value>
             </x-newdebugbar::inspector-source-fact>
         </x-newdebugbar::inspector-source-panel>

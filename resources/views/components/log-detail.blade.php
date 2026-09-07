@@ -216,25 +216,25 @@
             </x-newdebugbar::inspector-disclosure>
         </section>
 
-        <section data-ndb-log-detail-group="source" data-ndb-log-source class="ndb:bg-transparent ndb:p-0">
-            <x-newdebugbar::inspector-source-panel
-                :frames="\Illuminate\Support\Js::from($stack)"
-                columns="1"
-                empty-label="No application stack was captured for this log entry."
-                class="ndb:bg-transparent"
-            >
-                <x-newdebugbar::inspector-source-fact label="Source">
-                    <x-slot:value>
-                        @if ($sourceLabel !== null)
-                            <x-newdebugbar::inspector-source-link :copy="$sourceLabel">
-                                <x-slot:value>{{ $sourceLabel }}</x-slot:value>
-                            </x-newdebugbar::inspector-source-link>
-                        @else
-                            <span>—</span>
-                        @endif
-                    </x-slot:value>
-                </x-newdebugbar::inspector-source-fact>
-            </x-newdebugbar::inspector-source-panel>
-        </section>
+        @if ($sourceLabel !== null || $stack !== [])
+            <section data-ndb-log-detail-group="source" data-ndb-log-source class="ndb:bg-transparent ndb:p-0">
+                <x-newdebugbar::inspector-source-panel
+                    :frames="\Illuminate\Support\Js::from($stack)"
+                    columns="1"
+                    empty-label="No application stack was captured for this log entry."
+                    class="ndb:bg-transparent"
+                >
+                    @if ($sourceLabel !== null)
+                        <x-newdebugbar::inspector-source-fact label="Source">
+                            <x-slot:value>
+                                <x-newdebugbar::inspector-source-link :copy="$sourceLabel">
+                                    <x-slot:value>{{ $sourceLabel }}</x-slot:value>
+                                </x-newdebugbar::inspector-source-link>
+                            </x-slot:value>
+                        </x-newdebugbar::inspector-source-fact>
+                    @endif
+                </x-newdebugbar::inspector-source-panel>
+            </section>
+        @endif
     </div>
 </div>

@@ -2,6 +2,24 @@
 
 use NewDebugBar\Tests\Support\DebugBarBrowser;
 
+it('applies numeric property edits with Enter', function () {
+    $page = visit('/profiled-livewire')
+        ->resize(1024, 900)
+        ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
+
+    DebugBarBrowser::selectSectionViaPalette($page, 'livewire');
+
+    $page
+        ->click('[data-ndb-livewire-tab="components"]')
+        ->click('[data-ndb-livewire-edit-key$=":count"]')
+        ->type('input[data-ndb-livewire-edit-control]', '5')
+        ->keys('input[data-ndb-livewire-edit-control]', 'Enter')
+        ->assertMissing('[data-ndb-livewire-property-popover]')
+        ->assertSeeIn('[data-testid="host-counter-value"]', '5')
+        ->assertVisible('[data-ndb-livewire-component-detail]')
+        ->assertNoJavaScriptErrors();
+});
+
 it('keeps property shortcuts local to textarea controls', function (string $shortcut) {
     $page = visit('/profiled-livewire')
         ->resize(1024, 900)
@@ -15,7 +33,7 @@ it('keeps property shortcuts local to textarea controls', function (string $shor
         ->assertVisible('[data-ndb-livewire-property-popover]')
         ->assertScript(<<<'JS'
             document.querySelector('[data-ndb-livewire-property-popover]')
-                .querySelector('kbd, [aria-keyshortcuts]') === null
+                .querySelector('kbd, [aria-keyshortcuts*="Meta"], [aria-keyshortcuts*="Control"]') === null
             JS)
         ->type('input[data-ndb-livewire-edit-control]', '5')
         ->keys('input[data-ndb-livewire-edit-control]', $shortcut)
@@ -41,7 +59,7 @@ it('keeps property shortcuts local to textarea controls', function (string $shor
         ->assertVisible('[data-ndb-livewire-property-popover]')
         ->assertScript(<<<'JS'
             document.querySelector('[data-ndb-livewire-property-popover]')
-                .querySelector('kbd, [aria-keyshortcuts]') === null
+                .querySelector('kbd, [aria-keyshortcuts*="Meta"], [aria-keyshortcuts*="Control"]') === null
             JS)
         ->click('[data-ndb-livewire-edit-control][role="switch"]')
         ->keys('[data-ndb-livewire-edit-control][role="switch"]', $shortcut)
@@ -97,7 +115,7 @@ it('keeps property shortcuts local to textarea controls', function (string $shor
         ->assertVisible('input[data-ndb-livewire-edit-control]')
         ->assertScript(<<<'JS'
             document.querySelector('[data-ndb-livewire-property-popover]')
-                .querySelector('kbd, [aria-keyshortcuts]') === null
+                .querySelector('kbd, [aria-keyshortcuts*="Meta"], [aria-keyshortcuts*="Control"]') === null
             JS)
         ->type('input[data-ndb-livewire-edit-control]', '3')
         ->keys('select[data-ndb-livewire-edit-control]', $shortcut)

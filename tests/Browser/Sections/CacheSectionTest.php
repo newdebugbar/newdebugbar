@@ -2,6 +2,77 @@
 
 use NewDebugBar\Tests\Support\DebugBarBrowser;
 
+it('omits empty cache source details while retaining any captured stack', function (int $width, int $height, string $theme) {
+    $page = visit('/profiled-cache-rich')->resize($width, $height);
+    $page->script("localStorage.setItem('newdebugbar.preferences.v1', JSON.stringify({theme: '$theme'}))");
+    $page->refresh();
+
+    if ($width < 640) {
+        $page->click('[data-ndb-mobile-toolbar-trigger="actions"]')
+            ->click('[data-ndb-mobile-toolbar-action="inspector"]')
+            ->click('[data-ndb-header-mobile-trigger="actions"]')
+            ->click('[data-ndb-header-mobile-action="palette"]')
+            ->click('[data-ndb-command="section:cache"]');
+    } else {
+        $page->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
+        DebugBarBrowser::selectSectionViaPalette($page, 'cache');
+    }
+
+    DebugBarBrowser::waitForDetails($page);
+
+    if ($width < 1024) {
+        $page->click('[data-ndb-cache-item][aria-pressed="true"]');
+    }
+
+    $page->assertVisible('[data-ndb-cache-source]');
+    $page->script(<<<'JS'
+        (() => {
+            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-section="cache"]'));
+            const operation = state.selectedCacheOperation;
+            window.newdebugbarCacheSourceEvidence = { callsite: operation.callsite, stack: operation.stack };
+            operation.callsite = null;
+            operation.stack = [];
+        })()
+        JS);
+
+    $page
+        ->assertMissing('[data-ndb-cache-source]')
+        ->assertVisible('[data-ndb-cache-header]');
+
+    $page->script(<<<'JS'
+        Alpine.$data(document.querySelector('[data-ndb-loaded-section="cache"]')).selectedCacheOperation.stack
+            = window.newdebugbarCacheSourceEvidence.stack
+        JS);
+
+    $page
+        ->assertVisible('[data-ndb-cache-source]')
+        ->assertScript(<<<'JS'
+            document.querySelector('[data-ndb-cache-source] [data-ndb-inspector-source-fact]').getClientRects().length === 0
+            JS)
+        ->click('[data-ndb-cache-source] summary')
+        ->assertVisible('[data-ndb-cache-source] [data-ndb-inspector-stack]')
+        ->assertScript(<<<'JS'
+            document.querySelectorAll('[data-ndb-cache-source] [data-ndb-inspector-stack] li').length
+                === window.newdebugbarCacheSourceEvidence.stack.length
+            JS);
+
+    $page->script(<<<'JS'
+        Alpine.$data(document.querySelector('[data-ndb-loaded-section="cache"]')).selectedCacheOperation.callsite
+            = window.newdebugbarCacheSourceEvidence.callsite
+        JS);
+
+    $page
+        ->assertVisible('[data-ndb-cache-source] [data-ndb-inspector-source-fact]')
+        ->assertNoJavaScriptErrors();
+})->with([
+    'short desktop light' => [1024, 720, 'light'],
+    'short desktop dark' => [1024, 720, 'dark'],
+    'tall desktop light' => [1440, 1000, 'light'],
+    'tall desktop dark' => [1440, 1000, 'dark'],
+    'mobile light' => [390, 844, 'light'],
+    'mobile dark' => [390, 844, 'dark'],
+]);
+
 it('filters selects and inspects rich cache diagnostics', function () {
     $preferences = json_encode(['theme' => 'light', 'favorites' => []], JSON_THROW_ON_ERROR);
     $page = visit('/profiled-cache-rich')->resize(1440, 900);

@@ -82,6 +82,7 @@ export function createMail(context) {
 
     setMailDetailTab(tab) {
       if (!['preview', 'message', 'source'].includes(tab)) return;
+      if (tab === 'source' && !this.selectedMailHasSource) return;
 
       this.mailDetailTab = tab;
       if (tab !== 'preview') this.deactivate();
@@ -90,6 +91,12 @@ export function createMail(context) {
         this.$refs?.mailDetail?.scrollTo?.({ top: 0, behavior: 'instant' });
         browser.highlight?.();
       });
+    },
+
+    get selectedMailHasSource() {
+      const message = this.selectedMailMessage;
+
+      return Boolean(message?.source || message?.callsite?.file || message?.stack?.length);
     },
 
     applyMailView() {

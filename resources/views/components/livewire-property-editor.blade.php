@@ -120,6 +120,14 @@
                             data-ndb-livewire-edit-control
                             x-model="livewireDrafts[livewireDraftKey(row)].value"
                             type="number"
+                            aria-keyshortcuts="Enter"
+                            @keydown.enter.stop="
+                                applyLivewireDraftOnEnter(
+                                    row,
+                                    document.getElementById($id('newdebugbar-livewire-edit-trigger')),
+                                    $event,
+                                )
+                            "
                             :step="livewireDrafts[livewireDraftKey(row)]?.type === 'Float' ? 'any' : '1'"
                             :aria-label="`New value for ${row.path}`"
                             class="ndb:h-9 ndb:w-full ndb:rounded-lg ndb:border ndb:border-zinc-200 ndb:bg-white ndb:px-3 ndb:text-xs ndb:outline-none ndb:focus:border-indigo-400 ndb:focus:ring-2 ndb:focus:ring-indigo-500/15 ndb:dark:border-zinc-700 ndb:dark:bg-zinc-900"

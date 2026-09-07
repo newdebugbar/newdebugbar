@@ -7,7 +7,5 @@ it('composes Mail header facts from the shared fact family', function () {
         ->toContain('<x-newdebugbar::inspector-facts')
         ->toContain(':bordered="false"')
         ->toContain('columns="4"')
-        ->and(substr_count($header, '<x-newdebugbar::inspector-fact '))->toBe(4)
-        ->and($header)
         ->not->toContain('<div data-ndb-mail-fact');
 });

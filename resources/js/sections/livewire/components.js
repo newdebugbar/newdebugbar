@@ -151,17 +151,6 @@ export function createComponents(context) {
       this.livewireSearch = '';
     },
 
-    inspectLivewireComponentActivity() {
-      const id = this.selectedLivewireComponent?.latestActivityId;
-      if (!id || !this.livewireActivity.some((item) => item.id === id)) return;
-      this.livewireSelectedActivityId = id;
-      this.livewireActivitySelectionPinned = true;
-      this.livewireTab = 'activity';
-      this.livewireDetailOpen = true;
-      this.livewireSearch = '';
-      this.$nextTick?.(() => browser.highlight?.());
-    },
-
     livewireComponentTitle(id) {
       return this.livewireComponents.find((component) => component.id === String(id))?.title ?? String(id);
     },

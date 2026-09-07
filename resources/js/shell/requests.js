@@ -1,4 +1,5 @@
 import { DEFAULT_SECTION } from './navigation.js';
+import { createRequestCopyFeedback } from './request-copy.js';
 
 export const PROFILE_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -18,13 +19,18 @@ export function createRequests(context) {
     requestPickerArrowLeft: 0,
     recentProfiles: requests.slice(0, requestLimit),
     currentRequestId: summary.id ?? null,
+    viewedProfileIds: PROFILE_PATTERN.test(summary.id ?? '') ? [summary.id] : [],
     profileLimit: requestLimit,
     pendingProfileIds: [],
     requestSelectionPending: null,
     relatedProfileSelection: null,
 
     get requestBadgeCount() {
-      return this.laterRequestCount > 9 ? '9+' : String(this.laterRequestCount);
+      return this.unreadRequestCount > 9 ? '9+' : String(this.unreadRequestCount);
+    },
+
+    get unreadRequestCount() {
+      return this.laterRequestProfiles.filter((profile) => !this.viewedProfileIds.includes(profile.id)).length;
     },
 
     get currentRequestProfile() {
@@ -46,7 +52,13 @@ export function createRequests(context) {
     get requestPickerButtonLabel() {
       if (!this.hasOtherRequests) return 'No later requests yet';
 
-      return `Choose request, ${this.laterRequestCount} later ${this.laterRequestCount === 1 ? 'request' : 'requests'}`;
+      if (this.unreadRequestCount === 0) return 'Choose request';
+
+      return `Choose request, ${this.unreadRequestCount} unread ${this.unreadRequestCount === 1 ? 'request' : 'requests'}`;
+    },
+
+    requestCopyFeedback(requestUrl) {
+      return createRequestCopyFeedback(requestUrl, (value) => this.copyText(value), browser);
     },
 
     rememberProfile(summary) {
@@ -61,6 +73,9 @@ export function createRequests(context) {
           Math.max(0, this.profileLimit - (current ? 1 : 0)),
         );
         this.recentProfiles = current ? [...later, current] : later;
+        this.viewedProfileIds = this.viewedProfileIds.filter((id) =>
+          this.recentProfiles.some((profile) => profile.id === id),
+        );
 
         return;
       }
@@ -144,9 +159,11 @@ export function createRequests(context) {
       this.pendingProfileIds = this.pendingProfileIds.filter((id) => id !== summary.id);
       if (selectedFromPicker || selectedFromRelation) {
         this.rememberProfile(summary);
+        this.viewedProfileIds = [...new Set([...this.viewedProfileIds, summary.id])];
       } else {
         this.currentRequestId = summary.id;
         this.recentProfiles = [summary];
+        this.viewedProfileIds = [summary.id];
       }
       this.loadedSection = null;
       this.requestedSection = null;

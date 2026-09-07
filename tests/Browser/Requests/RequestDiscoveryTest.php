@@ -237,6 +237,7 @@ it('collects background requests in the split button without changing the host p
         ->assertNoJavaScriptErrors()
         ->assertVisible('[data-ndb-section-panel="request"]')
         ->assertVisible('[data-ndb-request-picker-trigger="header"]')
+        ->assertSeeIn('[data-ndb-request-badge="header"]', '2')
         ->click('[data-ndb-request-picker-trigger="header"]')
         ->assertVisible('#newdebugbar-request-list-header')
         ->assertScript(<<<'JS'
@@ -253,5 +254,27 @@ it('collects background requests in the split button without changing the host p
                     && Alpine.$data(document.getElementById('newdebugbar')).selected === 'request';
             })()
             JS)
+        ->assertNoJavaScriptErrors();
+
+    foreach ([1, 0] as $remaining) {
+        $page->assertScript(<<<'JS'
+            (() => {
+                const state = Alpine.$data(document.getElementById('newdebugbar'));
+                window.newdebugbarViewedRequestIds ??= [state.summary.id];
+                const option = [...document.querySelectorAll('#newdebugbar-request-list-header [data-ndb-request-group="later"] [data-ndb-request-option]')]
+                    .find((option) => ! window.newdebugbarViewedRequestIds.includes(option.dataset.ndbProfileId));
+                window.newdebugbarViewedRequestIds.push(option.dataset.ndbProfileId);
+                option.click();
+                return true;
+            })()
+            JS)
+            ->assertScript('Alpine.$data(document.getElementById("newdebugbar")).unreadRequestCount', $remaining)
+            ->assertScript('document.querySelector(\'[data-ndb-request-picker-trigger="header"]\').disabled === false')
+            ->click('[data-ndb-request-picker-trigger="header"]')
+            ->assertCount('#newdebugbar-request-list-header [data-ndb-request-group="later"] [data-ndb-request-option]', 3);
+    }
+
+    $page
+        ->assertScript('document.querySelector(\'[data-ndb-request-badge="header"]\').getClientRects().length === 0')
         ->assertNoJavaScriptErrors();
 });

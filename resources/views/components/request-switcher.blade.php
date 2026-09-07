@@ -107,7 +107,7 @@
             </span>
             <span
                 x-cloak
-                x-show.important="hasOtherRequests"
+                x-show.important="unreadRequestCount > 0"
                 x-text="requestBadgeCount"
                 data-ndb-request-badge="{{ $scope }}"
                 aria-hidden="true"

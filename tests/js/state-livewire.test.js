@@ -384,9 +384,6 @@ test('filters activity and moves between activity and component details', () => 
   assert.equal(state.livewireDetailTab, 'source');
   state.setLivewireDetailTab('invalid');
   assert.equal(state.livewireDetailTab, 'source');
-  state.inspectLivewireComponentActivity();
-  assert.equal(state.livewireTab, 'activity');
-  assert.equal(state.livewireSelectedActivityId, 'activity-2');
   state.inspectLivewireComponent('child-1');
   assert.equal(state.livewireTab, 'components');
   assert.equal(state.livewireDetailTab, 'properties');

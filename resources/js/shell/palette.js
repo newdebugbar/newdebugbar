@@ -148,7 +148,13 @@ export function createPalette(context) {
 
       if (kind === 'theme') this.setTheme(value);
 
-      if (kind === 'toolbar') this.pinToolbar(value);
+      if (kind === 'toolbar') {
+        this.pinToolbar(value);
+        this.closePalette(!this.inspectorOpen);
+        this.closeInspector();
+
+        return;
+      }
 
       if (kind === 'collectors' && value === 'show') {
         this.paletteShowQuiet = true;

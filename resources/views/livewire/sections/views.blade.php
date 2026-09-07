@@ -230,7 +230,10 @@
                             data-ndb-view-detail-content
                             class="ndb:space-y-3 ndb:border-l-0 ndb:bg-transparent ndb:p-3 ndb:sm:space-y-4 ndb:sm:p-4"
                         >
-                            <x-newdebugbar::inspector-source-fact label="Render source">
+                            <x-newdebugbar::inspector-source-fact
+                                label="Render source"
+                                x-show.important="selectedViewRender.source_label"
+                            >
                                 <x-slot:value>
                                     <template x-if="selectedViewRender.source_label">
                                         <x-newdebugbar::inspector-source-link
@@ -239,9 +242,6 @@
                                         >
                                             <x-slot:value x-text="selectedViewRender.source_label"></x-slot:value>
                                         </x-newdebugbar::inspector-source-link>
-                                    </template>
-                                    <template x-if="! selectedViewRender.source_label">
-                                        <span>Template source was not captured.</span>
                                     </template>
                                 </x-slot:value>
                             </x-newdebugbar::inspector-source-fact>

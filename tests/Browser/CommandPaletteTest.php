@@ -2,6 +2,23 @@
 
 use NewDebugBar\Tests\Support\DebugBarBrowser;
 
+it('pins and shrinks an expanded inspector from the command palette', function () {
+    visit('/profiled')
+        ->resize(1280, 900)
+        ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]')
+        ->click('[data-ndb-inspector-action="palette"]')
+        ->click('[data-ndb-command="toolbar:bottom-right"]')
+        ->assertAttribute('[data-ndb-toolbar-shell]', 'data-ndb-placement', 'bottom-right')
+        ->assertVisible('[data-ndb-corner-request]')
+        ->assertScript(<<<'JS'
+            (() => {
+                const state = Alpine.$data(document.getElementById('newdebugbar'));
+                return ! state.inspectorOpen && ! state.paletteOpen && state.barVisible;
+            })()
+            JS)
+        ->assertNoJavaScriptErrors();
+});
+
 it('uses the command palette, theme preference, and escape layers', function () {
     $page = visit('/profiled')
         ->assertAttribute('#newdebugbar', 'data-ndb-theme', 'light')

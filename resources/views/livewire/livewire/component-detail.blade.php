@@ -13,17 +13,6 @@
                 ></p>
             </div>
         </x-slot:title>
-        <x-slot:aside>
-            <x-newdebugbar::inspector-action
-                icon="activity"
-                data-ndb-livewire-view-activity
-                @click="inspectLivewireComponentActivity()"
-                ::disabled="! selectedLivewireComponent.latestActivityId"
-                class="ndb:justify-self-end ndb:disabled:cursor-default ndb:disabled:opacity-40"
-            >
-                Latest activity
-            </x-newdebugbar::inspector-action>
-        </x-slot:aside>
     </x-newdebugbar::inspector-detail-header>
 
     <x-newdebugbar::inspector-detail-tabs label="Livewire component detail">
@@ -254,16 +243,6 @@
             >
                 <x-slot:value x-text="selectedLivewireComponent.server.class"></x-slot:value>
             </x-newdebugbar::inspector-evidence>
-
-            <div
-                x-show.important="
-                    ! selectedLivewireComponent.server?.class &&
-                    ! selectedLivewireComponent.server?.source?.file &&
-                    ! selectedLivewireComponent.server?.view?.name
-                "
-            >
-                <x-newdebugbar::empty-state label="Server source was not captured for this component." />
-            </div>
         </div>
     </template>
 </article>

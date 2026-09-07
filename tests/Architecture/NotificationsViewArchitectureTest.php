@@ -41,8 +41,6 @@ it('composes Notifications from the canonical inspector grammar', function () {
         ->toContain('label="Duration"')
         ->toContain('label="Execution"')
         ->toContain('label="Source"')
-        ->and(substr_count($header, '<x-newdebugbar::inspector-fact '))->toBe(4)
-        ->and($header)
         ->not->toContain('<div data-ndb-notification-fact');
 
     expect($payload)

@@ -19,7 +19,7 @@ test('malformed startup inputs use safe request defaults', () => {
   state.recentProfiles = [{ id: 'current' }, ...Array.from({ length: 10 }, (_, index) => ({ id: `later-${index}` }))];
 
   assert.equal(state.requestBadgeCount, '9+');
-  assert.equal(state.requestPickerButtonLabel, 'Choose request, 10 later requests');
+  assert.equal(state.requestPickerButtonLabel, 'Choose request, 10 unread requests');
 });
 
 test('a new application profile keeps a matching section and resets stale section state', async () => {
@@ -116,14 +116,14 @@ test('background profiles are announced once and stay counted after the picker o
   assert.equal(state.hasOtherRequests, true);
   assert.equal(state.laterRequestCount, 1);
   assert.equal(state.requestBadgeCount, '1');
-  assert.equal(state.requestPickerButtonLabel, 'Choose request, 1 later request');
+  assert.equal(state.requestPickerButtonLabel, 'Choose request, 1 unread request');
 
   state.openRequestPicker('toolbar');
 
   assert.equal(state.requestPickerScope, 'toolbar');
   assert.equal(state.laterRequestCount, 1);
   assert.equal(state.requestBadgeCount, '1');
-  assert.equal(state.requestPickerButtonLabel, 'Choose request, 1 later request');
+  assert.equal(state.requestPickerButtonLabel, 'Choose request, 1 unread request');
   assert.deepEqual(calls, [['notice', ajaxProfileId]]);
 });
 
@@ -151,6 +151,94 @@ test('recent requests stay deduplicated, bounded, and include the selected reque
     state.recentProfiles.map((profile) => profile.id),
     [second.id, current.id],
   );
+});
+
+test('counts requests as unread until a successful selection and keeps viewed requests accessible', async () => {
+  const current = { ...summary, id: '6ba7b810-9dad-41d1-80b4-00c04fd430c8' };
+  const first = { ...summary, id: '550e8400-e29b-41d4-a716-446655440000' };
+  const second = { ...summary, id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' };
+  const next = { ...summary, id: '550e8400-e29b-41d4-a716-446655440001' };
+  const state = createNewDebugBar(current, runtime(), [first, second], 3);
+  state.$wire = { switchProfile: async () => {} };
+  state.$nextTick = (callback) => callback();
+
+  assert.equal(state.unreadRequestCount, 2);
+  state.openRequestPicker('toolbar');
+  assert.equal(state.unreadRequestCount, 2);
+  state.selectRequest(first.id);
+  assert.equal(state.unreadRequestCount, 2);
+  state.switchProfile(first);
+  assert.equal(state.unreadRequestCount, 1);
+  assert.equal(state.requestBadgeCount, '1');
+  assert.equal(state.laterRequestCount, 2);
+
+  state.openRelatedProfile(second.id);
+  state.switchProfile(second);
+  assert.equal(state.unreadRequestCount, 0);
+  assert.equal(state.hasOtherRequests, true);
+  assert.equal(state.requestPickerButtonLabel, 'Choose request');
+  assert.deepEqual(new Set(state.recentProfiles.map(({ id }) => id)), new Set([current.id, first.id, second.id]));
+  state.receiveProfile({ ...first, path: '/updated' });
+  assert.equal(state.unreadRequestCount, 0);
+
+  state.receiveProfile(next);
+  assert.equal(state.unreadRequestCount, 1);
+  assert.equal(
+    state.viewedProfileIds.every((id) => state.recentProfiles.some((profile) => profile.id === id)),
+    true,
+  );
+  state.$wire.switchProfile = async () => {
+    throw new Error('Profile unavailable');
+  };
+  state.selectRequest(next.id);
+  await Promise.resolve();
+  assert.equal(state.unreadRequestCount, 1);
+
+  state.switchProfile({ ...summary, id: '550e8400-e29b-41d4-a716-446655440002' });
+  assert.equal(state.unreadRequestCount, 0);
+  assert.deepEqual(state.viewedProfileIds, [state.summary.id]);
+});
+
+test('request copy feedback expires after three seconds and repeated copies replace its timer', async () => {
+  const browser = runtime();
+  const schedule = browser.schedule;
+  const delays = [];
+  const copies = [];
+  browser.schedule = (callback, delay) => {
+    delays.push(delay);
+    return schedule(callback);
+  };
+  browser.writeClipboard = async (value) => copies.push(value);
+  const state = createNewDebugBar(summary, browser);
+  const feedback = state.requestCopyFeedback('https://example.test/trips?season=autumn');
+
+  await feedback.copyRequestUrl();
+  assert.equal(feedback.copyFeedback, 'Copied');
+  await feedback.copyRequestUrl();
+  assert.equal(browser.timers.size, 1);
+  assert.deepEqual(delays, [3000, 3000]);
+  assert.deepEqual(copies, ['https://example.test/trips?season=autumn', 'https://example.test/trips?season=autumn']);
+  browser.runTimers();
+  assert.equal(feedback.copyFeedback, '');
+
+  browser.writeClipboard = async () => false;
+  await feedback.copyRequestUrl();
+  assert.equal(feedback.copyFeedback, 'Copy failed');
+  feedback.destroy();
+  assert.equal(browser.timers.size, 0);
+
+  let finish;
+  browser.writeClipboard = () =>
+    new Promise((resolve) => {
+      finish = resolve;
+    });
+  const pendingFeedback = state.requestCopyFeedback('/another-request');
+  const pending = pendingFeedback.copyRequestUrl();
+  pendingFeedback.destroy();
+  finish(true);
+  await pending;
+  assert.equal(pendingFeedback.copyFeedback, '');
+  assert.equal(browser.timers.size, 0);
 });
 
 test('request summaries format useful labels and update existing recent entries', () => {

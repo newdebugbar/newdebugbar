@@ -38,29 +38,31 @@
         </x-newdebugbar::inspector-definition-list>
     </div>
 
-    <x-newdebugbar::inspector-source-panel
-        frames="selectedCacheOperation.stack ?? []"
-        reset-on="selectedCacheOperation.execution"
-        data-ndb-cache-source
-        class="ndb:border-t ndb:border-zinc-200/90 ndb:dark:border-zinc-800"
-    >
-        <x-newdebugbar::inspector-source-fact label="Source">
-            <x-slot:value>
-                <template x-if="selectedCacheOperation.callsite?.file">
-                    <x-newdebugbar::inspector-source-link
-                        ::aria-label="'Copy source ' + selectedCacheOperation.source_label"
-                        @click="copyText(selectedCacheOperation.source_label)"
-                    >
-                        <x-slot:value
-                            ::title="selectedCacheOperation.source_label"
-                            x-text="selectedCacheOperation.source_label"
-                        ></x-slot:value>
-                    </x-newdebugbar::inspector-source-link>
-                </template>
-                <template x-if="! selectedCacheOperation.callsite?.file">
-                    <span x-text="selectedCacheOperation.source_label"></span>
-                </template>
-            </x-slot:value>
-        </x-newdebugbar::inspector-source-fact>
-    </x-newdebugbar::inspector-source-panel>
+    <template x-if="selectedCacheOperation.callsite?.file || (selectedCacheOperation.stack ?? []).length > 0">
+        <x-newdebugbar::inspector-source-panel
+            frames="selectedCacheOperation.stack ?? []"
+            reset-on="selectedCacheOperation.execution"
+            data-ndb-cache-source
+            class="ndb:border-t ndb:border-zinc-200/90 ndb:dark:border-zinc-800"
+        >
+            <x-newdebugbar::inspector-source-fact
+                label="Source"
+                x-show.important="selectedCacheOperation.callsite?.file"
+            >
+                <x-slot:value>
+                    <template x-if="selectedCacheOperation.callsite?.file">
+                        <x-newdebugbar::inspector-source-link
+                            ::aria-label="'Copy source ' + selectedCacheOperation.source_label"
+                            @click="copyText(selectedCacheOperation.source_label)"
+                        >
+                            <x-slot:value
+                                ::title="selectedCacheOperation.source_label"
+                                x-text="selectedCacheOperation.source_label"
+                            ></x-slot:value>
+                        </x-newdebugbar::inspector-source-link>
+                    </template>
+                </x-slot:value>
+            </x-newdebugbar::inspector-source-fact>
+        </x-newdebugbar::inspector-source-panel>
+    </template>
 </div>

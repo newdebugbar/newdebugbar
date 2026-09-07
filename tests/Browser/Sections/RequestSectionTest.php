@@ -341,6 +341,15 @@ it('copies the complete request URL with feedback', function () {
                     && Math.abs(copy.getBoundingClientRect().width - window.newdebugbarRequestCopyWidth) <= 1;
             })()
             JS)
+        ->assertAttribute('[data-ndb-request-copy]', 'aria-label', 'Copy request URL')
+        ->assertScript(<<<'JS'
+            (() => {
+                const copy = document.querySelector('[data-ndb-request-copy]');
+                return copy.querySelector('[role="status"]').getClientRects().length === 0
+                    && [...copy.querySelectorAll('svg')].filter((icon) => icon.getClientRects().length > 0).length === 1
+                    && Math.abs(copy.getBoundingClientRect().width - window.newdebugbarRequestCopyWidth) <= 1;
+            })()
+            JS)
         ->assertScript(<<<'JS'
             (() => {
                 window.navigator.clipboard.writeText = async () => {

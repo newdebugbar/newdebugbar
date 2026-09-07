@@ -86,7 +86,7 @@
             >
                 <x-slot:primary>
                     <div
-                        x-data="{ copyFeedback: '', requestUrl: @js($requestUrl) }"
+                        x-data="requestCopyFeedback(@js($requestUrl))"
                         class="ndb:flex ndb:min-w-0 ndb:items-start ndb:gap-3"
                     >
                         <x-newdebugbar::inspector-operation-badge
@@ -105,11 +105,19 @@
                                 :color-only="true"
                                 aria-label="Copy request URL"
                                 x-bind:aria-label="copyFeedback || 'Copy request URL'"
-                                @click="copyFeedback = (await copyText(requestUrl)) ? 'Copied' : 'Copy failed'"
-                                @blur="copyFeedback = ''"
+                                @click="copyRequestUrl()"
                                 class="ndb:relative ndb:size-7 ndb:shrink-0 ndb:rounded-md"
                             >
-                                <x-newdebugbar::icon name="copy" class="ndb:size-4" />
+                                <x-newdebugbar::icon
+                                    name="copy"
+                                    size="4"
+                                    x-show.important="copyFeedback !== 'Copied'"
+                                />
+                                <x-newdebugbar::icon
+                                    name="check"
+                                    size="4"
+                                    x-show.important="copyFeedback === 'Copied'"
+                                />
                                 <span
                                     x-cloak
                                     x-show.important="copyFeedback"

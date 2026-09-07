@@ -71,18 +71,24 @@
                         <x-newdebugbar::inspector-source-fact label="Notification class" :code="true">
                             <x-slot:value x-text="selectedNotification.notification"></x-slot:value>
                         </x-newdebugbar::inspector-source-fact>
-                        <x-newdebugbar::inspector-source-fact label="Defined at">
+                        <x-newdebugbar::inspector-source-fact
+                            label="Defined at"
+                            x-show.important="selectedNotification.notification_source?.file"
+                        >
                             <x-slot:value
                                 x-text="
                                     selectedNotification.notification_source
                                         ? selectedNotification.notification_source.file +
                                           ':' +
                                           selectedNotification.notification_source.line
-                                        : 'Source unavailable'
+                                        : ''
                                 "
                             ></x-slot:value>
                         </x-newdebugbar::inspector-source-fact>
-                        <x-newdebugbar::inspector-source-fact label="Triggered at">
+                        <x-newdebugbar::inspector-source-fact
+                            label="Triggered at"
+                            x-show.important="selectedNotification.callsite?.file"
+                        >
                             <x-slot:value x-text="selectedNotification.callsite_label"></x-slot:value>
                         </x-newdebugbar::inspector-source-fact>
                         <x-newdebugbar::inspector-source-fact

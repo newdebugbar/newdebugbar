@@ -148,13 +148,24 @@
                 </div>
 
                 <x-newdebugbar::inspector-source-panel
+                    x-show.important="
+                        selectedAuthorizationDecision.handler_available ||
+                        selectedAuthorizationDecision.handler_source_label ||
+                        selectedAuthorizationDecision.callsite_label ||
+                        selectedAuthorizationDecision.stack.length > 0
+                    "
                     title="Authorization logic"
                     frames="selectedAuthorizationDecision.stack"
                     columns="1"
                     empty-label="No application stack was captured for this decision."
                     class="ndb:border-t ndb:border-zinc-200/90 ndb:dark:border-zinc-800"
                 >
-                    <x-newdebugbar::inspector-source-fact>
+                    <x-newdebugbar::inspector-source-fact
+                        x-show.important="
+                            selectedAuthorizationDecision.handler_available ||
+                            selectedAuthorizationDecision.handler_source_label
+                        "
+                    >
                         <x-slot:term x-text="selectedAuthorizationDecision.handler_label"></x-slot:term>
                         <x-slot:value>
                             <code
@@ -163,10 +174,6 @@
                                 class="ndb:block ndb:min-w-0 ndb:break-all ndb:bg-transparent ndb:font-mono ndb:text-xs ndb:font-medium ndb:leading-5 ndb:text-zinc-700 ndb:dark:text-zinc-200"
                                 x-text="selectedAuthorizationDecision.handler_name"
                             ></code>
-                            <span
-                                x-show.important="! selectedAuthorizationDecision.handler_available"
-                                class="ndb:block ndb:text-xs ndb:font-semibold"
-                            >Not captured</span>
                             <template x-if="selectedAuthorizationDecision.handler_source_label">
                                 <x-newdebugbar::inspector-source-link
                                     class="ndb:mt-1"

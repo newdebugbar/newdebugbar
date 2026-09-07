@@ -90,7 +90,11 @@
                     x-text="selectedMailMessage.delivery_label"
                 ></x-slot:value>
             </x-newdebugbar::inspector-fact>
-            <x-newdebugbar::inspector-fact label="Source" data-ndb-mail-fact>
+            <x-newdebugbar::inspector-fact
+                label="Source"
+                data-ndb-mail-fact
+                x-show.important="selectedMailMessage.callsite?.file"
+            >
                 <x-slot:value>
                     <x-newdebugbar::inspector-source-link
                         ::title="selectedMailMessage.callsite_label"

@@ -37,32 +37,52 @@ test('the command palette jumps to sections and changes settings', async () => {
 });
 
 test('the command palette keeps quiet collectors behind one reveal action', () => {
-  const state = createNewDebugBar({
-    sections: [
-      { key: 'request', label: 'Requests', active: true },
-      { key: 'queries', label: 'Queries', active: true },
-      { key: 'redis', label: 'Redis', active: false },
-      { key: 'mail', label: 'Mail', active: false },
-    ],
-  }, runtime());
+  const state = createNewDebugBar(
+    {
+      sections: [
+        { key: 'request', label: 'Requests', active: true },
+        { key: 'queries', label: 'Queries', active: true },
+        { key: 'redis', label: 'Redis', active: false },
+        { key: 'mail', label: 'Mail', active: false },
+      ],
+    },
+    runtime(),
+  );
 
-  assert.deepEqual(state.filteredCommands.filter((command) => command.id.startsWith('section:')).map((command) => command.id), [
-    'section:queries',
-    'section:request',
-  ]);
+  assert.deepEqual(
+    state.filteredCommands.filter((command) => command.id.startsWith('section:')).map((command) => command.id),
+    ['section:queries', 'section:request'],
+  );
   assert.equal(state.filteredCommands.at(-1).id, 'collectors:show');
 
   state.runCommand('collectors:show');
-  assert.deepEqual(state.filteredCommands.filter((command) => command.id.startsWith('section:')).map((command) => command.id), [
-    'section:queries',
-    'section:request',
-    'section:mail',
-    'section:redis',
-  ]);
+  assert.deepEqual(
+    state.filteredCommands.filter((command) => command.id.startsWith('section:')).map((command) => command.id),
+    ['section:queries', 'section:request', 'section:mail', 'section:redis'],
+  );
 
   state.paletteSearch = 'redis';
   state.paletteShowQuiet = false;
-  assert.deepEqual(state.filteredCommands.map((command) => command.id), ['section:redis']);
+  assert.deepEqual(
+    state.filteredCommands.map((command) => command.id),
+    ['section:redis'],
+  );
+});
+
+test('pinning from the command palette shrinks the inspector and keeps its selected section', () => {
+  for (const placement of ['top', 'bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right']) {
+    const state = createNewDebugBar(summary, runtime());
+    state.inspectorOpen = true;
+    state.selected = 'queries';
+    state.paletteOpen = true;
+    state.runCommand(`toolbar:${placement}`);
+
+    assert.equal(state.toolbarPlacement, placement);
+    assert.equal(state.inspectorOpen, false);
+    assert.equal(state.paletteOpen, false);
+    assert.equal(state.barVisible, true);
+    assert.equal(state.selected, 'queries');
+  }
 });
 
 test('the palette filters, wraps, restores focus, and handles layered shortcuts', () => {
@@ -79,7 +99,10 @@ test('the palette filters, wraps, restores focus, and handles layered shortcuts'
   assert.equal(focused, 1);
 
   state.paletteSearch = 'dark theme';
-  assert.deepEqual(state.filteredCommands.map((command) => command.id), ['theme:dark']);
+  assert.deepEqual(
+    state.filteredCommands.map((command) => command.id),
+    ['theme:dark'],
+  );
   state.paletteIndex = 0;
   state.movePalette(-1);
   assert.equal(state.paletteIndex, 0);
