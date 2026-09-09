@@ -1,0 +1,15 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/nesbot/carbon/extension.neon
+
+parameters:
+    level: 4
+    paths:
+        - src
+        - config
+    configDirectories:
+        - config
+    stubFiles:
+        - phpstan/stubs/laravel-events.stub
+    phpVersion: 80100
+    tmpDir: .phpstan.cache

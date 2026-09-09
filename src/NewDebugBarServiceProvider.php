@@ -60,6 +60,7 @@ use NewDebugBar\Support\RequestContext;
 use NewDebugBar\Support\RuntimeContext;
 use NewDebugBar\Support\RuntimeProfiler;
 use NewDebugBar\Support\SafeUrl;
+use Psr\Log\LoggerInterface;
 use Throwable;
 
 use function Livewire\on;
@@ -219,6 +220,7 @@ final class NewDebugBarServiceProvider extends ServiceProvider
             $this->app,
             $this->app->make(CallSiteResolver::class),
         ))->register();
+        /** @var ExceptionHandler $exceptions */
         $exceptions = $this->app->make(ExceptionHandler::class);
 
         if (method_exists($exceptions, 'renderable')) {
@@ -258,6 +260,7 @@ final class NewDebugBarServiceProvider extends ServiceProvider
             ->whereNumber('index')
             ->whereNumber('attachment')
             ->name('newdebugbar.mail-attachment');
+        /** @var HttpKernel $kernel */
         $kernel = $this->app->make(HttpKernel::class);
 
         if (method_exists($kernel, 'pushMiddleware')) {
@@ -302,6 +305,7 @@ final class NewDebugBarServiceProvider extends ServiceProvider
             return;
         }
 
+        /** @var LoggerInterface $manager */
         $manager = $this->app->make('log');
 
         if (! $manager instanceof LogManager) {

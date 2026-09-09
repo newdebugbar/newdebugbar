@@ -29,11 +29,10 @@ final class QueuedCommunicationInspector
             }
 
             if ($job instanceof SendQueuedNotifications) {
-                $notifiables = is_iterable($job->notifiables) ? $job->notifiables : [];
                 $types = [];
                 $count = 0;
 
-                foreach ($notifiables as $notifiable) {
+                foreach ($job->notifiables as $notifiable) {
                     $count++;
 
                     if (count($types) < $this->maxItems) {

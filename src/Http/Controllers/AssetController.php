@@ -2,7 +2,6 @@
 
 namespace NewDebugBar\Http\Controllers;
 
-use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /** Serves the package's compiled local assets with immutable caching. */
@@ -14,7 +13,7 @@ final class AssetController
         'woff2' => 'font/woff2',
     ];
 
-    public function __invoke(string $path): BinaryFileResponse|Response
+    public function __invoke(string $path): BinaryFileResponse
     {
         if (str_contains($path, '..')) {
             abort(404);

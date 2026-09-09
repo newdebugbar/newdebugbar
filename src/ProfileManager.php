@@ -518,9 +518,9 @@ final class ProfileManager
 
         $this->request = [
             ...$this->request,
-            'route' => is_object($route) && method_exists($route, 'getName') ? $route->getName() : null,
-            'action' => is_object($route) && method_exists($route, 'getActionName') ? $route->getActionName() : null,
-            'parameters' => is_object($route) && method_exists($route, 'parameters')
+            'route' => is_object($route) ? $route->getName() : null,
+            'action' => is_object($route) ? $route->getActionName() : null,
+            'parameters' => is_object($route)
                 ? $this->redactor->clean($this->normalizeRouteParameters($route->parameters()))
                 : [],
             'middleware' => $middleware,

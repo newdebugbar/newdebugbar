@@ -7,6 +7,9 @@
 /package.json export-ignore
 /pint.json export-ignore
 /.phpunit.cache export-ignore
+/.phpstan.cache export-ignore
+/phpstan.neon.dist export-ignore
+/phpstan export-ignore
 /node_modules export-ignore
 /phpunit.xml.dist export-ignore
 /resources/css export-ignore

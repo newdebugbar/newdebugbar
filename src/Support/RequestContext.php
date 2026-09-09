@@ -2,6 +2,7 @@
 
 namespace NewDebugBar\Support;
 
+use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Support\ViewErrorBag;
@@ -12,7 +13,7 @@ final class RequestContext
 {
     public function __construct(private readonly int $maxKeys = 100) {}
 
-    /** @param list<string> $middleware @return array<string, mixed> */
+    /** @param list<string|Closure> $middleware @return array<string, mixed> */
     public function authentication(Request $request, array $middleware): array
     {
         $guard = $this->guard($middleware);
@@ -67,7 +68,7 @@ final class RequestContext
         }
     }
 
-    /** @param list<string> $middleware */
+    /** @param list<string|Closure> $middleware */
     private function guard(array $middleware): string
     {
         foreach ($middleware as $entry) {

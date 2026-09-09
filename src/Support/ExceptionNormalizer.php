@@ -70,7 +70,7 @@ final class ExceptionNormalizer
             $frame = $this->frame(
                 (string) $trace['file'],
                 (int) ($trace['line'] ?? 0),
-                (string) (($trace['class'] ?? '').($trace['type'] ?? '').($trace['function'] ?? '')),
+                (string) (($trace['class'] ?? '').($trace['type'] ?? '').$trace['function']),
             );
             $signature = $frame['file'].':'.$frame['line'].':'.$frame['function'];
 

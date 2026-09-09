@@ -1,0 +1,33 @@
+<?php
+
+namespace Illuminate\Auth\Access {
+    class Response {}
+}
+
+namespace Illuminate\Auth\Access\Events {
+    use Illuminate\Auth\Access\Response;
+
+    class GateEvaluated
+    {
+        /** Gate::raw() also dispatches the Response returned by a policy.
+         * @var Response|bool|null
+         */
+        public $result;
+    }
+}
+
+namespace Illuminate\Http\Client {
+    class ConnectionException extends \Exception {}
+}
+
+namespace Illuminate\Http\Client\Events {
+    use Illuminate\Http\Client\ConnectionException;
+
+    class ConnectionFailed
+    {
+        /** Laravel 10 events do not carry an exception.
+         * @var ConnectionException|null
+         */
+        public $exception;
+    }
+}

@@ -38,7 +38,7 @@ final class OutboundHttpCollector extends AbstractCollector
             return;
         }
 
-        if (! isset($item['duration_ms']) || $item['duration_ms'] === null) {
+        if (! isset($item['duration_ms'])) {
             $startedAt = $this->startedAt[$requestId] ?? null;
             $item['duration_ms'] = $startedAt === null ? 0.0 : round((hrtime(true) - $startedAt) / 1_000_000, 2);
         }

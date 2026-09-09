@@ -234,12 +234,11 @@ final class EventRegistrar
 
             if (config('newdebugbar.collection.query_bindings') === 'full') {
                 try {
-                    $runnableSql = method_exists($event, 'toRawSql')
-                        ? $event->toRawSql()
-                        : $event->connection->query()->getGrammar()->substituteBindingsIntoRawSql(
-                            $event->sql,
-                            $event->connection->prepareBindings($event->bindings),
-                        );
+                    // Use the grammar API shared by Laravel 10 and newer.
+                    $runnableSql = $event->connection->query()->getGrammar()->substituteBindingsIntoRawSql(
+                        $event->sql,
+                        $event->connection->prepareBindings($event->bindings),
+                    );
                 } catch (Throwable) {
                     $runnableSql = null;
                 }
@@ -440,7 +439,7 @@ final class EventRegistrar
         $this->listen(JobProcessed::class, function (JobProcessed $event): void {
             $context = $this->jobContext($event->job);
             $this->forgetJobContext($event->job);
-            $released = method_exists($event->job, 'isReleased') && $event->job->isReleased();
+            $released = $event->job->isReleased();
             $status = $released
                 ? 'waiting'
                 : (($context['communication_type'] ?? null) === null ? 'completed' : 'sent');
@@ -471,8 +470,7 @@ final class EventRegistrar
         $this->listen(JobExceptionOccurred::class, function (JobExceptionOccurred $event): void {
             $context = $this->jobContext($event->job);
             $this->forgetJobContext($event->job);
-            $failed = $event->job instanceof SyncJob
-                || (method_exists($event->job, 'hasFailed') && $event->job->hasFailed());
+            $failed = $event->job instanceof SyncJob || $event->job->hasFailed();
             $this->manager()->record('queue', [
                 'phase' => 'failed',
                 'execution_id' => spl_object_id($event->job),
@@ -596,7 +594,7 @@ final class EventRegistrar
             $this->manager()->record('redis', [
                 'command' => $command,
                 'connection' => $event->connectionName,
-                'duration_ms' => round((float) ($event->time ?? 0), 2),
+                'duration_ms' => round((float) $event->time, 2),
                 ...$keys,
                 'failed' => false,
                 'callsite' => $callsite,
@@ -1465,7 +1463,7 @@ final class EventRegistrar
 
         $id = $this->activeJobOrder[array_key_last($this->activeJobOrder)];
 
-        return is_int($id) ? ($this->activeJobContexts[$id] ?? []) : [];
+        return $this->activeJobContexts[$id] ?? [];
     }
 
     private function forgetJobContext(object $job): void
@@ -1700,7 +1698,7 @@ final class EventRegistrar
                 }
             }
 
-            $abilities = method_exists($gate, 'abilities') ? $gate->abilities() : [];
+            $abilities = $gate->abilities();
             $detail = $this->listenerDetail($abilities[$event->ability] ?? null);
 
             if ($detail !== null) {

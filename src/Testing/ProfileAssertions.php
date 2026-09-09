@@ -24,7 +24,7 @@ final class ProfileAssertions
         $profile = app(ProfileStore::class)->get($profileId);
         Assert::assertNotNull($profile, "Debug profile [{$profileId}] was not found.");
 
-        return self::for($profile ?? []);
+        return self::for($profile);
     }
 
     public function assertNoRepeatedQueries(): self

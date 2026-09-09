@@ -329,7 +329,7 @@ final class HttpClientAnalyzer
                 ? $body
                 : json_encode($body, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-            if (is_string($encoded) && $encoded !== '') {
+            if (is_string($encoded)) {
                 $parts[] = '--data-raw '.$this->shellArgument($encoded);
             }
         }

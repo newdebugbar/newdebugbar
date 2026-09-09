@@ -10,7 +10,8 @@
 
 - Format changed files before verification, then check their formatting. Use Pint for PHP and Blade, and the project's Prettier tooling for JavaScript, CSS, JSON, and Markdown where applicable. Do not reformat unrelated files.
 - Choose the smallest complete set of checks for the changed behavior and its consumers. Start with relevant test files or filters. Run broader affected suites for dependency, shared bootstrap, test/build configuration, or cross-cutting changes, or when a focused failure points to wider impact.
-- For internal backend changes, run the relevant PHP tests. Include MCP parity tests when profile data or diagnostic contracts change. Run JavaScript or browser tests only when the change also affects their inputs or behavior; a PHP change to rendered markup, UI state, or shared response data can require them.
+- Prefer tests of current behavior and contracts over exact source text or incidental markup. Remove assertions that only prove retired files, fields, or features remain absent. Keep negative assertions that protect current behavior.
+- For PHP code, PHPDoc, Composer, or analysis-configuration changes, run `composer analyse` (Larastan level 4). For backend behavior changes, also run the relevant PHP tests. Include MCP parity tests when profile data or diagnostic contracts change. Run JavaScript or browser tests when their inputs or behavior change, including changes to rendered markup, UI state, or shared response data.
 - For JavaScript, Blade, or CSS changes, run the relevant JavaScript, browser, and PHP rendering tests as applicable. Rebuild assets when their source changes, and perform the rendered checks required below for affected interfaces.
 - Run multi-file Pest selections in parallel with `--parallel --processes=4`. A focused single-file run may stay serial when worker overhead provides no benefit. Use the native Node test runner's concurrency for JavaScript tests.
 - Do not overlap separate Pest invocations in the same checkout: they share browser-server state. Parallel workers within one invocation are supported. Independent JavaScript checks may run alongside PHP checks after formatting and dependency installation finish.
@@ -19,6 +20,7 @@
 
 ## Product behavior
 
+- Before deleting code, trace its runtime consumers, including Laravel registration, Blade bindings, and public package APIs. Tests alone do not establish runtime usage.
 - Make the full local debugging experience work immediately. Do not hide useful diagnostics behind opt-in flags or masked defaults only because the captured data may be sensitive.
 - Add a config value only when developers have a real, repeated reason to change the behavior. Every value must have a distinct runtime effect and a clear reason for its default. Otherwise, use one fixed product behavior and remove the setting, branches, and tests.
 - Use a protective default only when the normal behavior could change external state, break the host app, or create unbounded work or storage. Local diagnostic visibility by itself is not a reason to disable a feature.
@@ -34,7 +36,7 @@
 
 - Treat the local MCP server as a full diagnostic interface, not a smaller copy of the browser inspector. Every captured, analyzed, grouped, or displayed profile field must be reachable through a bounded MCP request.
 - Keep focused tools concise, and expose deeper or newly shaped evidence through the generic profile-data tool instead of dropping it from MCP.
-- When a collector, analyzer, presenter, finding, or inspector changes profile data, update the MCP contract, tool guidance, and parity tests in the same change.
+- When a collector, analyzer, presenter, finding, or inspector changes profile data, update PHPDoc, the MCP contract, tool guidance, and parity tests in the same change.
 - Never report a profile as missing when loading or presenting it failed. Return a visible tool error so agents can distinguish expired data from broken processing.
 - Preserve capture-time redaction and MCP response limits while keeping every retained profile value requestable.
 
@@ -45,7 +47,7 @@
 - Show the request, errors, query count, and duration first.
 - Preserve useful diagnostics, but simplify dense views through hierarchy and progressive disclosure instead of removing information.
 - Keep primary views focused. Move framework internals, raw data, hashes, and supporting evidence into deeper detail views.
-- Reuse established components and interaction patterns, while letting each section's data model determine its content and controls.
+- Reuse established components, helpers, and inherited behavior before adding parallel implementations or forwarding wrappers. Share rules that must stay consistent, while letting each section's data model determine its content and controls.
 - Use Laravel's documented terms for Laravel concepts. Before adding or changing a framework-facing label, verify it against the official documentation for the supported Laravel versions; do not replace framework terms with invented synonyms.
 - Use the shared inspector explanation component only when developers need help interpreting or acting on a table or evidence group. Its title must state the concrete question the content answers. Its description must explain only domain-specific or ambiguous information and give a conditional next check without assuming the condition is a problem. Do not explain self-evident labels or fields such as Source, or repeat the tab name or table heading.
 - Use monospaced type only for actual code and numeric values in tables. Keep paths, sources, drivers, connections, table names, keys, labels, and prose in the interface typeface.

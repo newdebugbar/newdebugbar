@@ -35,6 +35,7 @@ final class SectionAnalyzer
         $items = $this->items($profile, 'models');
         $groups = [];
         $events = [];
+        /** @var array<string, array<string, mixed>> $modelGroups */
         $modelGroups = [];
         $querySources = $this->querySources($profile);
 

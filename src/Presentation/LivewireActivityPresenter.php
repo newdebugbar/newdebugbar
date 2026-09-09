@@ -9,6 +9,7 @@ final class LivewireActivityPresenter
     public function present(array $items, array $summary): array
     {
         $profileId = ($summary['request_type'] ?? null) === 'livewire' ? ($summary['id'] ?? null) : null;
+        /** @var list<array<string, mixed>> $records */
         $records = [];
         $owners = [];
 

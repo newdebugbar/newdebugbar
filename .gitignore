@@ -1,5 +1,6 @@
 .DS_Store
 /.phpunit.cache
+/.phpstan.cache
 /.phpunit.result.cache
 /coverage
 /node_modules

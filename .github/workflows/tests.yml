@@ -48,7 +48,7 @@ jobs:
           coverage: none
       - run: composer remove --dev pestphp/pest-plugin-browser --no-update
       - if: matrix.php == '8.1'
-        run: composer remove --dev laravel/pint --no-update
+        run: composer remove --dev laravel/pint larastan/larastan --no-update
       - run: composer config platform.php ${{ matrix.php }}.0
       - if: matrix.laravel == '10' || matrix.laravel == '11'
         run: composer config policy.advisories.block false
@@ -76,6 +76,8 @@ jobs:
             echo "::warning::Packagist audit request failed; retrying in ${audit_delay} seconds."
             sleep "$audit_delay"
           done
+      - if: matrix.laravel == '13'
+        run: composer analyse
       - run: composer test:php
 
   frontend:

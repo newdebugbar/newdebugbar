@@ -118,7 +118,7 @@ final class TimelineBuilder
     {
         $label = match ($section) {
             'queries' => ($item['kind'] ?? null) !== null
-                ? 'Transaction '.($item['kind'] ?? 'event').' '.($item['connection'] ?? '')
+                ? 'Transaction '.$item['kind'].' '.($item['connection'] ?? '')
                 : ($item['normalized_sql'] ?? $item['sql'] ?? 'Query'),
             'http_client' => trim(($item['method'] ?? '').' '.($item['url'] ?? 'HTTP request')),
             'queue' => trim(($item['kind'] ?? '').' '.($item['job'] ?? 'Job')),

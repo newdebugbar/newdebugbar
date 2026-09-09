@@ -256,10 +256,8 @@ final class LivewireRegistrar
     {
         try {
             $finder = $this->container->make('livewire.finder');
-            $class = method_exists($finder, 'resolveClassComponentClassName')
-                ? $finder->resolveClassComponentClassName($component->getName())
-                : null;
-            $path = $class === null && method_exists($finder, 'resolveSingleFileComponentPath')
+            $class = $finder->resolveClassComponentClassName($component->getName());
+            $path = $class === null
                 ? $finder->resolveSingleFileComponentPath($component->getName())
                 : null;
 
