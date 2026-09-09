@@ -15,6 +15,7 @@ final class ProfilePresenter
 {
     public function __construct(
         private readonly QueryAnalyzer $queries,
+        private readonly QueryRecordPresenter $queryRecords,
         private readonly CacheAnalyzer $cache,
         private readonly HttpClientAnalyzer $httpClient,
         private readonly LogAnalyzer $logs,
@@ -57,6 +58,9 @@ final class ProfilePresenter
             ];
             $profile['sections']['queries']['payload']['items'] = $queryAnalysis['items'];
             $profile['sections']['queries']['payload']['repeated_groups'] = $queryAnalysis['repeated_groups'];
+            $profile['sections']['queries']['payload']['records'] = $this->queryRecords->present(
+                $profile['sections']['queries']['payload'],
+            );
         }
 
         if (isset($profile['sections']['http_client'])) {
@@ -147,7 +151,7 @@ final class ProfilePresenter
             $profile['sections'] = $ordered;
         }
 
-        $profile['findings'] = $this->profiles->analyze($profile);
+        $profile['findings'] = $this->profiles->analyze($profile, $queryAnalysis);
 
         return $profile;
     }

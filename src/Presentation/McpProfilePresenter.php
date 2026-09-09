@@ -320,6 +320,10 @@ final class McpProfilePresenter
     /** @param array<string, mixed> $payload @return array<string, mixed> */
     private function safeSectionPayload(string $section, array $payload): array
     {
+        if ($section === 'queries') {
+            unset($payload['records']);
+        }
+
         if ($section !== 'request') {
             unset(
                 $payload['items'],

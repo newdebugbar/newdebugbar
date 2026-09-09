@@ -681,6 +681,10 @@ it('masks full query bindings and log labels again at the MCP boundary', functio
         'filter' => 'repeated',
     ])->assertOk()
         ->assertDontSee(['private-alpha', 'private-beta', 'private-gamma']));
+    NewDebugBarServer::tool(GetDebugProfileSection::class, [
+        'profile_id' => $profileId,
+        'section' => 'queries',
+    ])->assertOk()->assertDontSee(['private-alpha', 'private-beta', 'private-gamma']);
     $timeline = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileSection::class, [
         'profile_id' => $profileId,
         'section' => 'timeline',

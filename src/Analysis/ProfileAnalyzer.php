@@ -19,14 +19,15 @@ final class ProfileAnalyzer
 
     /**
      * @param  array<string, mixed>  $profile
+     * @param  array{summary: array<string, int|float>, items: list<array<string, mixed>>, repeated_groups: list<array<string, mixed>>}|null  $queryAnalysis  Reuse analysis from the same profile when already available.
      * @return list<array<string, mixed>>
      */
-    public function analyze(array $profile): array
+    public function analyze(array $profile, ?array $queryAnalysis = null): array
     {
         $sections = is_array($profile['sections'] ?? null) ? $profile['sections'] : [];
         $requestDuration = (float) ($profile['metrics']['duration_ms'] ?? 0);
         $queryItems = $sections['queries']['payload']['items'] ?? [];
-        $queryAnalysis = $this->queries->analyze(is_array($queryItems) ? $queryItems : [], $requestDuration);
+        $queryAnalysis ??= $this->queries->analyze(is_array($queryItems) ? $queryItems : [], $requestDuration);
         $status = (int) ($sections['request']['summary']['status'] ?? 0);
         $runtimeType = $sections['request']['payload']['runtime_type'] ?? null;
         $exitCode = $sections['request']['summary']['exit_code'] ?? null;
