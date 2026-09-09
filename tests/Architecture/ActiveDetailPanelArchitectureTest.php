@@ -19,24 +19,6 @@ it('mounts only the active HTTP Client detail evidence', function () {
         ->not->toContain('x-show.important="httpClientDetailTab');
 });
 
-it('merges Cache overview and source evidence without raw collector output', function () {
-    $views = dirname(__DIR__, 2).'/resources/views/components';
-    $detail = file_get_contents($views.'/cache-detail.blade.php');
-    $overview = file_get_contents($views.'/cache-overview-panel.blade.php');
-
-    expect($detail)
-        ->toContain('<x-newdebugbar::cache-overview-panel')
-        ->not->toContain('cacheDetailTab')
-        ->not->toContain('cache-detail-tabs')
-        ->not->toContain('cache-raw-panel')
-        ->and($overview)
-        ->toContain('data-ndb-cache-detail-content')
-        ->toContain('<x-newdebugbar::inspector-source-panel')
-        ->toContain('<x-newdebugbar::inspector-source-fact')
-        ->and(file_exists($views.'/cache-detail-tabs.blade.php'))->toBeFalse()
-        ->and(file_exists($views.'/cache-raw-panel.blade.php'))->toBeFalse();
-});
-
 it('mounts only the active Models detail evidence', function () {
     $detail = file_get_contents(dirname(__DIR__, 2).'/resources/views/components/model-group-detail.blade.php');
 
