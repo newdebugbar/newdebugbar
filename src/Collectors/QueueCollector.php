@@ -2,18 +2,11 @@
 
 namespace NewDebugBar\Collectors;
 
-use NewDebugBar\Support\Redactor;
-
 /** Records queued dispatches and correlates synchronous job execution. */
 final class QueueCollector extends AbstractCollector
 {
     /** @var array<int, int> */
     private array $startedAt = [];
-
-    public function __construct(Redactor $redactor, int $maxItems)
-    {
-        parent::__construct($redactor, $maxItems);
-    }
 
     public function key(): string
     {

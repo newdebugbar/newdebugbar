@@ -2,18 +2,11 @@
 
 namespace NewDebugBar\Collectors;
 
-use NewDebugBar\Support\Redactor;
-
 /** Correlates Laravel HTTP client starts with bounded completion facts. */
 final class OutboundHttpCollector extends AbstractCollector
 {
     /** @var array<int, int> */
     private array $startedAt = [];
-
-    public function __construct(Redactor $redactor, int $maxItems)
-    {
-        parent::__construct($redactor, $maxItems);
-    }
 
     public function key(): string
     {

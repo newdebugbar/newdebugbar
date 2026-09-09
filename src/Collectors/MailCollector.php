@@ -2,8 +2,6 @@
 
 namespace NewDebugBar\Collectors;
 
-use NewDebugBar\Support\Redactor;
-
 /** Captures mail shape and bounded previews with retained attachment data. */
 final class MailCollector extends AbstractCollector
 {
@@ -12,11 +10,6 @@ final class MailCollector extends AbstractCollector
 
     /** @var array<int, array<string, mixed>> */
     private array $pending = [];
-
-    public function __construct(Redactor $redactor, int $maxItems)
-    {
-        parent::__construct($redactor, $maxItems);
-    }
 
     public function key(): string
     {
@@ -57,25 +50,8 @@ final class MailCollector extends AbstractCollector
         ];
         $item['duration_ms'] = $startedAt === null ? 0.0 : round((hrtime(true) - $startedAt) / 1_000_000, 2);
         unset($this->startedAt[$messageId], $this->pending[$messageId]);
-        $preview = $item['preview'] ?? null;
-        unset($item['preview']);
 
-        /** @var array<string, mixed> $safeItem */
-        $safeItem = $this->redactor->clean($item);
-
-        if (is_array($preview)) {
-            $safeItem['preview'] = $preview;
-        }
-
-        $this->track($safeItem);
-
-        if (count($this->items) >= $this->maxItems) {
-            $this->dropped++;
-
-            return;
-        }
-
-        $this->items[] = $safeItem;
+        parent::record($item);
     }
 
     public function summary(): array
@@ -86,6 +62,19 @@ final class MailCollector extends AbstractCollector
             'attachment_count' => (int) ($this->totals['attachment_count'] ?? 0),
             'duration_ms' => round($this->totals['duration_ms'] ?? 0, 2),
         ];
+    }
+
+    protected function cleanItem(array $item): array
+    {
+        $preview = $item['preview'] ?? null;
+        unset($item['preview']);
+        $clean = parent::cleanItem($item);
+
+        if (is_array($preview)) {
+            $clean['preview'] = $preview;
+        }
+
+        return $clean;
     }
 
     protected function track(array $item): void

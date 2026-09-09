@@ -2,8 +2,6 @@
 
 namespace NewDebugBar\Collectors;
 
-use NewDebugBar\Support\Redactor;
-
 /** Pairs notification delivery events and keeps bounded evidence for each channel attempt. */
 final class NotificationCollector extends AbstractCollector
 {
@@ -18,11 +16,6 @@ final class NotificationCollector extends AbstractCollector
 
     /** @var array<string, true> */
     private array $failedGroups = [];
-
-    public function __construct(Redactor $redactor, int $maxItems)
-    {
-        parent::__construct($redactor, $maxItems);
-    }
 
     public function key(): string
     {
@@ -73,17 +66,7 @@ final class NotificationCollector extends AbstractCollector
             $this->pending[$attemptId],
         );
 
-        /** @var array<string, mixed> $safeItem */
-        $safeItem = $this->redactor->clean($item);
-        $this->track($safeItem);
-
-        if (count($this->items) >= $this->maxItems) {
-            $this->dropped++;
-
-            return;
-        }
-
-        $this->items[] = $safeItem;
+        parent::record($item);
     }
 
     public function summary(): array
