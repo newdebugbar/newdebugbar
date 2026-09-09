@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { runtime, summary, sectionHarness } from './state-test-support.js';
+import { runtime, summary, sectionHarness, listRow } from './state-test-support.js';
 
 test('notifications default to all and group channel delivery diagnostics', () => {
   const browser = runtime();
@@ -18,23 +18,12 @@ test('notifications default to all and group channel delivery diagnostics', () =
   );
   let notificationScrolls = 0;
   let mailFocuses = 0;
-  const element = (execution, status, search) => ({
-    dataset: {
+  const element = (execution, status, search) =>
+    listRow({
       ndbExecution: String(execution),
       ndbStatus: status,
       ndbSearch: search,
-    },
-    hidden: false,
-    style: {
-      display: '',
-      removeProperty(property) {
-        if (property === 'display') this.display = '';
-      },
-      setProperty(property, value) {
-        if (property === 'display') this.display = value;
-      },
-    },
-  });
+    });
   const first = element(1, 'partial', 'journey ready profile sms');
   const second = element(2, 'sent', 'departure push');
   const third = element(3, 'failed', 'payment failure slack');

@@ -1,29 +1,18 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { runtime, summary, sectionHarness } from './state-test-support.js';
+import { runtime, summary, sectionHarness, listRow } from './state-test-support.js';
 
 test('mail defaults to all and preview while keeping a visible message selected', () => {
   const browser = runtime();
   const { state, shell } = sectionHarness('mail', summary, browser);
   let detailResets = 0;
-  const element = (execution, attachments, search) => ({
-    dataset: {
+  const element = (execution, attachments, search) =>
+    listRow({
       ndbExecution: String(execution),
       ndbAttachments: String(attachments),
       ndbSearch: search,
-    },
-    hidden: false,
-    style: {
-      display: '',
-      removeProperty(property) {
-        if (property === 'display') this.display = '';
-      },
-      setProperty(property, value) {
-        if (property === 'display') this.display = value;
-      },
-    },
-  });
+    });
   const first = element(1, false, 'welcome taylor');
   const second = element(2, true, 'receipt alex invoice');
   const third = element(3, false, 'plain text morgan');

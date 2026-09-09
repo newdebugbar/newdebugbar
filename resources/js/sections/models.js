@@ -1,22 +1,8 @@
 /** Owns models inspector state and interactions. */
 export function createModels(context) {
-  const { browser, shell, profileId } = context;
-  const summary = shell.summary;
-  const instance = Symbol();
+  const { browser } = context;
   return {
-    profileId,
-    initialized: false,
-    destroyed: false,
-    init() {
-      shell.mountSection('models', profileId, this, instance);
-    },
-    destroy() {
-      this.destroyed = true;
-      this.deactivate?.();
-      shell.unmountSection(instance);
-    },
     refresh() {
-      if (this.destroyed || profileId !== shell.summary.id) return;
       this.initializeModels(this.$root?.querySelectorAll?.('[data-ndb-model-group]').length ?? 0);
     },
 

@@ -1,30 +1,19 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { runtime, summary, sectionHarness } from './state-test-support.js';
+import { runtime, summary, sectionHarness, listRow } from './state-test-support.js';
 
 test('Cache filters searches and keeps a visible operation selected', () => {
   const { state, shell } = sectionHarness('cache', summary, runtime());
   let detailResets = 0;
   let contentResets = 0;
-  const element = (execution, category, failed, search) => ({
-    dataset: {
+  const element = (execution, category, failed, search) =>
+    listRow({
       ndbCacheExecution: String(execution),
       ndbCacheCategory: category,
       ndbCacheFailed: String(failed),
       ndbCacheSearchText: search,
-    },
-    hidden: false,
-    style: {
-      display: '',
-      removeProperty(property) {
-        if (property === 'display') this.display = '';
-      },
-      setProperty(property, value) {
-        if (property === 'display') this.display = value;
-      },
-    },
-  });
+    });
   const first = element(1, 'read', false, 'get hit trip alpha array');
   const second = element(2, 'write', false, 'put stored trip beta redis');
   const third = element(3, 'delete', true, 'forget failed trip stale database');

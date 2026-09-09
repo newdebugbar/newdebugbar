@@ -3,23 +3,10 @@ import { formatDuration } from '../duration.js';
 
 /** Owns events inspector state and interactions. */
 export function createEvents(context) {
-  const { browser, shell, profileId } = context;
+  const { browser, shell } = context;
   const summary = shell.summary;
-  const instance = Symbol();
   return {
-    profileId,
-    initialized: false,
-    destroyed: false,
-    init() {
-      shell.mountSection('events', profileId, this, instance);
-    },
-    destroy() {
-      this.destroyed = true;
-      this.deactivate?.();
-      shell.unmountSection(instance);
-    },
     refresh() {
-      if (this.destroyed || profileId !== shell.summary.id) return;
       const payload = readSectionPayload(this.$root, '[data-ndb-event-payload]');
       if (payload !== null) this.initializeEvents(payload);
     },

@@ -1,24 +1,12 @@
+import { filterList } from './list.js';
 import { readSectionPayload } from '../runtime.js';
 
 /** Owns redis inspector state and interactions. */
 export function createRedis(context) {
-  const { browser, shell, profileId } = context;
+  const { browser, shell } = context;
   const summary = shell.summary;
-  const instance = Symbol();
   return {
-    profileId,
-    initialized: false,
-    destroyed: false,
-    init() {
-      shell.mountSection('redis', profileId, this, instance);
-    },
-    destroy() {
-      this.destroyed = true;
-      this.deactivate?.();
-      shell.unmountSection(instance);
-    },
     refresh() {
-      if (this.destroyed || profileId !== shell.summary.id) return;
       const payload = readSectionPayload(this.$root, '[data-ndb-redis-payload]');
       if (payload !== null) this.initializeRedis(payload);
     },
@@ -90,26 +78,16 @@ export function createRedis(context) {
       const list = this.$refs?.redisList;
       const search = this.redisSearch.toLowerCase().trim();
       const commands = new Map(this.redisCommands.map((command) => [command.execution, command]));
-      let visible = 0;
-      let firstVisible = null;
-      let selectedVisible = false;
 
-      [...(list?.children ?? [])].forEach((item) => {
-        const execution = Number(item.dataset.ndbRedisExecution);
-        const command = commands.get(execution);
-        const failed = item.dataset.ndbRedisFailed === 'true';
-        const matchesFilter = this.redisFilter === 'all' || (this.redisFilter === 'failed' && failed);
-        const matches = command !== undefined && matchesFilter && (search === '' || command.search.includes(search));
-        item.hidden = !matches;
-
-        if (matches) {
-          item.style.removeProperty('display');
-          firstVisible ??= execution;
-          selectedVisible ||= execution === this.redisSelected;
-          visible++;
-        } else {
-          item.style.setProperty('display', 'none', 'important');
-        }
+      const { visible, firstVisible, selectedVisible } = filterList(list?.children ?? [], {
+        selected: this.redisSelected,
+        key: (item) => Number(item.dataset.ndbRedisExecution),
+        matches: (item) => {
+          const command = commands.get(Number(item.dataset.ndbRedisExecution));
+          const matchesFilter =
+            this.redisFilter === 'all' || (this.redisFilter === 'failed' && item.dataset.ndbRedisFailed === 'true');
+          return command !== undefined && matchesFilter && (search === '' || command.search.includes(search));
+        },
       });
 
       this.visibleRedisCount = visible;

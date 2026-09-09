@@ -1,24 +1,12 @@
+import { filterList } from './list.js';
 import { readSectionPayload } from '../runtime.js';
 
 /** Owns authorization inspector state and interactions. */
 export function createAuthorization(context) {
-  const { browser, shell, profileId } = context;
+  const { browser, shell } = context;
   const summary = shell.summary;
-  const instance = Symbol();
   return {
-    profileId,
-    initialized: false,
-    destroyed: false,
-    init() {
-      shell.mountSection('authorization', profileId, this, instance);
-    },
-    destroy() {
-      this.destroyed = true;
-      this.deactivate?.();
-      shell.unmountSection(instance);
-    },
     refresh() {
-      if (this.destroyed || profileId !== shell.summary.id) return;
       const payload = readSectionPayload(this.$root, '[data-ndb-authorization-payload]');
       if (payload !== null) this.initializeAuthorization(payload);
     },
@@ -97,9 +85,6 @@ export function createAuthorization(context) {
     applyAuthorizationView() {
       const list = this.$refs?.authorizationList;
       const search = this.authorizationSearch.toLowerCase().trim();
-      let visible = 0;
-      let firstVisible = null;
-      let selectedVisible = false;
 
       if (this.authorizationDecisions.length === 0) {
         this.visibleAuthorizationCount = 0;
@@ -115,20 +100,15 @@ export function createAuthorization(context) {
         return;
       }
 
-      [...list.children].forEach((item) => {
-        const matches =
-          (this.authorizationFilter === 'all' || item.dataset.ndbAuthorizationResult === this.authorizationFilter) &&
-          (search === '' || item.dataset.ndbAuthorizationSearchValue?.includes(search));
-        item.hidden = !matches;
-        if (matches) {
-          item.style?.removeProperty?.('display');
-          const execution = Number(item.dataset.ndbAuthorizationExecution);
-          firstVisible ??= execution;
-          selectedVisible ||= execution === this.authorizationSelected;
-          visible++;
-        } else {
-          item.style?.setProperty?.('display', 'none', 'important');
-        }
+      const { visible, firstVisible, selectedVisible } = filterList(list.children, {
+        selected: this.authorizationSelected,
+        key: (item) => Number(item.dataset.ndbAuthorizationExecution),
+        matches: (item) => {
+          return (
+            (this.authorizationFilter === 'all' || item.dataset.ndbAuthorizationResult === this.authorizationFilter) &&
+            (search === '' || item.dataset.ndbAuthorizationSearchValue?.includes(search))
+          );
+        },
       });
 
       this.visibleAuthorizationCount = visible;
@@ -138,10 +118,6 @@ export function createAuthorization(context) {
         this.authorizationDetailOpen = firstVisible !== null && this.authorizationDetailOpen;
         this.resetAuthorizationDetail();
       }
-    },
-
-    applyAuthorizationFilters() {
-      this.applyAuthorizationView();
     },
   };
 }

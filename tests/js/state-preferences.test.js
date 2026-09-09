@@ -9,7 +9,6 @@ test('restores safe local preferences', () => {
   const browser = runtime({
     theme: 'dark',
     toolbarAnchor: 'top',
-    sectionMode: 'all',
     favorites: ['logs', 'unknown', 'logs'],
   });
   const state = createNewDebugBar(summary, browser);
@@ -20,7 +19,6 @@ test('restores safe local preferences', () => {
   assert.equal(state.toolbarPlacement, 'top');
   assert.equal(state.toolbarPreferredPlacement, 'top');
   assert.deepEqual(state.favorites, ['logs']);
-  assert.equal('sectionMode' in state, false);
 
   state.setTheme('light');
   assert.deepEqual(JSON.parse(browser.values.get(STORAGE_KEY)), {
@@ -29,17 +27,6 @@ test('restores safe local preferences', () => {
     favorites: ['logs'],
     sectionOrder: [],
   });
-});
-
-test('the theme toggle shows the opposite resolved theme', () => {
-  const state = createNewDebugBar(summary, runtime());
-  state.init();
-
-  assert.equal(state.resolvedTheme, 'dark');
-  state.toggleTheme();
-  assert.equal(state.resolvedTheme, 'light');
-  state.toggleTheme();
-  assert.equal(state.resolvedTheme, 'dark');
 });
 
 test('broken browser preferences never break initialization or persistence', () => {

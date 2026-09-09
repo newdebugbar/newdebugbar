@@ -1,24 +1,12 @@
+import { filterList } from './list.js';
 import { readSectionPayload } from '../runtime.js';
 
 /** Owns http-client inspector state and interactions. */
 export function createHttpClient(context) {
-  const { browser, shell, profileId } = context;
+  const { browser, shell } = context;
   const summary = shell.summary;
-  const instance = Symbol();
   return {
-    profileId,
-    initialized: false,
-    destroyed: false,
-    init() {
-      shell.mountSection('http_client', profileId, this, instance);
-    },
-    destroy() {
-      this.destroyed = true;
-      this.deactivate?.();
-      shell.unmountSection(instance);
-    },
     refresh() {
-      if (this.destroyed || profileId !== shell.summary.id) return;
       const payload = readSectionPayload(this.$root, '[data-ndb-http-client-payload]');
       if (payload !== null) this.initializeHttpClient(payload);
     },
@@ -114,34 +102,22 @@ export function createHttpClient(context) {
       const list = this.$refs?.httpClientList;
       const search = this.httpClientSearch.toLowerCase().trim();
       const items = [...(list?.querySelectorAll?.('[data-ndb-http-client-item]') ?? [])];
-      let visible = 0;
-      let firstVisible = null;
-      let selectedVisible = false;
 
-      items
-        .sort((left, right) => this.compareHttpClientRequests(left, right))
-        .forEach((item) => {
-          const matchesFilter =
-            this.httpClientFilter === 'all' ||
-            (this.httpClientFilter === 'failed' && item.dataset.ndbFailed === 'true') ||
-            (this.httpClientFilter === 'slow' && item.dataset.ndbSlow === 'true');
-          const matches = matchesFilter && (search === '' || item.dataset.ndbSearch?.includes(search));
-          item.hidden = !matches;
-          if (matches) {
-            item.style.removeProperty('display');
-          } else {
-            item.style.setProperty('display', 'none', 'important');
-          }
-
-          if (matches) {
-            const execution = Number(item.dataset.ndbExecution);
-            firstVisible ??= execution;
-            selectedVisible ||= execution === this.httpClientSelected;
-            visible++;
-          }
-
-          list?.appendChild?.(item);
-        });
+      const { visible, firstVisible, selectedVisible } = filterList(
+        items.sort((left, right) => this.compareHttpClientRequests(left, right)),
+        {
+          selected: this.httpClientSelected,
+          key: (item) => Number(item.dataset.ndbExecution),
+          matches: (item) => {
+            const matchesFilter =
+              this.httpClientFilter === 'all' ||
+              (this.httpClientFilter === 'failed' && item.dataset.ndbFailed === 'true') ||
+              (this.httpClientFilter === 'slow' && item.dataset.ndbSlow === 'true');
+            return matchesFilter && (search === '' || item.dataset.ndbSearch?.includes(search));
+          },
+        },
+      );
+      items.forEach((item) => list?.appendChild?.(item));
 
       this.visibleHttpClientCount = visible;
 

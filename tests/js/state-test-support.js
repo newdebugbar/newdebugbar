@@ -46,6 +46,22 @@ export const summary = {
   ],
 };
 
+export function listRow(dataset) {
+  return {
+    dataset,
+    hidden: false,
+    style: {
+      display: '',
+      removeProperty(property) {
+        if (property === 'display') this.display = '';
+      },
+      setProperty(property, value) {
+        if (property === 'display') this.display = value;
+      },
+    },
+  };
+}
+
 export function toolbarHarness(saved = null) {
   const browser = runtime(saved);
   browser.toolbarPlacement = (_root, preferred) => preferred;

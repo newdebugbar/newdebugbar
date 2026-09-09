@@ -3,23 +3,11 @@ import { readSectionPayload } from '../runtime.js';
 /** Owns views inspector state and interactions. */
 export function createViews(context) {
   const { browser, shell, profileId } = context;
-  const summary = shell.summary;
-  const instance = Symbol();
   return {
-    profileId,
-    initialized: false,
-    destroyed: false,
-    init() {
-      shell.mountSection('views', profileId, this, instance);
-    },
     destroy() {
-      this.destroyed = true;
-      this.deactivate?.();
       this.resetViewData();
-      shell.unmountSection(instance);
     },
     refresh() {
-      if (this.destroyed || profileId !== shell.summary.id) return;
       const payload = readSectionPayload(this.$root, '[data-ndb-view-payload]');
       if (payload !== null) this.initializeViews(payload);
     },

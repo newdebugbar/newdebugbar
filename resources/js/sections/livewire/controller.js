@@ -5,23 +5,9 @@ import { createProperties } from './properties.js';
 
 /** Owns livewire controller inspector state and interactions. */
 export function createController(context) {
-  const { browser, trace, shell, profileId } = context;
-  const summary = shell.summary;
-  const instance = Symbol();
+  const { browser, trace } = context;
   return composeState(createActivity(context), createComponents(context), createProperties(context), {
-    profileId,
-    initialized: false,
-    destroyed: false,
-    init() {
-      shell.mountSection('livewire', profileId, this, instance);
-    },
-    destroy() {
-      this.destroyed = true;
-      this.deactivate?.();
-      shell.unmountSection(instance);
-    },
     refresh() {
-      if (this.destroyed || profileId !== shell.summary.id) return;
       const payload = readSectionPayload(this.$root, '[data-ndb-livewire-payload]');
       if (payload !== null) this.mergeLivewireServer(payload);
     },

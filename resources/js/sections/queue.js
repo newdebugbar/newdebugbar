@@ -1,24 +1,12 @@
+import { filterList } from './list.js';
 import { readSectionPayload } from '../runtime.js';
 
 /** Owns queue inspector state and interactions. */
 export function createQueue(context) {
-  const { browser, shell, profileId } = context;
+  const { browser, shell } = context;
   const summary = shell.summary;
-  const instance = Symbol();
   return {
-    profileId,
-    initialized: false,
-    destroyed: false,
-    init() {
-      shell.mountSection('queue', profileId, this, instance);
-    },
-    destroy() {
-      this.destroyed = true;
-      this.deactivate?.();
-      shell.unmountSection(instance);
-    },
     refresh() {
-      if (this.destroyed || profileId !== shell.summary.id) return;
       const payload = readSectionPayload(this.$root, '[data-ndb-queue-payload]');
       if (payload !== null) this.initializeQueue(payload);
     },
@@ -95,25 +83,15 @@ export function createQueue(context) {
       const list = this.$refs?.queueList;
       const search = this.queueSearch.toLowerCase().trim();
       const activities = new Map(this.queueActivities.map((activity) => [activity.execution, activity]));
-      let visible = 0;
-      let firstVisible = null;
-      let selectedVisible = false;
 
-      [...(list?.children ?? [])].forEach((item) => {
-        const execution = Number(item.dataset.ndbQueueExecution);
-        const activity = activities.get(execution);
-        const matchesFilter = this.queueFilter === 'all' || item.dataset.ndbQueueGroup === this.queueFilter;
-        const matches = activity !== undefined && matchesFilter && (search === '' || activity.search.includes(search));
-        item.hidden = !matches;
-
-        if (matches) {
-          item.style.removeProperty('display');
-          firstVisible ??= execution;
-          selectedVisible ||= execution === this.queueSelected;
-          visible++;
-        } else {
-          item.style.setProperty('display', 'none', 'important');
-        }
+      const { visible, firstVisible, selectedVisible } = filterList(list?.children ?? [], {
+        selected: this.queueSelected,
+        key: (item) => Number(item.dataset.ndbQueueExecution),
+        matches: (item) => {
+          const activity = activities.get(Number(item.dataset.ndbQueueExecution));
+          const matchesFilter = this.queueFilter === 'all' || item.dataset.ndbQueueGroup === this.queueFilter;
+          return activity !== undefined && matchesFilter && (search === '' || activity.search.includes(search));
+        },
       });
 
       this.visibleQueueCount = visible;

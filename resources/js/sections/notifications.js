@@ -1,24 +1,12 @@
+import { filterList } from './list.js';
 import { readSectionPayload } from '../runtime.js';
 
 /** Owns notifications inspector state and interactions. */
 export function createNotifications(context) {
-  const { browser, shell, profileId } = context;
+  const { browser, shell } = context;
   const summary = shell.summary;
-  const instance = Symbol();
   return {
-    profileId,
-    initialized: false,
-    destroyed: false,
-    init() {
-      shell.mountSection('notifications', profileId, this, instance);
-    },
-    destroy() {
-      this.destroyed = true;
-      this.deactivate?.();
-      shell.unmountSection(instance);
-    },
     refresh() {
-      if (this.destroyed || profileId !== shell.summary.id) return;
       const payload = readSectionPayload(this.$root, '[data-ndb-notification-payload]');
       if (payload !== null) this.initializeNotifications(payload);
     },
@@ -97,9 +85,6 @@ export function createNotifications(context) {
     applyNotificationView() {
       const list = this.$refs?.notificationList;
       const search = this.notificationSearch.toLowerCase().trim();
-      let visible = 0;
-      let firstVisible = null;
-      let selectedVisible = false;
 
       if (this.notificationGroups.length === 0) {
         this.visibleNotificationCount = 0;
@@ -109,23 +94,17 @@ export function createNotifications(context) {
         return;
       }
 
-      [...(list?.children ?? [])].forEach((item) => {
-        const status = item.dataset.ndbStatus;
-        const matchesFilter =
-          this.notificationFilter === 'all' ||
-          (this.notificationFilter === 'attention' && status !== 'sent') ||
-          (this.notificationFilter === 'sent' && status === 'sent');
-        const matches = matchesFilter && (search === '' || item.dataset.ndbSearch?.includes(search));
-        item.hidden = !matches;
-        if (matches) {
-          item.style.removeProperty('display');
-          const execution = Number(item.dataset.ndbExecution);
-          firstVisible ??= execution;
-          selectedVisible ||= execution === this.notificationSelected;
-          visible++;
-        } else {
-          item.style.setProperty('display', 'none', 'important');
-        }
+      const { visible, firstVisible, selectedVisible } = filterList(list?.children ?? [], {
+        selected: this.notificationSelected,
+        key: (item) => Number(item.dataset.ndbExecution),
+        matches: (item) => {
+          const status = item.dataset.ndbStatus;
+          const matchesFilter =
+            this.notificationFilter === 'all' ||
+            (this.notificationFilter === 'attention' && status !== 'sent') ||
+            (this.notificationFilter === 'sent' && status === 'sent');
+          return matchesFilter && (search === '' || item.dataset.ndbSearch?.includes(search));
+        },
       });
 
       this.visibleNotificationCount = visible;

@@ -1,23 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { runtime, summary, sectionHarness } from './state-test-support.js';
+import { runtime, summary, sectionHarness, listRow } from './state-test-support.js';
 
 function row(dataset, focused) {
-  return {
-    dataset,
-    hidden: false,
-    style: {
-      display: '',
-      removeProperty(property) {
-        if (property === 'display') this.display = '';
-      },
-      setProperty(property, value) {
-        if (property === 'display') this.display = value;
-      },
-    },
-    focus: (options) => focused.push([dataset, options]),
-  };
+  return { ...listRow(dataset), focus: (options) => focused.push([dataset, options]) };
 }
 
 test('Queue searches, filters, selects, and restores mobile list focus', () => {
@@ -237,8 +224,6 @@ test('Redis builds bounded search state and keeps failed filtering truthful', ()
 
   state.setRedisFilter('succeeded');
   state.selectRedisCommand(99);
-  assert.equal('redisDetailTab' in state, false);
-  assert.equal(typeof state.setRedisDetailTab, 'undefined');
   assert.equal(state.redisFilter, 'all');
   assert.equal(state.redisSelected, 1);
 

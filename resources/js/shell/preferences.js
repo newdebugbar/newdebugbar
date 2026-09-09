@@ -109,10 +109,6 @@ export function createPreferences(context) {
       this.persist();
     },
 
-    toggleTheme() {
-      this.setTheme(this.resolvedTheme === 'dark' ? 'light' : 'dark');
-    },
-
     setTheme(theme) {
       if (!['system', 'light', 'dark'].includes(theme)) return;
 

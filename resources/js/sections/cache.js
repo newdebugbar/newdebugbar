@@ -1,24 +1,12 @@
+import { filterList } from './list.js';
 import { readSectionPayload } from '../runtime.js';
 
 /** Owns cache inspector state and interactions. */
 export function createCache(context) {
-  const { browser, shell, profileId } = context;
+  const { browser, shell } = context;
   const summary = shell.summary;
-  const instance = Symbol();
   return {
-    profileId,
-    initialized: false,
-    destroyed: false,
-    init() {
-      shell.mountSection('cache', profileId, this, instance);
-    },
-    destroy() {
-      this.destroyed = true;
-      this.deactivate?.();
-      shell.unmountSection(instance);
-    },
     refresh() {
-      if (this.destroyed || profileId !== shell.summary.id) return;
       const payload = readSectionPayload(this.$root, '[data-ndb-cache-payload]');
       if (payload !== null) this.initializeCache(payload);
     },
@@ -87,32 +75,19 @@ export function createCache(context) {
       }
       const list = this.$refs?.cacheList;
       const search = this.cacheSearch.toLowerCase().trim();
-      let visible = 0;
-      let firstVisible = null;
-      let selectedVisible = false;
 
-      [...(list?.children ?? [])].forEach((item) => {
-        const matchesFilter =
-          this.cacheFilter === 'all' ||
-          (this.cacheFilter === 'reads' && item.dataset.ndbCacheCategory === 'read') ||
-          (this.cacheFilter === 'writes' && item.dataset.ndbCacheCategory === 'write') ||
-          (this.cacheFilter === 'deletes' && item.dataset.ndbCacheCategory === 'delete') ||
-          (this.cacheFilter === 'failed' && item.dataset.ndbCacheFailed === 'true');
-        const matches = matchesFilter && (search === '' || item.dataset.ndbCacheSearchText?.includes(search));
-        item.hidden = !matches;
-
-        if (matches) {
-          item.style.removeProperty('display');
-        } else {
-          item.style.setProperty('display', 'none', 'important');
-        }
-
-        if (matches) {
-          const execution = Number(item.dataset.ndbCacheExecution);
-          firstVisible ??= execution;
-          selectedVisible ||= execution === this.cacheSelected;
-          visible++;
-        }
+      const { visible, firstVisible, selectedVisible } = filterList(list?.children ?? [], {
+        selected: this.cacheSelected,
+        key: (item) => Number(item.dataset.ndbCacheExecution),
+        matches: (item) => {
+          const matchesFilter =
+            this.cacheFilter === 'all' ||
+            (this.cacheFilter === 'reads' && item.dataset.ndbCacheCategory === 'read') ||
+            (this.cacheFilter === 'writes' && item.dataset.ndbCacheCategory === 'write') ||
+            (this.cacheFilter === 'deletes' && item.dataset.ndbCacheCategory === 'delete') ||
+            (this.cacheFilter === 'failed' && item.dataset.ndbCacheFailed === 'true');
+          return matchesFilter && (search === '' || item.dataset.ndbCacheSearchText?.includes(search));
+        },
       });
 
       this.visibleCacheCount = visible;

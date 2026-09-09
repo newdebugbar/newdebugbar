@@ -1,31 +1,20 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { runtime, summary, sectionHarness } from './state-test-support.js';
+import { runtime, summary, sectionHarness, listRow } from './state-test-support.js';
 
 test('HTTP client filters failures and slow requests while keeping one selected', () => {
   const browser = runtime();
   const { state, shell } = sectionHarness('http_client', summary, browser);
   let detailResets = 0;
-  const element = (execution, duration, failed, slow, search) => ({
-    dataset: {
+  const element = (execution, duration, failed, slow, search) =>
+    listRow({
       ndbExecution: String(execution),
       ndbDuration: String(duration),
       ndbFailed: String(failed),
       ndbSlow: String(slow),
       ndbSearch: search,
-    },
-    hidden: false,
-    style: {
-      display: '',
-      removeProperty(property) {
-        if (property === 'display') this.display = '';
-      },
-      setProperty(property, value) {
-        if (property === 'display') this.display = value;
-      },
-    },
-  });
+    });
   const first = element(1, 12, false, false, 'get api.example.test 200');
   const second = element(2, 319.53, false, true, 'get api.slow.test 200');
   const third = element(3, 68.44, true, false, 'delete api.error.test 503');

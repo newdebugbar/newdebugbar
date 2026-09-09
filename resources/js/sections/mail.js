@@ -1,25 +1,13 @@
+import { filterList } from './list.js';
 import { readSectionPayload, composeState } from '../runtime.js';
 import { createMailPreview } from './mail-preview.js';
 
 /** Owns mail inspector state and interactions. */
 export function createMail(context) {
-  const { browser, shell, profileId } = context;
+  const { browser, shell } = context;
   const summary = shell.summary;
-  const instance = Symbol();
   return composeState(createMailPreview(context), {
-    profileId,
-    initialized: false,
-    destroyed: false,
-    init() {
-      shell.mountSection('mail', profileId, this, instance);
-    },
-    destroy() {
-      this.destroyed = true;
-      this.deactivate?.();
-      shell.unmountSection(instance);
-    },
     refresh() {
-      if (this.destroyed || profileId !== shell.summary.id) return;
       const payload = readSectionPayload(this.$root, '[data-ndb-mail-payload]');
       if (payload !== null) this.initializeMail(payload);
     },
@@ -102,9 +90,6 @@ export function createMail(context) {
     applyMailView() {
       const list = this.$refs?.mailList;
       const search = this.mailSearch.toLowerCase().trim();
-      let visible = 0;
-      let firstVisible = null;
-      let selectedVisible = false;
 
       if (this.mailMessages.length === 0) {
         this.visibleMailCount = 0;
@@ -120,20 +105,15 @@ export function createMail(context) {
         return;
       }
 
-      [...list.children].forEach((item) => {
-        const matches =
-          (this.mailFilter === 'all' || item.dataset.ndbAttachments === 'true') &&
-          (search === '' || item.dataset.ndbSearch?.includes(search));
-        item.hidden = !matches;
-        if (matches) {
-          item.style.removeProperty('display');
-          const execution = Number(item.dataset.ndbExecution);
-          firstVisible ??= execution;
-          selectedVisible ||= execution === this.mailSelected;
-          visible++;
-        } else {
-          item.style.setProperty('display', 'none', 'important');
-        }
+      const { visible, firstVisible, selectedVisible } = filterList(list.children, {
+        selected: this.mailSelected,
+        key: (item) => Number(item.dataset.ndbExecution),
+        matches: (item) => {
+          return (
+            (this.mailFilter === 'all' || item.dataset.ndbAttachments === 'true') &&
+            (search === '' || item.dataset.ndbSearch?.includes(search))
+          );
+        },
       });
 
       this.visibleMailCount = visible;

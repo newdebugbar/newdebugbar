@@ -1,3 +1,4 @@
+import { composeState } from '../runtime.js';
 import { createAuthorization } from './authorization.js';
 import { createCache } from './cache.js';
 import { createHttpClient } from './http-client.js';
@@ -31,5 +32,28 @@ const controllers = {
 };
 
 export function createSectionController(section, context) {
-  return controllers[section]?.(context) ?? {};
+  const controller = controllers[section]?.(context);
+  if (!controller) return {};
+
+  const { shell, profileId } = context;
+  const instance = Symbol();
+
+  return composeState(controller, {
+    profileId,
+    initialized: false,
+    destroyed: false,
+    init() {
+      shell.mountSection(section, profileId, this, instance);
+    },
+    destroy() {
+      this.destroyed = true;
+      this.deactivate?.();
+      controller.destroy?.call(this);
+      shell.unmountSection(instance);
+    },
+    refresh() {
+      if (this.destroyed || profileId !== shell.summary.id) return;
+      controller.refresh.call(this);
+    },
+  });
 }

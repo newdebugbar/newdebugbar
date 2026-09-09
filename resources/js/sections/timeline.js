@@ -1,22 +1,8 @@
 /** Owns timeline inspector state and interactions. */
 export function createTimeline(context) {
   const { browser, shell, profileId } = context;
-  const summary = shell.summary;
-  const instance = Symbol();
   return {
-    profileId,
-    initialized: false,
-    destroyed: false,
-    init() {
-      shell.mountSection('timeline', profileId, this, instance);
-    },
-    destroy() {
-      this.destroyed = true;
-      this.deactivate?.();
-      shell.unmountSection(instance);
-    },
     refresh() {
-      if (this.destroyed || profileId !== shell.summary.id) return;
       this.initialized = true;
       this.syncTimelineSelection();
     },
