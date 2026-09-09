@@ -5,14 +5,26 @@ const ACTIVITY_POLL_INTERVAL = 1000;
 
 /** Owns activity-refresh shell behavior. */
 export function createActivityRefresh(context) {
-  const { browser, summary } = context;
+  const { browser } = context;
   return {
     activityPollAttempts: 0,
     activityPollTimer: null,
     activityRefreshPending: false,
+    activityRefreshError: null,
+
+    get backgroundActivityError() {
+      return this.activityRefreshError !== null && this.activityRefreshError.profileId === this.summary.id
+        ? this.activityRefreshError.message
+        : (this.summary.background_error ?? null);
+    },
 
     hasPendingActivity(summary = this.summary) {
-      return summary?.completion_state === 'terminating' || summary?.background_pending === true;
+      return (
+        summary?.completion_state === 'terminating' ||
+        summary?.background_pending === true ||
+        Boolean(summary?.background_error) ||
+        (this.activityRefreshError !== null && this.activityRefreshError.profileId === summary?.id)
+      );
     },
 
     cancelActivityRefresh(reset = false) {
@@ -59,11 +71,18 @@ export function createActivityRefresh(context) {
           if (profileId !== this.summary.id) return;
 
           this.activityRefreshPending = false;
+          this.activityRefreshError = null;
           this.scheduleActivityRefresh();
         })
         .catch(() => {
+          if (profileId !== this.summary.id) return;
+
           this.activityRefreshPending = false;
-          this.cancelActivityRefresh();
+          this.activityRefreshError = {
+            profileId,
+            message: 'Background activity could not be refreshed. Showing the last captured details.',
+          };
+          this.scheduleActivityRefresh();
         });
     },
 
@@ -73,6 +92,7 @@ export function createActivityRefresh(context) {
       const nextSummary = { ...this.summary, ...summary };
       const backgroundChanged =
         nextSummary.background_pending !== this.summary.background_pending ||
+        nextSummary.background_error !== this.summary.background_error ||
         nextSummary.background_activity_count !== this.summary.background_activity_count ||
         JSON.stringify(nextSummary.related_profile_ids ?? []) !==
           JSON.stringify(this.summary.related_profile_ids ?? []);
@@ -85,6 +105,7 @@ export function createActivityRefresh(context) {
         ['timeline', 'queue', 'mail', 'notifications'].includes(this.selected) && (backgroundChanged || relatedChanged);
 
       this.summary = nextSummary;
+      this.activityRefreshError = null;
       this.rememberProfile(this.summary);
       (Array.isArray(relatedProfiles) ? relatedProfiles : []).forEach((profile) => this.receiveProfile(profile));
       this.activityRefreshPending = false;

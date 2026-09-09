@@ -41,10 +41,11 @@ final class GetDebugProfileData extends DebugTool
     {
         return [
             'version' => $schema->integer()->required(),
-            'status' => $schema->string()->enum(['ok', 'not_found'])->required(),
+            'status' => $schema->string()->enum(['ok', 'partial', 'not_found'])->required(),
             'data' => $schema->object([
                 'profile_id' => $schema->string()->required(),
                 'path' => $schema->string()->required(),
+                'background_error' => $schema->string()->description('A partial response includes retained data, but current background activity could not be read.'),
                 'type' => $schema->string()->enum(['object', 'list', 'string', 'integer', 'number', 'boolean', 'null', 'unknown']),
                 'count' => $schema->integer()->min(0),
                 'length_bytes' => $schema->integer()->min(0),

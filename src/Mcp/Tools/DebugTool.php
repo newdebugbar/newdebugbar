@@ -22,7 +22,7 @@ abstract class DebugTool extends Tool
     {
         return [
             'version' => $schema->integer()->required(),
-            'status' => $schema->string()->enum(['ok', 'not_found'])->required(),
+            'status' => $schema->string()->enum(['ok', 'partial', 'not_found'])->required(),
             'data' => $schema->object()->required(),
         ];
     }
@@ -30,6 +30,11 @@ abstract class DebugTool extends Tool
     /** @param array<string, mixed> $content */
     protected function response(array $content): ResponseFactory
     {
+        if (($content['status'] ?? null) === 'partial') {
+            return Response::make(Response::error($content['data']['background_error']))
+                ->withStructuredContent($content);
+        }
+
         return Response::structured($content);
     }
 

@@ -9,9 +9,17 @@ use Throwable;
 /** Connects stored request and worker profiles through bounded queue facts. */
 final class BackgroundActivityPresenter
 {
+    public const READ_ERROR = 'Background activity could not be refreshed. Showing the last captured details.';
+
     public function __construct(private readonly BackgroundActivityStore $activities) {}
 
-    /** @param array<string, mixed> $profile @return array<string, mixed> */
+    /**
+     * Adds background_activity with nullable pending and error fields. A read failure
+     * leaves captured section items intact and pending unknown until a later refresh.
+     *
+     * @param  array<string, mixed>  $profile
+     * @return array<string, mixed>
+     */
     public function present(array $profile): array
     {
         $profileId = (string) ($profile['id'] ?? '');
@@ -33,10 +41,13 @@ final class BackgroundActivityPresenter
             $keys[] = $runtimeKey;
         }
 
+        $error = null;
+
         try {
             $activities = collect($this->activities->many($keys))->keyBy('key');
         } catch (Throwable) {
             $activities = collect();
+            $error = self::READ_ERROR;
         }
 
         foreach (['queue', 'mail', 'notifications'] as $section) {
@@ -110,7 +121,8 @@ final class BackgroundActivityPresenter
 
         $profile['background_activity'] = [
             'count' => count($activityItems),
-            'pending' => $pending,
+            'pending' => $error === null ? $pending : null,
+            'error' => $error,
             'items' => $activityItems,
             'related_profile_ids' => $relatedProfileIds,
             'origin_profile_id' => $activityItems[0]['origin_profile_id'] ?? null,

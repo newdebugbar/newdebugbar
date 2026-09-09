@@ -313,6 +313,68 @@ test('background refresh is useful-only, bounded, and preserves related navigati
   assert.equal(state.activityPollTimer, null);
 });
 
+test('background read and network failures stay visible through bounded retries and recover manually', async () => {
+  const origin = {
+    ...summary,
+    id: '6ba7b810-9dad-41d1-80b4-00c04fd430c8',
+    completion_state: 'complete',
+    background_pending: null,
+    background_error: 'Background activity could not be refreshed. Showing the last captured details.',
+  };
+  const browser = runtime();
+  const state = createNewDebugBar(origin, browser);
+  let refreshes = 0;
+  state.inspectorOpen = true;
+  state.$wire = {
+    refreshRelatedActivity: async () => {
+      refreshes++;
+      throw new Error('Network unavailable');
+    },
+  };
+
+  assert.equal(state.backgroundActivityError, origin.background_error);
+  state.scheduleActivityRefresh();
+  for (let attempt = 0; attempt < 35; attempt++) {
+    browser.runTimers();
+    await new Promise(setImmediate);
+  }
+
+  assert.equal(refreshes, 30);
+  assert.equal(state.activityPollTimer, null);
+  assert.equal(state.backgroundActivityError, origin.background_error);
+  assert.equal(state.activityRefreshPending, false);
+
+  state.$wire.refreshRelatedActivity = async () => {
+    refreshes++;
+    state.receiveActivityRefresh({ ...origin, background_pending: false, background_error: null });
+  };
+  state.refreshBackgroundActivity(true);
+  await new Promise(setImmediate);
+  assert.equal(refreshes, 31);
+  assert.equal(state.activityPollAttempts, 1);
+  assert.equal(state.activityPollTimer, null);
+  assert.equal(state.backgroundActivityError, null);
+  assert.equal(state.hasPendingActivity(), false);
+});
+
+test('a stale background request failure does not affect a different profile', async () => {
+  const state = createNewDebugBar({ ...summary, background_pending: true }, runtime());
+  let rejectRefresh;
+  state.inspectorOpen = true;
+  state.$wire = {
+    refreshRelatedActivity: () => new Promise((resolve, reject) => (rejectRefresh = reject)),
+  };
+  state.refreshBackgroundActivity();
+  state.switchProfile({ ...summary, id: '6ba7b810-9dad-41d1-80b4-00c04fd430c8', background_pending: false });
+  rejectRefresh(new Error('Old request failed'));
+  await new Promise(setImmediate);
+
+  assert.equal(state.backgroundActivityError, null);
+  assert.equal(state.hasPendingActivity(), false);
+  assert.equal(state.activityRefreshPending, false);
+  assert.equal(state.activityPollTimer, null);
+});
+
 test('background refresh reloads only sections affected by related activity', async () => {
   const origin = {
     ...summary,

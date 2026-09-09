@@ -9,6 +9,7 @@ use NewDebugBar\Mcp\Tools\GetDebugProfileData;
 use NewDebugBar\Mcp\Tools\GetDebugProfileSection;
 use NewDebugBar\Mcp\Tools\InspectDebugQueries;
 use NewDebugBar\Mcp\Tools\ListDebugProfiles;
+use NewDebugBar\Presentation\BackgroundActivityPresenter;
 use NewDebugBar\Presentation\McpProfilePresenter;
 use NewDebugBar\Presentation\ProfilePresenter;
 use NewDebugBar\Storage\BackgroundActivityStore;
@@ -552,6 +553,63 @@ it('exposes queued communication facts and correlated worker outcomes through MC
     expect($refreshedOrigin)
         ->background_pending->toBeFalse()
         ->related_profile_ids->toBe([$workerId]);
+});
+
+it('reports background read failures while retaining bounded MCP evidence and can recover', function () {
+    $profileId = $this->get('/profiled-queued-communications', ['Accept' => 'text/html'])
+        ->assertOk()->headers->get('X-NewDebugBar-Profile');
+    $profile = app(ProfileStore::class)->get($profileId);
+    $key = $profile['sections']['queue']['payload']['items'][0]['correlation_key'];
+    $filename = config('newdebugbar.storage.path').'/background/'.$key.'.json';
+    $original = File::get($filename);
+    File::put($filename, '{broken');
+    $calls = [
+        ListDebugProfiles::class => ['limit' => 10],
+        GetDebugProfileSection::class => ['profile_id' => $profileId, 'section' => 'queue'],
+        InspectDebugQueries::class => ['profile_id' => $profileId],
+        GetDebugFindings::class => ['profile_id' => $profileId],
+        GetDebugProfileData::class => ['profile_id' => $profileId, 'path' => '/background_activity/pending'],
+    ];
+
+    foreach ($calls as $tool => $arguments) {
+        $content = McpResponse::structuredContent(NewDebugBarServer::tool($tool, $arguments)
+            ->assertHasErrors([BackgroundActivityPresenter::READ_ERROR]));
+        expect($content['status'])->toBe('partial')
+            ->and($content['data']['background_error'])->toBe(BackgroundActivityPresenter::READ_ERROR);
+
+        if ($tool === GetDebugProfileSection::class) {
+            expect($content['data']['payload']['items'][0]['status'])->toBe('delayed');
+        } elseif ($tool === GetDebugProfileData::class) {
+            expect($content['data']['value'])->toBeNull();
+        }
+    }
+
+    config()->set('newdebugbar.mcp.max_bytes', 700);
+    app()->forgetInstance(McpProfilePresenter::class);
+    $value = str_repeat('é漢🙂-', 80);
+    $profile['large_value'] = $value;
+    app(ProfileStore::class)->put($profile);
+    $cursor = 0;
+    $chunks = [];
+
+    do {
+        $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
+            'profile_id' => $profileId, 'path' => '/large_value', 'cursor' => $cursor,
+        ])->assertHasErrors([BackgroundActivityPresenter::READ_ERROR]));
+        $chunks = [...$chunks, ...$content['data']['chunks']];
+        $cursor = $content['data']['pagination']['next_cursor'];
+        expect(strlen(json_encode($content, JSON_UNESCAPED_UNICODE)))->toBeLessThanOrEqual(700);
+    } while ($cursor !== null);
+
+    expect(implode('', $chunks))->toBe($value);
+    File::put($filename, $original);
+    config()->set('newdebugbar.mcp.max_bytes', 100_000);
+    app()->forgetInstance(McpProfilePresenter::class);
+
+    foreach ($calls as $tool => $arguments) {
+        $content = McpResponse::structuredContent(NewDebugBarServer::tool($tool, $arguments)->assertOk());
+        expect($content['status'])->toBe('ok');
+    }
 });
 
 it('exposes every recorded context section through the bounded section tool', function () {

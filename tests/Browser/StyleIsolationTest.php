@@ -2,6 +2,56 @@
 
 use NewDebugBar\Tests\Support\DebugBarBrowser;
 
+it('keeps background read errors usable under host styles and clears them after recovery', function (int $width, int $height, string $theme) {
+    $page = visit('/profiled-queued-communications?background_error=1')->resize($width, $height);
+    $page->script(<<<JS
+        Alpine.\$data(document.querySelector('#newdebugbar')).setTheme('{$theme}');
+        const style = document.createElement('style');
+        style.textContent = `[role="status"], [data-background-activity-error] {
+            background: red; color: green; width: 1200px; padding: 50px; font-size: 42px;
+        }`;
+        document.head.append(style);
+        JS);
+    if ($width < 640) {
+        $page->click('[data-ndb-mobile-toolbar-trigger="actions"]')
+            ->click('[data-ndb-mobile-toolbar-action="inspector"]')
+            ->click('[data-ndb-header-mobile-trigger="actions"]')
+            ->click('[data-ndb-select-section="queue"]');
+    } else {
+        $page->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]')
+            ->click('[data-ndb-select-section="queue"]');
+    }
+    $page->assertVisible('[data-ndb-background-activity-error]')
+        ->assertSeeIn('[data-ndb-background-activity-error]', 'Showing the last captured details.')
+        ->click('[data-ndb-background-activity-error] button')
+        ->assertScript(<<<'JS'
+            (() => {
+                const error = document.querySelector('[data-ndb-background-activity-error]');
+                const button = error.querySelector('button');
+                const box = error.getBoundingClientRect();
+                const buttonBox = button.getBoundingClientRect();
+                const style = getComputedStyle(error);
+                return box.left >= 0 && box.right <= window.innerWidth
+                    && Math.abs(box.width - error.parentElement.clientWidth) <= 1
+                    && error.scrollWidth <= error.clientWidth
+                    && buttonBox.top >= box.top && buttonBox.bottom <= box.bottom
+                    && style.backgroundColor !== 'rgb(255, 0, 0)'
+                    && style.color !== 'rgb(0, 128, 0)' && parseFloat(style.fontSize) < 42;
+            })()
+            JS);
+    $page->script("fetch('/__newdebugbar/testing/repair-background')");
+    $page->assertScript("document.querySelector('[data-ndb-background-activity-error]').getClientRects().length === 0")
+        ->assertScript("Alpine.\$data(document.querySelector('#newdebugbar')).summary.background_pending === true")
+        ->assertNoJavaScriptErrors();
+})->with([
+    'short light' => [1280, 640, 'light'],
+    'short dark' => [1280, 640, 'dark'],
+    'tall light' => [1440, 1000, 'light'],
+    'tall dark' => [1440, 1000, 'dark'],
+    'mobile light' => [390, 844, 'light'],
+    'mobile dark' => [390, 844, 'dark'],
+]);
+
 it('isolates the shared section list and drag classes from host styles', function () {
     $page = visit('/hostile-styles')->resize(390, 844);
     $page->script(<<<'JS'

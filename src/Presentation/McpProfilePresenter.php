@@ -85,9 +85,12 @@ final class McpProfilePresenter
             return $this->notFound($profileId);
         }
 
+        $context = $this->backgroundContext($profile);
+
         if (! in_array($section, self::SECTION_NAMES, true) || ! isset($profile['sections'][$section])) {
             return $this->response([
                 'profile_id' => $profileId,
+                ...$context,
                 'section' => $section,
                 'available_sections' => array_values(array_keys($profile['sections'] ?? [])),
             ], 'not_found');
@@ -105,6 +108,7 @@ final class McpProfilePresenter
             $limit,
             fn (array $page, array $pagination): array => [
                 'profile_id' => $profileId,
+                ...$context,
                 'section' => $section,
                 'label' => $sectionData['label'] ?? ucfirst($section),
                 'summary' => $this->clean($sectionData['summary'] ?? []),
@@ -131,6 +135,8 @@ final class McpProfilePresenter
         if ($profile === null) {
             return $this->notFound($profileId);
         }
+
+        $context = $this->backgroundContext($profile);
 
         $section = $profile['sections']['queries'] ?? ['summary' => [], 'payload' => []];
         $items = $filter === 'repeated'
@@ -164,6 +170,7 @@ final class McpProfilePresenter
             $limit,
             fn (array $page, array $pagination): array => [
                 'profile_id' => $profileId,
+                ...$context,
                 'filter' => $filter,
                 'search' => $search,
                 'sort' => $sort,
@@ -186,12 +193,15 @@ final class McpProfilePresenter
             return $this->notFound($profileId);
         }
 
+        $context = $this->backgroundContext($profile);
+
         return $this->paginatedResponse(
             is_array($profile['findings'] ?? null) ? $profile['findings'] : [],
             $cursor,
             $limit,
             fn (array $page, array $pagination): array => [
                 'profile_id' => $profileId,
+                ...$context,
                 'findings' => $this->clean($page),
                 'pagination' => $pagination,
             ],
@@ -210,11 +220,14 @@ final class McpProfilePresenter
             ], 'not_found');
         }
 
+        $context = $this->backgroundContext($profile);
+
         [$found, $value] = $this->valueAtPointer($profile, $path);
 
         if (! $found) {
             return $this->response([
                 'profile_id' => $profileId,
+                ...$context,
                 'path' => $path,
             ], 'not_found');
         }
@@ -224,6 +237,7 @@ final class McpProfilePresenter
         if (! is_array($value)) {
             $response = $this->response([
                 'profile_id' => $profileId,
+                ...$context,
                 'path' => $path,
                 'type' => $type,
                 'value' => $value,
@@ -233,13 +247,13 @@ final class McpProfilePresenter
                 return $response;
             }
 
-            return $this->chunkedStringResponse($profileId, $path, $value, $cursor, $limit);
+            return $this->chunkedStringResponse($profileId, $path, $value, $cursor, $limit, $context);
         }
 
         $entries = [];
 
         foreach ($value as $key => $item) {
-            $entries[] = $this->dataEntry($profileId, $path, (string) $key, $item);
+            $entries[] = $this->dataEntry($profileId, $path, (string) $key, $item, $context);
         }
 
         return $this->paginatedResponse(
@@ -248,6 +262,7 @@ final class McpProfilePresenter
             $limit,
             fn (array $page, array $pagination): array => [
                 'profile_id' => $profileId,
+                ...$context,
                 'path' => $path,
                 'type' => $type,
                 'count' => count($value),
@@ -508,7 +523,7 @@ final class McpProfilePresenter
     }
 
     /** @return array<string, mixed> */
-    private function dataEntry(string $profileId, string $parentPath, string $key, mixed $value): array
+    private function dataEntry(string $profileId, string $parentPath, string $key, mixed $value, array $context): array
     {
         $path = $parentPath.'/'.$this->escapePointerSegment($key);
         $type = $this->nodeType($value);
@@ -526,6 +541,7 @@ final class McpProfilePresenter
 
         if (is_string($value) && $this->byteLength($this->response([
             'profile_id' => $profileId,
+            ...$context,
             'path' => $path,
             'type' => 'string',
             'value' => $value,
@@ -566,6 +582,7 @@ final class McpProfilePresenter
         string $value,
         int $cursor,
         int $limit,
+        array $context,
     ): array {
         $cursor = max(0, $cursor);
         $limit = max(1, min($limit, $this->maxItems));
@@ -573,7 +590,7 @@ final class McpProfilePresenter
         $offset = 0;
         $index = 0;
         $length = strlen($value);
-        $chunkBytes = $this->dataChunkBytes($profileId, $path, $length);
+        $chunkBytes = $this->dataChunkBytes($profileId, $path, $length, $context);
 
         while ($offset < $length) {
             $chunk = mb_strcut($value, $offset, $chunkBytes, 'UTF-8');
@@ -596,6 +613,7 @@ final class McpProfilePresenter
             $index,
             fn (array $page, array $pagination): array => [
                 'profile_id' => $profileId,
+                ...$context,
                 'path' => $path,
                 'type' => 'string',
                 'length_bytes' => $length,
@@ -606,10 +624,11 @@ final class McpProfilePresenter
         );
     }
 
-    private function dataChunkBytes(string $profileId, string $path, int $length): int
+    private function dataChunkBytes(string $profileId, string $path, int $length, array $context): int
     {
         $envelope = $this->response([
             'profile_id' => $profileId,
+            ...$context,
             'path' => $path,
             'type' => 'string',
             'length_bytes' => $length,
@@ -631,7 +650,12 @@ final class McpProfilePresenter
     /** @param list<array<string, mixed>> $profiles @return array<string, mixed> */
     private function profileListResponse(array $profiles, int $total, bool $truncated): array
     {
+        $context = collect($profiles)->contains(fn (array $profile): bool => isset($profile['background_error']))
+            ? ['background_error' => BackgroundActivityPresenter::READ_ERROR]
+            : [];
+
         return $this->response([
+            ...$context,
             'profiles' => $profiles,
             'count' => count($profiles),
             'total' => $total,
@@ -717,7 +741,7 @@ final class McpProfilePresenter
         $data = is_array($response['data'] ?? null) ? $response['data'] : [];
         $minimal = [];
 
-        foreach (['profile_id', 'section', 'filter', 'search', 'sort', 'path', 'type'] as $key) {
+        foreach (['profile_id', 'section', 'filter', 'search', 'sort', 'path', 'type', 'background_error'] as $key) {
             if (array_key_exists($key, $data)) {
                 $minimal[$key] = $data[$key];
             }
@@ -736,11 +760,23 @@ final class McpProfilePresenter
     /** @return array<string, mixed> */
     private function response(array $data, string $status = 'ok'): array
     {
+        if (isset($data['background_error'])) {
+            $status = 'partial';
+        }
+
         return [
             'version' => self::RESPONSE_VERSION,
             'status' => $status,
             'data' => $data,
         ];
+    }
+
+    /** @param array<string, mixed> $profile @return array<string, string> */
+    private function backgroundContext(array $profile): array
+    {
+        return isset($profile['background_activity']['error'])
+            ? ['background_error' => BackgroundActivityPresenter::READ_ERROR]
+            : [];
     }
 
     /** @return array<string, mixed> */

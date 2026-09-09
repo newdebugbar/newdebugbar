@@ -33,6 +33,23 @@
     >
         @include('newdebugbar::livewire.inspector-header')
 
+        <div
+            x-cloak
+            x-show.important="backgroundActivityError !== null"
+            data-ndb-background-activity-error
+            role="status"
+            aria-live="polite"
+            class="ndb:flex ndb:w-full ndb:min-w-0 ndb:shrink-0 ndb:items-center ndb:justify-between ndb:gap-3 ndb:border-b ndb:border-amber-200 ndb:bg-amber-50 ndb:px-3 ndb:py-2 ndb:text-xs ndb:text-amber-900 ndb:sm:px-6 ndb:dark:border-amber-900 ndb:dark:bg-amber-950 ndb:dark:text-amber-200"
+        >
+            <span x-text="backgroundActivityError" class="ndb:min-w-0"></span>
+            <x-newdebugbar::inspector-action
+                icon="activity"
+                @click="refreshBackgroundActivity(true)"
+                x-bind:disabled="activityRefreshPending"
+                class="ndb:shrink-0"
+            >Retry now</x-newdebugbar::inspector-action>
+        </div>
+
         <div class="ndb:relative ndb:isolate ndb:flex ndb:min-h-0 ndb:flex-1 ndb:flex-col ndb:sm:flex-row">
             <nav
                 id="newdebugbar-section-navigation"

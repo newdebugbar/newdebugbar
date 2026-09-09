@@ -1039,7 +1039,22 @@ trait DefinesTestApplication
                 delay: 0,
             ));
 
-            return response('<!doctype html><html><body>Queued communications</body></html>');
+            if (request()->boolean('background_error')) {
+                $key = app(BackgroundActivityStore::class)->key('redis', 'mail-delayed', 'mail-job-1');
+                $filename = config('newdebugbar.storage.path').'/background/'.$key.'.json';
+                app('files')->copy($filename, $filename.'.recover');
+                app('files')->put($filename, '{broken');
+            }
+
+            return response('<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body>Queued communications</body></html>');
+        });
+
+        $router->get('/__newdebugbar/testing/repair-background', function () {
+            $key = app(BackgroundActivityStore::class)->key('redis', 'mail-delayed', 'mail-job-1');
+            $filename = config('newdebugbar.storage.path').'/background/'.$key.'.json';
+            app('files')->move($filename.'.recover', $filename);
+
+            return response()->noContent();
         });
 
         $router->middleware(ProfileRequest::class)->get('/profiled-after-response', function () {

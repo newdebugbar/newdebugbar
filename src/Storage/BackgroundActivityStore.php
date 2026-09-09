@@ -155,11 +155,15 @@ final class BackgroundActivityStore
 
         try {
             $activity = json_decode($this->files->get($filename), true, flags: JSON_THROW_ON_ERROR);
-        } catch (JsonException) {
-            return null;
+        } catch (JsonException $exception) {
+            throw new RuntimeException('The background activity could not be decoded.', previous: $exception);
         }
 
-        return is_array($activity) ? $activity : null;
+        if (! is_array($activity)) {
+            throw new RuntimeException('The background activity did not contain a JSON object.');
+        }
+
+        return $activity;
     }
 
     /** @param list<string> $keys @return list<array<string, mixed>> */

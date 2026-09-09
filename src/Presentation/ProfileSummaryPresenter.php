@@ -34,7 +34,10 @@ final class ProfileSummaryPresenter
             'environment' => $profile['environment'] ?? null,
             'profile_type' => $profile['profile_type'] ?? 'http',
             'completion_state' => $profile['completion_state'] ?? 'complete',
-            'background_pending' => (bool) ($profile['background_activity']['pending'] ?? false),
+            'background_pending' => isset($profile['background_activity']['error'])
+                ? null
+                : (bool) ($profile['background_activity']['pending'] ?? false),
+            'background_error' => $profile['background_activity']['error'] ?? null,
             'background_activity_count' => (int) ($profile['background_activity']['count'] ?? 0),
             'related_profile_ids' => $profile['background_activity']['related_profile_ids'] ?? [],
             'origin_profile_id' => $profile['background_activity']['origin_profile_id'] ?? null,
@@ -72,7 +75,7 @@ final class ProfileSummaryPresenter
             'cache_hit_rate' => $cacheReads > 0 ? round(((int) ($cache['hits'] ?? 0) / $cacheReads) * 100, 1) : 0.0,
             'exception_count' => $exceptionCount,
             'finding_count' => count($profile['findings'] ?? []),
-            'warning' => $status >= 400 || (is_int($exitCode) && $exitCode !== 0) || $exceptionCount > 0 || ($profile['findings'] ?? []) !== [],
+            'warning' => $status >= 400 || (is_int($exitCode) && $exitCode !== 0) || $exceptionCount > 0 || ($profile['findings'] ?? []) !== [] || isset($profile['background_activity']['error']),
         ]);
 
         return $summary;
