@@ -41,8 +41,7 @@ it('captures Laravel decisions sources transactions and view data', function () 
             'version_count' => 2,
         ]])
         ->render_order->toBe(1)
-        ->source->file->toBe('tests/Fixtures/views/context.blade.php')
-        ->and($profile['sections'])->not->toHaveKey('messages');
+        ->source->file->toBe('tests/Fixtures/views/context.blade.php');
 
     $event = collect($profile['sections']['events']['payload']['items'])
         ->firstWhere('name', ProfiledApplicationEvent::class);

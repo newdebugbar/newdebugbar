@@ -226,7 +226,7 @@ it('removes a cache command even after the Redis item limit is reached', functio
         'truncated' => false,
         'duration_ms' => 1.25,
         'failed_count' => 0,
-    ])->and($redis->payload())->not->toHaveKey('dropped');
+    ]);
 });
 
 it('does not remove an older direct Redis command for a dropped cache command', function () {

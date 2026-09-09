@@ -18,9 +18,9 @@ interface Collector
     /** @param array<string, mixed> $item */
     public function record(array $item): void;
 
-    /** @return array<string, int|float|string> */
+    /** @return array<string, int|float|string|bool> */
     public function summary(): array;
 
-    /** @return array{items: array<int, array<string, mixed>>, dropped: int} */
+    /** @return array<string, mixed> Retained items and collector-specific evidence. */
     public function payload(): array;
 }

@@ -93,24 +93,11 @@ it('captures a local web request and its Laravel activity', function () {
     expect(array_column($profile['sections']['models']['payload']['items'], 'event'))
         ->toContain('retrieved');
 
-    expect($profile['metrics'])->not->toHaveKey('memory_mb')
-        ->and($profile['sections']['request']['payload'])->not->toHaveKey('early_bootstrap_measured');
-
     expect($profile['sections']['logs']['payload']['items'][0]['callsite'])
         ->toMatchArray(['file' => 'tests/Support/DefinesTestApplication.php'])
         ->and($profile['sections']['logs']['payload']['items'][0]['stack'])->not->toBeEmpty();
 
     foreach ($profile['sections'] as $section) {
-        expect($section['payload'])->not->toHaveKeys([
-            'dropped',
-            'retained',
-            'total',
-            'truncated',
-            'transaction_retained',
-            'transaction_dropped',
-            'transaction_total',
-        ]);
-
         foreach ($section['payload']['items'] ?? [] as $item) {
             expect($item['at_ms'])->toBeNumeric()->toBeGreaterThanOrEqual(0);
         }

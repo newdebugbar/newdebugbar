@@ -563,11 +563,10 @@ it('exposes every recorded context section through the bounded section tool', fu
         }
     }
 
-    $missing = app(McpProfilePresenter::class)->section($profileId, 'messages', 0, 50);
+    $missing = app(McpProfilePresenter::class)->section($profileId, 'unknown-section', 0, 50);
 
     expect($missing['status'])->toBe('not_found')
-        ->and($missing['data']['available_sections'])->not->toContain('messages')
-        ->and(app(McpProfilePresenter::class)->sectionNames())->not->toContain('messages');
+        ->and($missing['data']['available_sections'])->toContain('authorization', 'validation');
 });
 
 it('keeps captured mail content out of MCP responses', function () {
