@@ -30,7 +30,7 @@ final class ProfileStore
         $this->ensureStorageDirectory();
 
         try {
-            $json = json_encode($profile, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+            $json = StoredJson::encode($profile);
         } catch (JsonException $exception) {
             throw new RuntimeException('The debug profile could not be encoded.', previous: $exception);
         }
@@ -96,7 +96,7 @@ final class ProfileStore
         $limit = max(1, min($limit ?? $this->maxProfiles, $this->maxProfiles));
         $profiles = [];
 
-        foreach (collect($this->files->files($this->path))->sortByDesc->getMTime() as $file) {
+        foreach (collect($this->files->files($this->path))->sortByDesc(StoredJson::timestamp(...)) as $file) {
             if ($file->getExtension() !== 'json') {
                 continue;
             }
@@ -133,7 +133,7 @@ final class ProfileStore
     {
         $files = collect($this->files->files($this->path))
             ->filter(fn ($file): bool => $file->getExtension() === 'json')
-            ->sortByDesc(fn ($file): int => $file->getMTime())
+            ->sortByDesc(StoredJson::timestamp(...))
             ->values();
 
         $expiresAt = now()->subMinutes($this->maxAgeMinutes)->getTimestamp();

@@ -3,6 +3,7 @@
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 use NewDebugBar\Storage\ProfileStore;
+use NewDebugBar\Tests\Support\FixedTimestampFilesystem;
 
 beforeEach(function () {
     $this->profilePath = sys_get_temp_dir().'/newdebugbar-profile-store-tests';
@@ -86,6 +87,41 @@ it('lists valid recent profiles within the retention limit', function () {
     expect(array_column($store->recent(), 'id'))->toBe([$latest, $first])
         ->and($store->recent(1))->toHaveCount(1)
         ->and($store->maxProfiles())->toBe(2);
+});
+
+it('retains the newest twenty profiles when a burst shares one filesystem timestamp', function () {
+    $store = new ProfileStore(new FixedTimestampFilesystem, $this->profilePath);
+
+    foreach (range(1, 20) as $sequence) {
+        $store->put([
+            'id' => sprintf('00000000-0000-4000-8000-%012d', $sequence),
+            'sequence' => $sequence,
+        ]);
+    }
+
+    $latest = 'ffffffff-ffff-4fff-bfff-ffffffffffff';
+    $store->put(['id' => $latest, 'sequence' => 21]);
+
+    expect($store->get($latest)['sequence'])->toBe(21)
+        ->and(array_column($store->recent(), 'sequence'))->toBe(range(21, 2))
+        ->and($store->get('00000000-0000-4000-8000-000000000001'))->toBeNull();
+});
+
+it('promotes an updated profile before pruning older records', function () {
+    $store = new ProfileStore(new FixedTimestampFilesystem, $this->profilePath, maxProfiles: 2);
+    $first = '00000000-0000-4000-8000-000000000001';
+    $second = '00000000-0000-4000-8000-000000000002';
+    $third = 'ffffffff-ffff-4fff-bfff-ffffffffffff';
+    $store->put(['id' => $first, 'completion_state' => 'terminating']);
+    $store->put(['id' => $second]);
+    $updated = $store->get($first);
+    $updated['completion_state'] = 'complete';
+    $store->put($updated);
+    $store->put(['id' => $third]);
+
+    expect(array_column($store->recent(), 'id'))->toBe([$third, $first])
+        ->and($store->get($first)['completion_state'])->toBe('complete')
+        ->and($store->get($second))->toBeNull();
 });
 
 it('deletes an expired profile when it is read', function () {

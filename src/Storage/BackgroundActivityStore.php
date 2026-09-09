@@ -179,7 +179,7 @@ final class BackgroundActivityStore
     }
 
     /** @param array<string, mixed> $activity */
-    private function put(array $activity): void
+    private function put(array &$activity): void
     {
         $key = (string) ($activity['key'] ?? '');
 
@@ -190,7 +190,7 @@ final class BackgroundActivityStore
         $this->files->ensureDirectoryExists($this->path, 0700);
 
         try {
-            $json = json_encode($activity, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+            $json = StoredJson::encode($activity);
         } catch (JsonException $exception) {
             throw new RuntimeException('The background activity could not be encoded.', previous: $exception);
         }
@@ -221,7 +221,7 @@ final class BackgroundActivityStore
 
         $files = collect($this->files->files($this->path))
             ->filter(fn ($file): bool => $file->getExtension() === 'json')
-            ->sortByDesc(fn ($file): int => $file->getMTime())
+            ->sortByDesc(StoredJson::timestamp(...))
             ->values();
         $expiresAt = now()->subMinutes($this->maxAgeMinutes)->getTimestamp();
 

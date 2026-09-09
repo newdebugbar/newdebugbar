@@ -3,6 +3,7 @@
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 use NewDebugBar\Storage\BackgroundActivityStore;
+use NewDebugBar\Tests\Support\FixedTimestampFilesystem;
 
 it('keeps bounded dispatch and worker attempt correlation facts', function (): void {
     $files = new Filesystem;
@@ -55,6 +56,39 @@ it('keeps bounded dispatch and worker attempt correlation facts', function (): v
         }
 
         expect($files->files($path))->toHaveCount(2);
+    } finally {
+        $files->deleteDirectory($path);
+    }
+});
+
+it('retains new and updated activity when filesystem timestamps tie', function () {
+    $files = new FixedTimestampFilesystem;
+    $path = sys_get_temp_dir().'/newdebugbar-background-burst-'.bin2hex(random_bytes(8));
+    $store = new BackgroundActivityStore($files, $path, maxActivities: 2);
+    $keys = [];
+
+    foreach ([1, 2, 3] as $jobId) {
+        $keys[$jobId] = $store->key('database', 'default', $jobId);
+    }
+    asort($keys);
+    [$first, $second, $third] = array_keys($keys);
+    $origin = (string) Str::uuid();
+    $dispatch = fn (int $jobId): array => $store->recordDispatch([
+        'origin_profile_id' => $origin,
+        'connection' => 'database',
+        'queue' => 'default',
+        'job_id' => $jobId,
+    ]);
+
+    try {
+        $dispatch($first);
+        $dispatch($second);
+        $store->markProcessing('database', 'default', $first, 1);
+        $dispatch($third);
+
+        expect($store->get($keys[$third])['status'])->toBe('queued')
+            ->and($store->get($keys[$first])['status'])->toBe('processing')
+            ->and($store->get($keys[$second]))->toBeNull();
     } finally {
         $files->deleteDirectory($path);
     }

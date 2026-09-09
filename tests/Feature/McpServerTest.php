@@ -179,6 +179,19 @@ it('keeps every presented section reachable through MCP', function () {
     }
 });
 
+it('exposes the precise profile write time through generic profile data', function () {
+    $response = $this->get('/profiled', ['Accept' => 'text/html'])->assertOk();
+    $profileId = $response->headers->get('X-NewDebugBar-Profile');
+    $stored = app(ProfileStore::class)->get($profileId);
+    $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
+        'profile_id' => $profileId,
+        'path' => '/stored_at',
+    ])->assertOk());
+
+    expect($stored['stored_at'])->toBeNumeric()
+        ->and($content['data']['value'])->toBe($stored['stored_at']);
+});
+
 it('walks exact retained values that focused MCP responses intentionally omit', function () {
     $profiles = [
         [$this->get('/profiled-private-query', ['Accept' => 'text/html'])->assertOk(), 'private-alpha'],

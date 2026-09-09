@@ -29,7 +29,7 @@ final class GetDebugProfileData extends DebugTool
             'profile_id' => $schema->string()->format('uuid')->required(),
             'path' => $schema->string()
                 ->max(1_000)
-                ->description('JSON Pointer to inspect. Use /sections to discover all diagnostic sections and an empty string for the profile root.')
+                ->description('JSON Pointer to inspect. Use /sections for diagnostic sections, /stored_at for the latest write time in Unix seconds with microseconds, and an empty string for the profile root.')
                 ->default('/sections'),
             'cursor' => $schema->integer()->min(0)->default(0),
             'limit' => $schema->integer()->min(1)->max($this->profiles->maxItems())->default($this->defaultLimit()),
