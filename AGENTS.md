@@ -30,7 +30,7 @@
 ## Documentation
 
 - Keep the public README short. Explain why the package exists and how to start using it.
-- Keep client-specific MCP setup in `docs/mcp.md`. Link to it from the README.
+- Keep setup instructions, including client-specific MCP setup, in the website documentation. Link to it from the README.
 - Keep test reports, support tables, and long setup notes out of the README.
 
 ## MCP parity
