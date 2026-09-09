@@ -1,19 +1,33 @@
 <?php
 
+use Illuminate\Filesystem\Filesystem;
 use Laravel\Mcp\Client;
 use Laravel\Mcp\Client\Transport\StdioTransport;
 use Laravel\Mcp\Schema\Implementation;
 
 test('the real stdio server advertises complete profile access', function () {
     $root = dirname(__DIR__, 2);
+    $files = new Filesystem;
+    $cachePath = sys_get_temp_dir().'/newdebugbar-mcp-'.bin2hex(random_bytes(8));
+    $files->ensureDirectoryExists($cachePath, 0700);
     $client = new Client(
-        new StdioTransport('/usr/bin/env', [
-            'APP_ENV=local',
-            PHP_BINARY,
-            $root.'/vendor/bin/testbench',
-            'mcp:start',
-            'newdebugbar',
-        ]),
+        new class('/usr/bin/env', ['APP_ENV=local', 'APP_PACKAGES_CACHE='.$cachePath.'/packages.php', 'APP_SERVICES_CACHE='.$cachePath.'/services.php', PHP_BINARY, $root.'/vendor/bin/testbench', 'mcp:start', 'newdebugbar']) extends StdioTransport
+        {
+            public function receive(): string
+            {
+                $line = parent::receive();
+
+                if (json_decode($line, true) === null) {
+                    throw new RuntimeException('Unexpected MCP subprocess output: '.substr(
+                        ($this->process?->getOutput() ?? $line).($this->process?->getErrorOutput() ?? ''),
+                        0,
+                        4_000,
+                    ));
+                }
+
+                return $line;
+            }
+        },
         new Implementation('newdebugbar-tests', '1.0.0'),
     );
 
@@ -27,6 +41,8 @@ test('the real stdio server advertises complete profile access', function () {
         ]);
 
         expect($initialization?->serverInfo->name)->toBe('New Debug Bar')
+            ->and($files->exists($cachePath.'/packages.php'))->toBeTrue()
+            ->and($files->exists($cachePath.'/services.php'))->toBeTrue()
             ->and($initialization?->serverInfo->version)->toBe('1.1.0')
             ->and($initialization?->instructions)->toContain('get-debug-profile-data', '/sections')
             ->and($tools->keys()->all())->toBe([
@@ -49,6 +65,7 @@ test('the real stdio server advertises complete profile access', function () {
             ]);
     } finally {
         $client->disconnect();
+        $files->deleteDirectory($cachePath);
     }
 })->skip(
     fn (): bool => ! class_exists(Client::class),
