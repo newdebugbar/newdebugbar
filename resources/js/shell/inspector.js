@@ -156,17 +156,18 @@ export function createInspector(context) {
       this.mobileToolbarReturnFocus = null;
       this.closeThemeMenu(false);
       this.closeRequestPicker(false);
-      this.mobileSectionsOpen = false;
-      this.mobileSectionsReturnFocus = null;
       this.inspectorOpen = true;
       this.selectSection(section);
       this.scheduleActivityRefresh(true);
       this.syncHostLock();
       this.$nextTick?.(() => {
-        const focus = () =>
-          this.$root
-            ?.querySelector?.('[data-ndb-window-controls="expanded"] [data-ndb-window-action="shrink"]')
-            ?.focus?.();
+        const focus = () => {
+          const selector =
+            browser.viewportWidth?.() < 640
+              ? '[data-ndb-section-heading]'
+              : '[data-ndb-window-controls="expanded"] [data-ndb-window-action="shrink"]';
+          this.$root?.querySelector?.(selector)?.focus?.();
+        };
         browser.afterPaint ? browser.afterPaint(focus) : focus();
       });
     },
@@ -253,8 +254,6 @@ export function createInspector(context) {
       this.syncSectionLifecycle();
       this.cancelActivityRefresh();
       this.inspectorReturnFocus = null;
-      this.mobileSectionsOpen = false;
-      this.mobileSectionsReturnFocus = null;
       this.mobileToolbarMenu = null;
       this.mobileToolbarReturnFocus = null;
       this.closeThemeMenu(false);
@@ -275,8 +274,6 @@ export function createInspector(context) {
       this.syncSectionLifecycle();
       this.cancelActivityRefresh();
       this.inspectorReturnFocus = null;
-      this.mobileSectionsOpen = false;
-      this.mobileSectionsReturnFocus = null;
       this.mobileToolbarMenu = null;
       this.mobileToolbarReturnFocus = null;
       this.themeMenuScope = null;

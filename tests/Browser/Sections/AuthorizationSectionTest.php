@@ -263,7 +263,6 @@ it('drills into authorization evidence on 390 pixel mobile in dark mode', functi
         ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
         ->click('[data-ndb-mobile-toolbar-action="inspector"]')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
         ->click('[data-ndb-select-section="authorization"]')
         ->waitForText('6 decisions');
 

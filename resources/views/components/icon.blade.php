@@ -97,10 +97,6 @@
             <ellipse cx="12" cy="5" rx="8" ry="3"
             /><path d="M4 5v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7" />
             @break
-        @case ('sidebar')
-            <rect x="3" y="4" width="18" height="16" rx="3"
-            /><path d="M9 4v16M5.5 8h1M5.5 12h1" />
-            @break
         @case ('code')
             <path d="m8 9-4 3 4 3M16 9l4 3-4 3M14 5l-4 14" />
             @break

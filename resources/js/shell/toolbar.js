@@ -402,16 +402,32 @@ export function createToolbar(context) {
       this.closeThemeMenu(false);
       this.mobileToolbarReturnFocus = returnFocus ?? browser.activeElement?.();
       this.$nextTick?.(() => {
-        const focus = () =>
-          this.$root?.querySelector?.(`[data-ndb-mobile-toolbar-menu="${menu}"] [role="menuitem"]`)?.focus?.();
+        const focus = () => {
+          const popover = this.$root?.querySelector?.(`[data-ndb-mobile-toolbar-menu="${menu}"]`);
+          const items = popover?.querySelector?.('[data-ndb-mobile-toolbar-popover-items]');
+          if (items) items.scrollTop = 0;
+          popover?.querySelector?.('[role="menuitem"]')?.focus?.();
+        };
         browser.afterPaint ? browser.afterPaint(focus) : focus();
       });
     },
 
-    openMobileSectionsFromToolbar() {
+    openSectionFromToolbar(section) {
       const returnFocus = this.mobileToolbarReturnFocus;
       this.closeMobileToolbarMenu(false);
-      this.openMobileSections(returnFocus);
+
+      if (this.inspectorOpen) this.selectSection(section, null, true);
+      else this.openInspector(section, returnFocus);
+    },
+
+    moveMobileToolbarMenu(direction, menu) {
+      const items = [...(menu?.querySelectorAll?.('button:not([disabled])') ?? [])].filter(
+        (item) => item.getClientRects().length > 0,
+      );
+      if (!items.length) return;
+
+      const index = items.indexOf(browser.activeElement?.());
+      items[(index + direction + items.length) % items.length]?.focus?.();
     },
 
     closeMobileToolbarMenu(restoreFocus = true) {

@@ -31,7 +31,7 @@ it('alphabetizes active sections and keeps quiet sections in the palette', funct
                 return JSON.stringify(labels) === JSON.stringify(sorted);
             })()
             JS)
-        ->assertAttribute('[data-ndb-section="validation"]', 'data-ndb-section-visible', 'false')
+        ->assertMissing('[data-ndb-section="validation"]')
         ->assertScript('document.querySelector("[data-ndb-header-environment]").textContent.trim() === "testing"')
         ->assertScript('!["·", "•", "|"].some((separator) => document.querySelector("[data-ndb-header-facts]").textContent.includes(separator))')
         ->assertScript(<<<'JS'

@@ -335,7 +335,6 @@ it('drills into mail details with compact icon tabs on mobile', function () {
         ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
         ->click('[data-ndb-mobile-toolbar-action="inspector"]')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
         ->click('[data-ndb-select-section="mail"]')
         ->waitForText('Payment receipt #NS-1042')
         ->assertAttribute('#newdebugbar', 'data-ndb-theme', 'dark')

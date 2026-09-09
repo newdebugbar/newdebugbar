@@ -2,6 +2,43 @@
 
 use NewDebugBar\Tests\Support\DebugBarBrowser;
 
+it('isolates the shared section list and drag classes from host styles', function () {
+    $page = visit('/hostile-styles')->resize(390, 844);
+    $page->script(<<<'JS'
+        const style = document.createElement('style');
+        style.textContent = `
+            [data-section-list], [data-sort-group], .section-dragging, .section-chosen, .section-drag,
+            .sortable-ghost, .sortable-chosen, .sortable-drag, .sortable-fallback {
+                background: red; color: green; width: 1200px; padding: 50px;
+            }
+            [data-ndb-sort-group] button { height: 91px; background: red; color: green; }
+        `;
+        document.head.append(style);
+        JS);
+    $page->click('[data-ndb-mobile-toolbar-trigger="actions"]')
+        ->click('[data-ndb-toggle-favorite="request"]')
+        ->click('[data-ndb-toggle-favorite="queries"]');
+
+    DebugBarBrowser::dragSection($page, 'queries', 'request');
+
+    $page->assertScript(<<<'JS'
+            (() => {
+                const list = document.querySelector('[data-ndb-mobile-toolbar-menu="actions"] [data-ndb-section-list]');
+                const buttons = [...list.querySelectorAll('button')].filter((button) => button.getClientRects().length > 0);
+                return list.scrollWidth <= list.clientWidth && buttons.length > 2
+                    && buttons.every((button) => {
+                        const styles = getComputedStyle(button);
+                        return button.getBoundingClientRect().height === 44
+                            && styles.backgroundColor !== 'rgb(255, 0, 0)'
+                            && styles.color !== 'rgb(0, 128, 0)';
+                    });
+            })()
+            JS)
+        ->assertNoJavaScriptErrors();
+
+    DebugBarBrowser::assertFavoriteOrder($page, 'queries,request');
+});
+
 it('isolates unread request dots from host styles', function () {
     $page = visit('/hostile-styles')->resize(1024, 720);
     $page->script("fetch('/api/plain-json?unread=1')");
@@ -1314,7 +1351,6 @@ it('keeps host styles and package styles isolated', function () {
         ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
         ->click('[data-ndb-mobile-toolbar-action="inspector"]')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
         ->click('[data-ndb-select-section="exceptions"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->click('[data-ndb-exception-item="1"]')

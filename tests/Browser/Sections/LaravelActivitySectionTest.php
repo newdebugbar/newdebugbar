@@ -220,7 +220,6 @@ it('keeps Events selection focused with one mobile scroll owner', function () {
         ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
         ->click('[data-ndb-mobile-toolbar-action="inspector"]')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
         ->click('[data-ndb-select-section="events"]');
 
     DebugBarBrowser::waitForDetails($page);

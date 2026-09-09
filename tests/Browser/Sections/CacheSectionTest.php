@@ -344,7 +344,6 @@ it('drills into cache detail on mobile in dark mode', function () {
         ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
         ->click('[data-ndb-mobile-toolbar-action="inspector"]')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
         ->click('[data-ndb-select-section="cache"]');
 
     DebugBarBrowser::waitForVisibleElement($page, '[data-ndb-cache-workspace]');

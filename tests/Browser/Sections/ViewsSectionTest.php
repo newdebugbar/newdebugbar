@@ -125,7 +125,6 @@ it('uses a bounded mobile list drill-in with a working Views back action', funct
         ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
         ->click('[data-ndb-mobile-toolbar-action="inspector"]')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
         ->click('[data-ndb-select-section="views"]');
 
     DebugBarBrowser::assertSectionSelected($page, 'views');

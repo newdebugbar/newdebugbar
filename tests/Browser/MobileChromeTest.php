@@ -3,6 +3,90 @@
 use NewDebugBar\Support\DurationFormatter;
 use NewDebugBar\Tests\Support\DebugBarBrowser;
 
+it('navigates and saves section ordering inside either mobile menu', function (string $theme, int $width, int $height) {
+    $page = visit('/profiled')->resize($width, $height);
+    $preferences = json_encode([
+        'theme' => $theme,
+        'favorites' => ['queries', 'request'],
+        'sectionOrder' => ['models', 'logs'],
+    ], JSON_THROW_ON_ERROR);
+    $page->script("localStorage.setItem('newdebugbar.preferences.v1', JSON.stringify({$preferences}))");
+    $page->refresh()
+        ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
+        ->assertScript(<<<'JS'
+            (() => {
+                const menu = document.querySelector('[data-ndb-mobile-toolbar-menu="actions"]');
+                const items = menu.querySelector('[data-ndb-mobile-toolbar-popover-items]');
+                const box = menu.getBoundingClientRect();
+                const controls = [...menu.querySelectorAll('[data-ndb-mobile-toolbar-action]')];
+                return controls.map((control) => control.dataset.ndbMobileToolbarAction).join(',') === 'palette,inspector,dismiss,theme'
+                    && box.top >= 0 && box.bottom <= window.innerHeight
+                    && box.left >= 0 && box.right <= window.innerWidth
+                    && items.scrollHeight >= items.clientHeight
+                    && items.scrollWidth <= items.clientWidth;
+            })()
+            JS);
+
+    DebugBarBrowser::dragSection($page, 'request', 'queries');
+
+    DebugBarBrowser::assertFavoriteOrder($page, 'request,queries');
+
+    DebugBarBrowser::dragSection($page, 'logs', 'models');
+
+    $page->assertScript(<<<'JS'
+            [...document.querySelectorAll('[data-ndb-section][data-ndb-favorite="false"]')]
+                .filter((row) => row.getClientRects().length > 0)
+                .slice(0, 2).map((row) => row.dataset.ndbSection).join(',')
+            JS, 'logs,models')
+        ->click('[data-ndb-select-section="logs"]');
+
+    DebugBarBrowser::assertSectionSelected($page, 'logs');
+
+    $page->assertScript('document.activeElement === document.querySelector("[data-ndb-section-heading]")')
+        ->click('[data-ndb-header-mobile-trigger="actions"]')
+        ->assertScript(<<<'JS'
+            (() => {
+                const menu = document.querySelector('[data-ndb-mobile-toolbar-menu="header-actions"]');
+                const bounds = menu.getBoundingClientRect();
+                const dialog = menu.closest('[role="dialog"]').getBoundingClientRect();
+                return bounds.bottom <= dialog.bottom && bounds.top >= dialog.top
+                    && bounds.left >= 0 && bounds.right <= window.innerWidth;
+            })()
+            JS)
+        ->click('[data-ndb-toggle-favorite="models"]');
+
+    DebugBarBrowser::assertFavoriteOrder($page, 'request,queries,models');
+
+    DebugBarBrowser::dragSection($page, 'models', 'queries');
+
+    DebugBarBrowser::assertFavoriteOrder($page, 'request,models,queries');
+
+    $page->keys('[data-ndb-select-section="models"]', 'Escape')
+        ->assertScript('document.activeElement.dataset.ndbHeaderMobileTrigger === "actions"')
+        ->click('[data-ndb-header-mobile-trigger="actions"]')
+        ->click('[data-ndb-header-mobile-action="shrink"]')
+        ->assertScript('document.activeElement.dataset.ndbMobileToolbarTrigger === "actions"')
+        ->refresh()
+        ->click('[data-ndb-mobile-toolbar-trigger="actions"]');
+
+    DebugBarBrowser::assertFavoriteOrder($page, 'request,models,queries');
+
+    $page->click('[data-ndb-select-section="queries"]')
+        ->resize(1440, 900)
+        ->assertVisible('#newdebugbar-section-navigation');
+
+    DebugBarBrowser::assertFavoriteOrder($page, 'request,models,queries');
+
+    $page->assertScript(<<<'JS'
+        [...document.querySelectorAll('[data-ndb-section][data-ndb-favorite="false"]')]
+            .filter((row) => row.getClientRects().length > 0)[0].dataset.ndbSection
+        JS, 'logs')
+        ->assertNoJavaScriptErrors();
+})->with([
+    'short light phone' => ['light', 320, 568],
+    'dark phone' => ['dark', 390, 844],
+]);
+
 it('keeps mobile metric values readable across duration formats', function (int $width) {
     $page = visit('/profiled')
         ->resize($width, 844)
@@ -317,14 +401,13 @@ it('uses the compact inspector header only below sm', function () {
                     && arrow.querySelectorAll('path').length === 2
                     && parseFloat(getComputedStyle(items).rowGap) > 0
                     && visibleItems.every((item) => parseFloat(getComputedStyle(item).borderTopWidth) === 0)
-                    && visibleItems.length === 7
+                    && visibleItems.length > 6
                     && visibleItems.every((item) => item.getBoundingClientRect().height >= 44)
                     && document.activeElement === visibleItems[0];
             })()
             JS)
-        ->click('[data-ndb-header-mobile-action="sections"]')
-        ->assertVisible('#newdebugbar-section-navigation')
-        ->keys('#newdebugbar-section-navigation [data-ndb-select-section][aria-current="page"]', 'Escape')
+        ->assertVisible('[data-ndb-mobile-toolbar-menu="header-actions"] [data-ndb-select-section="queries"]')
+        ->keys('[data-ndb-mobile-toolbar-menu="header-actions"] [data-ndb-select-section="queries"]', 'Escape')
         ->assertScript('document.activeElement === document.querySelector("[data-ndb-header-mobile-trigger=\\"actions\\"]")')
         ->resize(640, 844)
         ->assertScript(<<<'JS'
@@ -394,11 +477,11 @@ it('keeps the main interactions usable on a phone viewport', function () {
         ->assertScript(<<<'JS'
                 (() => {
                     const menu = document.querySelector('[data-ndb-mobile-toolbar-menu="actions"]');
-                    const items = Array.from(menu.querySelectorAll('[role="menuitem"], [role="menuitemradio"]'));
+                    const items = Array.from(menu.querySelectorAll('[role="menuitem"], [role="menuitemradio"]')).filter((item) => item.getClientRects().length > 0);
 
                     return menu.querySelector('h1, h2, h3, [role="heading"]') === null
                         && !menu.textContent.includes('Debug bar')
-                        && items.length === 6
+                        && items.length > 6
                         && menu.querySelector('[data-ndb-mobile-toolbar-action="placement"]') === null
                         && menu.querySelector('[data-ndb-mobile-toolbar-action="inspector"]').textContent.trim() === 'Open'
                         && menu.querySelectorAll('[data-ndb-mobile-theme-option]').length === 3
@@ -433,87 +516,29 @@ it('keeps the main interactions usable on a phone viewport', function () {
                     && actions.querySelectorAll('svg').length === 1
                     && Number.parseFloat(actionStyles.borderTopWidth) === 0
                     && actionStyles.boxShadow === 'none'
-                    && actionStyles.backgroundColor === 'rgba(0, 0, 0, 0)'
-                    && document.querySelector('[data-ndb-mobile-sections-toggle]').getClientRects().length === 0;
-            })()
-            JS)
-        ->assertScript(<<<'JS'
-            (() => {
-                const navigation = document.querySelector('#newdebugbar-section-navigation');
-                const styles = getComputedStyle(navigation);
-                const transitionProperties = styles.transitionProperty.split(',').map((property) => property.trim());
-                const transitionDurations = styles.transitionDuration.split(',').map((duration) => duration.trim());
-                const transitionDelays = styles.transitionDelay.split(',').map((delay) => delay.trim());
-                const transformIndex = transitionProperties.indexOf('transform');
-                const visibilityIndex = transitionProperties.indexOf('visibility');
-                const transformDuration = Number.parseFloat(transitionDurations[transformIndex] ?? transitionDurations[0]);
-                const visibilityDelay = Number.parseFloat(transitionDelays[visibilityIndex] ?? transitionDelays[0]);
-
-                return styles.visibility === 'hidden'
-                    && navigation.getBoundingClientRect().right <= 1
-                    && transformIndex >= 0
-                    && visibilityIndex >= 0
-                    && transformDuration > 0
-                    && visibilityDelay >= transformDuration;
+                    && actionStyles.backgroundColor === 'rgba(0, 0, 0, 0)';
             })()
             JS)
         ->click('[data-ndb-header-mobile-trigger="actions"]')
         ->assertAttribute('[data-ndb-header-mobile-trigger="actions"]', 'aria-expanded', 'true')
-        ->click('[data-ndb-header-mobile-action="sections"]')
-        ->assertAttribute('[data-ndb-header-mobile-trigger="actions"]', 'aria-expanded', 'false')
-        ->assertVisible('#newdebugbar-section-navigation')
-        ->assertVisible('[data-ndb-mobile-sections-backdrop]')
-        ->assertScript(<<<'JS'
-            (() => {
-                const navigation = document.querySelector('#newdebugbar-section-navigation');
-                const box = navigation.getBoundingClientRect();
-
-                return getComputedStyle(navigation).position === 'absolute'
-                    && box.left >= 0
-                    && box.right <= window.innerWidth
-                    && box.width <= 281
-                    && document.activeElement === navigation.querySelector('[data-ndb-select-section][aria-current="page"]');
-            })()
-            JS)
-        ->keys('#newdebugbar-section-navigation [data-ndb-select-section][aria-current="page"]', 'Escape')
-        ->assertScript('document.activeElement === document.querySelector("[data-ndb-header-mobile-trigger=\\"actions\\"]")')
-        ->assertScript('getComputedStyle(document.querySelector("#newdebugbar-section-navigation")).visibility === "hidden"')
-        ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
         ->click('[data-ndb-select-section="queries"]')
-        ->assertScript('document.activeElement === document.querySelector("[data-ndb-section-heading]")')
-        ->assertScript('getComputedStyle(document.querySelector("#newdebugbar-section-navigation")).visibility === "hidden"');
+        ->assertScript('document.activeElement === document.querySelector("[data-ndb-section-heading]")');
 
     DebugBarBrowser::assertSectionSelected($page, 'queries');
 
     $page
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
         ->click('[data-ndb-toggle-favorite="queries"]')
-        ->assertAttribute('[data-ndb-toggle-favorite="queries"]', 'aria-pressed', 'true')
+        ->assertAttribute('[data-ndb-toggle-favorite="queries"]', 'aria-checked', 'true')
         ->keys('[data-ndb-toggle-favorite="queries"]', 'Escape')
         ->assertVisible('[role="dialog"][aria-label="Request inspector"]')
-        ->assertScript('document.activeElement === document.querySelector("[data-ndb-header-mobile-trigger=\\"actions\\"]")')
-        ->assertScript('getComputedStyle(document.querySelector("#newdebugbar-section-navigation")).visibility === "hidden"')
+        ->assertScript('document.activeElement.dataset.ndbHeaderMobileTrigger === "actions"')
+        ->assertAttribute('[data-ndb-header-mobile-trigger="actions"]', 'aria-expanded', 'false')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
-        ->click('[data-ndb-mobile-sections-backdrop]')
-        ->assertScript('document.activeElement === document.querySelector("[data-ndb-header-mobile-trigger=\\"actions\\"]")')
-        ->assertScript('getComputedStyle(document.querySelector("#newdebugbar-section-navigation")).visibility === "hidden"')
+        ->click('[data-ndb-mobile-toolbar-metric-scope="header"][data-ndb-mobile-toolbar-metric="memory"]')
+        ->assertAttribute('[data-ndb-header-mobile-trigger="actions"]', 'aria-expanded', 'false')
         ->resize(1440, 900)
-        ->assertScript(<<<'JS'
-            (() => {
-                const toggle = document.querySelector('[data-ndb-mobile-sections-toggle]');
-                const navigation = document.querySelector('#newdebugbar-section-navigation');
-                const mobileToolbar = document.querySelector('[data-ndb-header-mobile-toolbar]');
-                const desktopToolbar = document.querySelector('[data-ndb-header-toolbar]');
-
-                return getComputedStyle(toggle).display === 'none'
-                    && getComputedStyle(mobileToolbar).display === 'none'
-                    && getComputedStyle(desktopToolbar).display !== 'none'
-                    && getComputedStyle(navigation).position === 'static'
-                    && getComputedStyle(navigation).visibility === 'visible';
-            })()
-            JS)
+        ->assertVisible('#newdebugbar-section-navigation')
+        ->assertScript('getComputedStyle(document.querySelector("[data-ndb-header-mobile-toolbar]")).display === "none"')
         ->assertNoJavaScriptErrors();
 });

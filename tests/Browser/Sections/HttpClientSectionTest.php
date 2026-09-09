@@ -562,7 +562,6 @@ it('keeps HTTP request details readable on mobile in dark mode', function () {
         ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
         ->click('[data-ndb-mobile-toolbar-action="inspector"]')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
         ->click('[data-ndb-select-section="http_client"]')
         ->waitForText('7 requests')
         ->assertAttribute('#newdebugbar', 'data-ndb-theme', 'dark')

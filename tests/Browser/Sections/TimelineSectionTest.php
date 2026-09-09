@@ -141,7 +141,6 @@ it('turns the timeline into a mobile chronological drill-in without horizontal o
         ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
         ->click('[data-ndb-mobile-toolbar-action="inspector"]')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
         ->click('[data-ndb-select-section="timeline"]')
         ->assertAttribute('#newdebugbar', 'data-ndb-theme', 'light')
         ->assertMissing('[data-ndb-timeline-load-more]')

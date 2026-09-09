@@ -92,7 +92,6 @@ test('dismissing the bar lasts for the page lifetime without becoming a preferen
   assert.equal(state.barVisible, false);
   assert.equal(state.inspectorOpen, false);
   assert.equal(state.paletteOpen, false);
-  assert.equal(state.mobileSectionsOpen, false);
   assert.equal(state.mobileToolbarMenu, null);
   assert.equal(state.mobileToolbarReturnFocus, null);
   assert.equal(browser.host.unlocks, 1);
@@ -118,68 +117,6 @@ test('dismissing the bar lasts for the page lifetime without becoming a preferen
   assert.equal(reloaded.barVisible, true);
 });
 
-test('mobile section navigation manages focus and layered dismissal', () => {
-  let active = null;
-  let selectedFocused = 0;
-  let headingFocused = 0;
-  let openerFocused = 0;
-  const opener = {
-    focus() {
-      active = opener;
-      openerFocused++;
-    },
-  };
-  const selectedButton = {
-    focus() {
-      active = selectedButton;
-      selectedFocused++;
-    },
-  };
-  const heading = {
-    focus() {
-      active = heading;
-      headingFocused++;
-    },
-  };
-  const browser = runtime();
-  browser.activeElement = () => active;
-  const state = createNewDebugBar(summary, browser);
-  state.$root = { querySelectorAll: () => [] };
-  state.$refs = {
-    content: { scrollTop: 40 },
-    mobileSectionsNav: { querySelector: () => selectedButton },
-    sectionHeading: heading,
-  };
-  state.$nextTick = (callback) => callback();
-  state.inspectorOpen = true;
-
-  active = opener;
-  state.openMobileSections();
-  assert.equal(state.mobileSectionsOpen, true);
-  assert.equal(selectedFocused, 1);
-
-  state.toggleMobileSections();
-  assert.equal(state.mobileSectionsOpen, false);
-  assert.equal(openerFocused, 1);
-
-  active = opener;
-  state.toggleMobileSections();
-  assert.equal(state.mobileSectionsOpen, true);
-
-  state.selectSection('queries');
-  assert.equal(state.selected, 'queries');
-  assert.equal(state.mobileSectionsOpen, false);
-  assert.equal(state.mobileSectionsReturnFocus, null);
-  assert.equal(headingFocused, 1);
-
-  active = opener;
-  state.openMobileSections();
-  state.handleShortcut({ metaKey: false, ctrlKey: false, shiftKey: false, key: 'Escape', preventDefault() {} });
-  assert.equal(state.mobileSectionsOpen, false);
-  assert.equal(state.inspectorOpen, true);
-  assert.equal(openerFocused, 2);
-});
-
 test('mobile toolbar menus manage focus and hand off to overlays', () => {
   let active = null;
   let actionsFocused = 0;
@@ -198,6 +135,7 @@ test('mobile toolbar menus manage focus and hand off to overlays', () => {
     },
   };
   const menuItem = {
+    querySelector: () => menuItem,
     focus() {
       active = menuItem;
       menuItemFocused++;
@@ -236,11 +174,10 @@ test('mobile toolbar menus manage focus and hand off to overlays', () => {
   state.openMobileToolbarMenu('header-actions', actionsOpener);
   assert.equal(state.mobileToolbarMenu, 'header-actions');
   assert.equal(menuItemFocused, 1);
-  state.openMobileSectionsFromToolbar();
+  state.openSectionFromToolbar('queries');
   assert.equal(state.mobileToolbarMenu, null);
-  assert.equal(state.mobileSectionsOpen, true);
-  assert.equal(state.mobileSectionsReturnFocus, actionsOpener);
-  state.closeMobileSections(false);
+  assert.equal(state.selected, 'queries');
+  assert.equal(state.inspectorOpen, true);
 
   state.inspectorOpen = false;
   state.barVisible = false;
@@ -283,6 +220,54 @@ test('mobile toolbar menus manage focus and hand off to overlays', () => {
   assert.equal(state.selected, 'queries');
   assert.equal(state.inspectorReturnFocus, metricOpener);
   assert.equal(shrinkFocused, 1);
+});
+
+test('opening a section from the compact menu preserves the opener and focuses its heading on mobile', () => {
+  const browser = runtime();
+  browser.viewportWidth = () => 390;
+  let focused = null;
+  const opener = { focus: () => (focused = 'opener') };
+  const heading = { focus: () => (focused = 'heading') };
+  const state = createNewDebugBar(summary, browser);
+  state.$root = { querySelector: () => heading, querySelectorAll: () => [] };
+  state.$wire = { loadSection: async () => {} };
+  state.$nextTick = (callback) => callback();
+  state.mobileToolbarMenu = 'actions';
+  state.mobileToolbarReturnFocus = opener;
+
+  state.openSectionFromToolbar('logs');
+  assert.equal(state.inspectorOpen, true);
+  assert.equal(state.selected, 'logs');
+  assert.equal(state.mobileToolbarMenu, null);
+  assert.equal(focused, 'heading');
+
+  state.closeInspector();
+  assert.equal(focused, 'opener');
+});
+
+test('menu arrow keys skip hidden controls and wrap through the visible actions', () => {
+  const browser = runtime();
+  let active = null;
+  const item = (visible) => {
+    const button = { getClientRects: () => (visible ? [{}] : []), focus: () => (active = button) };
+    return button;
+  };
+  const first = item(true);
+  const hidden = item(false);
+  const last = item(true);
+  const state = createNewDebugBar(summary, browser);
+  const menu = { querySelectorAll: () => [first, hidden, last] };
+  browser.activeElement = () => active;
+
+  active = first;
+  state.moveMobileToolbarMenu(1, menu);
+  assert.equal(active, last);
+  state.moveMobileToolbarMenu(1, menu);
+  assert.equal(active, first);
+  state.moveMobileToolbarMenu(-1, menu);
+  assert.equal(active, last);
+  state.moveMobileToolbarMenu(1, { querySelectorAll: () => [] });
+  assert.equal(active, last);
 });
 
 test('theme menus expose explicit choices and manage layered focus', () => {

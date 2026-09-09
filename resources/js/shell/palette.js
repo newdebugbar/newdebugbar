@@ -81,17 +81,13 @@ export function createPalette(context) {
           ? this.themeMenuReturnFocus
           : this.mobileToolbarMenu
             ? this.mobileToolbarReturnFocus
-            : this.mobileSectionsOpen
-              ? this.mobileSectionsReturnFocus
-              : browser.activeElement?.();
+            : browser.activeElement?.();
       this.requestPickerScope = null;
       this.requestPickerReturnFocus = null;
       this.themeMenuScope = null;
       this.themeMenuReturnFocus = null;
       this.mobileToolbarMenu = null;
       this.mobileToolbarReturnFocus = null;
-      this.mobileSectionsOpen = false;
-      this.mobileSectionsReturnFocus = null;
       this.paletteOpen = true;
       this.syncHostLock();
       this.paletteSearch = '';
@@ -180,7 +176,6 @@ export function createPalette(context) {
         else if (this.themeMenuScope) this.closeThemeMenu();
         else if (this.requestPickerScope) this.closeRequestPicker();
         else if (this.mobileToolbarMenu) this.closeMobileToolbarMenu();
-        else if (this.mobileSectionsOpen) this.closeMobileSections();
         else if (this.inspectorOpen) this.closeInspector();
       }
     },

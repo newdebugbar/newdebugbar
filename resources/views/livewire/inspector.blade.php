@@ -28,149 +28,28 @@
         role="dialog"
         aria-modal="true"
         aria-label="Request inspector"
-        @keydown="keepFocusWithin($event, mobileSectionsOpen ? $refs.mobileSectionsNav : $el)"
+        @keydown="keepFocusWithin($event, $el)"
         class="ndb-inspector-panel ndb:absolute ndb:inset-x-0 ndb:mx-auto ndb:flex ndb:h-[min(82vh,780px)] ndb:w-full ndb:max-w-8xl ndb:max-h-[calc(100vh-12px)] ndb:flex-col ndb:overflow-hidden ndb:border-white/70 ndb:bg-white/90 ndb:backdrop-blur-2xl ndb:dark:border-zinc-800/80 ndb:dark:bg-zinc-950/90"
     >
         @include('newdebugbar::livewire.inspector-header')
 
         <div class="ndb:relative ndb:isolate ndb:flex ndb:min-h-0 ndb:flex-1 ndb:flex-col ndb:sm:flex-row">
-            <div
-                x-cloak
-                x-show.important="mobileSectionsOpen"
-                x-transition.opacity.duration.150ms
-                data-ndb-mobile-sections-backdrop
-                @click="closeMobileSections()"
-                class="ndb:absolute ndb:inset-y-0 ndb:right-0 ndb:left-[min(82vw,280px)] ndb:z-20 ndb:bg-transparent ndb:sm:hidden"
-                aria-hidden="true"
-            ></div>
-
             <nav
                 id="newdebugbar-section-navigation"
-                x-ref="mobileSectionsNav"
                 aria-label="Debug sections"
-                :data-ndb-mobile-open="mobileSectionsOpen ? 'true' : 'false'"
-                class="ndb-mobile-section-navigation ndb:absolute ndb:inset-y-0 ndb:left-0 ndb:z-30 ndb:flex ndb:w-[82vw] ndb:max-w-[280px] ndb:flex-col ndb:border-r ndb:border-zinc-200/80 ndb:bg-zinc-50/95 ndb:p-3 ndb:shadow-2xl ndb:backdrop-blur-2xl ndb:sm:static ndb:sm:z-auto ndb:sm:w-[210px] ndb:sm:max-w-none ndb:sm:shrink-0 ndb:sm:shadow-none ndb:dark:border-zinc-800/80 ndb:dark:bg-zinc-900/95 ndb:sm:dark:bg-zinc-900/60"
+                class="ndb:hidden ndb:w-[210px] ndb:shrink-0 ndb:flex-col ndb:border-r ndb:border-zinc-200/80 ndb:bg-zinc-50/95 ndb:p-3 ndb:sm:flex ndb:dark:border-zinc-800/80 ndb:dark:bg-zinc-900/60"
             >
-                <div
-                    id="newdebugbar-section-list"
-                    class="ndb-scrollbar ndb:flex ndb:min-h-0 ndb:flex-1 ndb:flex-col ndb:gap-0.5 ndb:overflow-y-auto"
-                >
-                    <p
-                        data-ndb-favorites-heading
-                        x-show.important="favorites.length > 0"
-                        class="ndb:px-2 ndb:pb-1.5 ndb:pt-1 ndb:text-xs ndb:font-bold ndb:uppercase ndb:tracking-[0.14em] ndb:text-zinc-400"
-                    >
-                        Favorites
-                    </p>
-                    <template x-for="section in orderedSections" :key="'section-' + section.key">
-                        <div x-show.important="isSectionVisible(section)" class="ndb:contents">
-                            <div
-                                x-show.important="favorites.length > 0 && section.key === firstVisibleNonFavoriteKey"
-                                class="ndb:my-2 ndb:h-px ndb:bg-zinc-200 ndb:dark:bg-zinc-800"
-                            ></div>
-                            <p
-                                data-ndb-sections-heading
-                                x-show.important="favorites.length > 0 && section.key === firstVisibleNonFavoriteKey"
-                                class="ndb:px-2 ndb:pb-1.5 ndb:pt-1 ndb:text-xs ndb:font-bold ndb:uppercase ndb:tracking-[0.14em] ndb:text-zinc-400"
-                            >
-                                Sections
-                            </p>
-                            <div
-                                :draggable="isFavorite(section.key)"
-                                :data-ndb-section="section.key"
-                                :data-ndb-section-visible="isSectionVisible(section) ? 'true' : 'false'"
-                                :data-ndb-favorite="isFavorite(section.key) ? 'true' : 'false'"
-                                data-ndb-dragging="false"
-                                @dragstart="startFavoriteDrag(section.key, $event)"
-                                @dragover.prevent="
-                                    hoverFavorite(
-                                        section.key,
-                                        $event.clientY >
-                                            $event.currentTarget.getBoundingClientRect().top +
-                                                $event.currentTarget.offsetHeight / 2,
-                                    )
-                                "
-                                @dragleave="leaveFavorite(section.key)"
-                                @drop.prevent="dropFavorite(section.key, favoriteDropAfter)"
-                                @dragend="endFavoriteDrag()"
-                                class="ndb:group ndb:relative ndb:flex ndb:w-full ndb:items-center ndb:rounded-lg ndb:pr-1 ndb:transition ndb:hover:bg-zinc-200/60 ndb:dark:hover:bg-zinc-800/60"
-                                :class="selected === section.key ? 'ndb-section-active' : ''"
-                            >
-                                <span
-                                    :data-ndb-favorite-drop-before="section.key"
-                                    hidden
-                                    class="ndb:absolute ndb:inset-x-0.5 ndb:top-0 ndb:z-20 ndb:h-1 ndb:-translate-y-1/2 ndb:rounded-full ndb:bg-indigo-500 ndb:shadow-[0_0_0_2px_rgba(255,255,255,0.8)] ndb:dark:shadow-[0_0_0_2px_rgba(9,9,11,0.9)]"
-                                ></span>
-                                <span
-                                    :data-ndb-favorite-drop-after="section.key"
-                                    hidden
-                                    class="ndb:absolute ndb:inset-x-0.5 ndb:bottom-0 ndb:z-20 ndb:h-1 ndb:translate-y-1/2 ndb:rounded-full ndb:bg-indigo-500 ndb:shadow-[0_0_0_2px_rgba(255,255,255,0.8)] ndb:dark:shadow-[0_0_0_2px_rgba(9,9,11,0.9)]"
-                                ></span>
-                                <button
-                                    type="button"
-                                    :data-ndb-select-section="section.key"
-                                    :aria-current="selected === section.key ? 'page' : null"
-                                    :aria-label="isFavorite(section.key)
-                                        ? section.label + '. Drag to reorder. Shift and arrow keys also reorder.'
-                                        : section.label"
-                                    @click="inspector.selectSection(section.key)"
-                                    @keydown.shift.arrow-up.prevent="moveFavorite(section.key, -1)"
-                                    @keydown.shift.arrow-down.prevent="moveFavorite(section.key, 1)"
-                                    class="ndb:flex ndb:h-9 ndb:min-w-0 ndb:flex-1 ndb:items-center ndb:gap-2 ndb:rounded-lg ndb:px-2.5 ndb:text-left ndb:text-xs ndb:font-semibold ndb:transition ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500"
-                                    :class="(isFavorite(section.key)
-                                        ? 'ndb:cursor-grab ndb:active:cursor-grabbing '
-                                        : '') +
-                                    (selected === section.key
-                                        ? ''
-                                        : 'ndb:text-zinc-600 ndb:hover:text-zinc-950 ndb:dark:text-zinc-400 ndb:dark:hover:text-white')"
-                                >
-                                    <span class="ndb-section-label ndb:truncate" x-text="section.label"></span>
-                                    <span class="ndb:ml-auto ndb:flex ndb:h-7 ndb:shrink-0 ndb:items-center ndb:gap-1.5">
-                                        <span
-                                            x-show.important="section.count !== null"
-                                            class="ndb-section-count ndb:inline-flex ndb:items-center ndb:text-xs ndb:leading-none ndb:tabular-nums"
-                                            :class="selected === section.key ? '' : 'ndb:text-zinc-400'"
-                                            x-text="section.count"
-                                        ></span>
-                                    </span>
-                                </button>
-                                <button
-                                    type="button"
-                                    draggable="false"
-                                    :data-ndb-toggle-favorite="section.key"
-                                    :aria-label="(isFavorite(section.key) ? 'Remove ' : 'Add ') +
-                                    section.label +
-                                    (isFavorite(section.key) ? ' from favorites' : ' to favorites')"
-                                    :aria-pressed="isFavorite(section.key)"
-                                    :title="isFavorite(section.key) ? 'Remove from favorites' : 'Add to favorites'"
-                                    @dragstart.prevent
-                                    @click.stop="toggleFavorite(section.key)"
-                                    class="ndb-star-button ndb:inline-flex ndb:size-7 ndb:items-center ndb:justify-center ndb:rounded-lg ndb:text-zinc-400 ndb:transition ndb:hover:scale-105 ndb:hover:text-blue-600 ndb:focus-visible:opacity-100 ndb:focus-visible:outline-2 ndb:focus-visible:outline-offset-1 ndb:focus-visible:outline-blue-500 ndb:sm:opacity-0 ndb:sm:group-focus-within:opacity-100 ndb:sm:group-hover:opacity-100 ndb:dark:text-zinc-500 ndb:dark:hover:text-blue-300"
-                                    :class="isFavorite(section.key) || selected === section.key
-                                        ? 'ndb:sm:opacity-100'
-                                        : ''"
-                                >
-                                    <span
-                                        x-show.important="! isFavorite(section.key)"
-                                        class="ndb-section-star-outline ndb:flex ndb:items-center ndb:justify-center ndb:leading-none"
-                                        ><x-newdebugbar::icon name="star" class="ndb:size-3.5"
-                                    /></span>
-                                    <span
-                                        x-show.important="isFavorite(section.key)"
-                                        class="ndb:flex ndb:items-center ndb:justify-center ndb:leading-none"
-                                        ><x-newdebugbar::icon name="star-filled" class="ndb-favorite-star ndb:size-3.5"
-                                    /></span>
-                                </button>
-                            </div>
-                        </div>
-                    </template>
-                </div>
+                <template x-if="! mobileToolbarMenu">
+                    <x-newdebugbar::section-navigation
+                        id="newdebugbar-section-list"
+                        class="ndb-scrollbar ndb:overflow-y-auto"
+                    />
+                </template>
             </nav>
 
             <div
                 data-ndb-inspector-content
                 x-ref="content"
-                :inert="mobileSectionsOpen"
                 class="ndb-scrollbar ndb:min-w-0 ndb:flex-1 ndb:overflow-y-auto ndb:bg-white/70 ndb:lg:flex ndb:lg:flex-col ndb:dark:bg-zinc-950/70"
             >
                 <x-newdebugbar::section-heading>

@@ -87,7 +87,6 @@ it('uses a focused Queue detail with Back on mobile dark mode', function () {
         ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
         ->click('[data-ndb-mobile-toolbar-action="inspector"]')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
         ->click('[data-ndb-select-section="queue"]');
 
     DebugBarBrowser::waitForVisibleElement($page, '[data-ndb-queue-workspace]');
@@ -242,7 +241,6 @@ it('uses a focused Redis detail with Back on mobile light mode', function () {
         ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
         ->click('[data-ndb-mobile-toolbar-action="inspector"]')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
         ->click('[data-ndb-select-section="redis"]');
 
     DebugBarBrowser::waitForVisibleElement($page, '[data-ndb-redis-workspace]');

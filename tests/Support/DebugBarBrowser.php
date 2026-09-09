@@ -213,6 +213,14 @@ final class DebugBarBrowser
             JS, $order);
     }
 
+    public static function dragSection(mixed $page, string $source, string $target): void
+    {
+        $sourceSelector = '[data-ndb-section="'.$source.'"]';
+        $encodedSelector = json_encode($sourceSelector, JSON_THROW_ON_ERROR);
+        $page->script("document.querySelector({$encodedSelector}).scrollIntoView({block: 'center'})");
+        $page->drag($sourceSelector, '[data-ndb-section="'.$target.'"]');
+    }
+
     public static function selectSectionViaPalette(mixed $page, string $section): void
     {
         $page

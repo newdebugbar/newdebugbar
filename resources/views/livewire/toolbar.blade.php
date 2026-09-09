@@ -159,39 +159,7 @@
                 id="newdebugbar-mobile-actions"
                 menu="actions"
                 label="Debug bar actions"
-            >
-                <button
-                    type="button"
-                    role="menuitem"
-                    data-ndb-mobile-toolbar-action="palette"
-                    @click="openPalette()"
-                    class="ndb:flex ndb:min-h-11 ndb:w-full ndb:items-center ndb:gap-3 ndb:rounded-lg ndb:px-3 ndb:py-2 ndb:text-left ndb:transition-colors ndb:hover:bg-zinc-100 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500 ndb:dark:hover:bg-white/10"
-                >
-                    <x-newdebugbar::icon name="search" class="ndb:size-4 ndb:text-zinc-500 ndb:dark:text-zinc-400" />
-                    <span class="ndb:text-sm ndb:font-medium">Command palette</span>
-                </button>
-                <button
-                    type="button"
-                    role="menuitem"
-                    data-ndb-mobile-toolbar-action="inspector"
-                    @click="openInspector('request')"
-                    class="ndb:flex ndb:min-h-11 ndb:w-full ndb:items-center ndb:gap-3 ndb:rounded-lg ndb:px-3 ndb:py-2 ndb:text-left ndb:transition-colors ndb:hover:bg-zinc-100 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500 ndb:dark:hover:bg-white/10"
-                >
-                    <x-newdebugbar::icon name="expand" class="ndb:size-4 ndb:text-zinc-500 ndb:dark:text-zinc-400" />
-                    <span class="ndb:text-sm ndb:font-medium">Open</span>
-                </button>
-                <x-newdebugbar::theme-menu-item data-ndb-mobile-toolbar-action="theme" />
-                <button
-                    type="button"
-                    role="menuitem"
-                    data-ndb-mobile-toolbar-action="dismiss"
-                    @click="dismissBar()"
-                    class="ndb:flex ndb:min-h-11 ndb:w-full ndb:items-center ndb:gap-3 ndb:rounded-lg ndb:px-3 ndb:py-2 ndb:text-left ndb:transition-colors ndb:hover:bg-zinc-100 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500 ndb:dark:hover:bg-white/10"
-                >
-                    <x-newdebugbar::icon name="close" class="ndb:size-4 ndb:text-zinc-500 ndb:dark:text-zinc-400" />
-                    <span class="ndb:text-sm ndb:font-medium">Hide until reload</span>
-                </button>
-            </x-newdebugbar::mobile-toolbar-popover>
+            />
         </div>
 
         <div data-ndb-toolbar-actions class="ndb:hidden ndb:shrink-0 ndb:items-center ndb:gap-0.5 ndb:sm:flex">

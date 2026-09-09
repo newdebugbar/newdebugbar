@@ -350,7 +350,6 @@ it('drills into notification details with icon tabs on mobile', function () {
         ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
         ->click('[data-ndb-mobile-toolbar-action="inspector"]')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
         ->click('[data-ndb-select-section="notifications"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->waitForText('ProfiledNotification')

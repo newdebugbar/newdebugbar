@@ -11,9 +11,7 @@ export function createPreferences(context) {
     theme: ['system', 'light', 'dark'].includes(summary.theme) ? summary.theme : 'system',
     resolvedTheme: 'light',
     favorites: [],
-    favoriteDrag: null,
-    favoriteDrop: null,
-    favoriteDropAfter: false,
+    sectionOrder: [],
     colorScheme: null,
     colorSchemeListener: null,
 
@@ -28,9 +26,10 @@ export function createPreferences(context) {
           this.toolbarDragTarget = saved.toolbarAnchor;
           this.toolbarDragOriginPlacement = saved.toolbarAnchor;
         }
-        if (Array.isArray(saved.favorites)) {
-          const allowed = this.sectionKeys;
-          this.favorites = [...new Set(saved.favorites)].filter((key) => allowed.includes(key));
+        for (const preference of ['favorites', 'sectionOrder']) {
+          if (Array.isArray(saved[preference])) {
+            this[preference] = [...new Set(saved[preference])].filter((key) => this.sectionKeys.includes(key));
+          }
         }
       } catch {
         // A broken preference must never break the host page.
@@ -45,6 +44,7 @@ export function createPreferences(context) {
             theme: this.theme,
             toolbarAnchor: this.toolbarPreferredPlacement,
             favorites: this.favorites,
+            sectionOrder: this.sectionOrder,
           }),
         );
       } catch {
@@ -63,79 +63,50 @@ export function createPreferences(context) {
         ? this.favorites.filter((favorite) => favorite !== key)
         : [...this.favorites, key];
       this.persist();
+      this.$nextTick?.(() => this.$root?.querySelector?.(`[data-ndb-toggle-favorite="${key}"]`)?.focus?.());
     },
 
-    moveFavorite(key, direction) {
-      const index = this.favorites.indexOf(key);
-      const target = index + direction;
+    get sectionSortConfig() {
+      return {
+        draggable: '[data-ndb-section]',
+        dataIdAttr: 'data-ndb-section',
+        ghostClass: 'ndb-section-dragging',
+        chosenClass: 'ndb-section-chosen',
+        dragClass: 'ndb-section-drag',
+        fallbackClass: 'ndb-section-drag',
+        delay: 180,
+        delayOnTouchOnly: true,
+        touchStartThreshold: 5,
+        fallbackTolerance: 4,
+        // Drag previews must not become Alpine components or alter the host body.
+        onClone: ({ clone }) => clone.setAttribute('x-ignore', ''),
+        onStart: ({ item }) => {
+          item.parentElement.querySelectorAll('.ndb-section-drag').forEach((preview) => {
+            if (preview !== item) preview.setAttribute('x-ignore', '');
+          });
+        },
+        onEnd: null,
+      };
+    },
 
-      if (index < 0 || target < 0 || target >= this.favorites.length) return;
+    moveSection(key, direction) {
+      const peers = this.navigationSections(this.isFavorite(key));
+      const index = peers.findIndex((section) => section.key === key);
+      if (index >= 0) this.sortSection(key, index + direction);
+    },
 
-      const reordered = [...this.favorites];
-      [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
-      this.favorites = reordered;
+    sortSection(key, position) {
+      const peers = this.navigationSections(this.isFavorite(key));
+      const index = peers.findIndex((section) => section.key === key);
+      const target = peers[position]?.key;
+      if (index < 0 || !target || target === key) return;
+
+      const preference = this.isFavorite(key) ? 'favorites' : 'sectionOrder';
+      const order = preference === 'favorites' ? this.favorites : this.sectionsInOrder.map((section) => section.key);
+      const reordered = order.filter((section) => section !== key);
+      reordered.splice(reordered.indexOf(target) + (position > index ? 1 : 0), 0, key);
+      this[preference] = reordered;
       this.persist();
-    },
-
-    startFavoriteDrag(key, event = null) {
-      if (!this.favorites.includes(key)) return;
-
-      this.favoriteDrag = key;
-      event?.dataTransfer?.setData?.('text/plain', key);
-      if (event?.dataTransfer) event.dataTransfer.effectAllowed = 'move';
-      this.syncFavoriteDragVisuals();
-    },
-
-    hoverFavorite(key, after = false) {
-      if (!this.favoriteDrag || this.favoriteDrag === key || !this.isFavorite(key)) return;
-
-      this.favoriteDrop = key;
-      this.favoriteDropAfter = after;
-      this.syncFavoriteDragVisuals();
-    },
-
-    leaveFavorite(key) {
-      if (this.favoriteDrop !== key) return;
-
-      this.favoriteDrop = null;
-      this.favoriteDropAfter = false;
-      this.syncFavoriteDragVisuals();
-    },
-
-    dropFavorite(target, after = false) {
-      const source = this.favoriteDrag;
-      this.endFavoriteDrag();
-
-      if (!source || source === target || !this.favorites.includes(target)) return;
-
-      const reordered = this.favorites.filter((key) => key !== source);
-      const targetIndex = reordered.indexOf(target);
-      reordered.splice(targetIndex + (after ? 1 : 0), 0, source);
-      this.favorites = reordered;
-      this.persist();
-    },
-
-    endFavoriteDrag() {
-      this.favoriteDrag = null;
-      this.favoriteDrop = null;
-      this.favoriteDropAfter = false;
-      this.syncFavoriteDragVisuals();
-    },
-
-    syncFavoriteDragVisuals() {
-      const rows = this.$root?.querySelectorAll?.('[data-ndb-section]') ?? [];
-
-      rows.forEach((row) => {
-        const key = row.dataset.ndbSection;
-        const dragging = this.favoriteDrag === key;
-        const dropBefore = this.favoriteDrop === key && !this.favoriteDropAfter;
-        const dropAfter = this.favoriteDrop === key && this.favoriteDropAfter;
-
-        row.dataset.ndbDragging = dragging ? 'true' : 'false';
-        row.classList.toggle('ndb-favorite-dragging', dragging);
-        row.querySelector('[data-ndb-favorite-drop-before]')?.toggleAttribute('hidden', !dropBefore);
-        row.querySelector('[data-ndb-favorite-drop-after]')?.toggleAttribute('hidden', !dropAfter);
-      });
     },
 
     toggleTheme() {

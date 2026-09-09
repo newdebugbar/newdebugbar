@@ -194,7 +194,6 @@ it('adapts the log list and details into a mobile drill in flow', function () {
         ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
         ->click('[data-ndb-mobile-toolbar-action="inspector"]')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
         ->click('[data-ndb-select-section="logs"]');
 
     DebugBarBrowser::waitForVisibleElement($page, '[data-ndb-log-list]');
@@ -263,7 +262,6 @@ it('adapts the log list and details into a mobile drill in flow', function () {
 
     $page
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
         ->click('[data-ndb-select-section="logs"]');
 
     DebugBarBrowser::waitForVisibleElement($page, '[data-ndb-log-list]');

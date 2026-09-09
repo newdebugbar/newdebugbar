@@ -164,7 +164,6 @@ it('uses a list-detail workspace for multiple exceptions with mobile drill in', 
         ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
         ->click('[data-ndb-mobile-toolbar-action="inspector"]')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-header-mobile-action="sections"]')
         ->click('[data-ndb-select-section="exceptions"]');
 
     DebugBarBrowser::waitForVisibleElement($page, '[data-ndb-exception-list]');
