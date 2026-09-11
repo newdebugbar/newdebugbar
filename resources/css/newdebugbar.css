@@ -1,26 +1,26 @@
-@import "@fontsource-variable/outfit";
-@import "tailwindcss/theme.css" prefix(ndb);
-@import "tailwindcss/utilities.css" prefix(ndb) important;
+@import '@fontsource-variable/outfit';
+@import 'tailwindcss/theme.css' prefix(ndb);
+@import 'tailwindcss/utilities.css' prefix(ndb) important;
 
 @font-face {
-    font-family: "JetBrains Mono Variable";
-    font-style: normal;
-    font-display: swap;
-    font-weight: 100 800;
-    src: url("@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2")
-        format("woff2-variations");
-    unicode-range:
-        U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F,
-        U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  font-family: 'JetBrains Mono Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 800;
+  src: url('@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @source "../views/**/*.blade.php";
 @source "../js/**/*.js";
 
 @theme {
-    --container-8xl: 96rem;
-    --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    --font-mono--font-feature-settings: "calt" 1, "liga" 1;
+  --container-8xl: 96rem;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-mono--font-feature-settings: 'calt' 1, 'liga' 1;
 }
 
 @custom-variant dark (&:where([data-ndb-theme="dark"], [data-ndb-theme="dark"] *));
@@ -29,334 +29,336 @@
 #newdebugbar *,
 #newdebugbar *::before,
 #newdebugbar *::after {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 #newdebugbar {
-    background: transparent;
-    color: #18181b;
-    font-family: "Outfit Variable", Outfit, ui-sans-serif, system-ui, sans-serif;
-    font-size: 14px;
-    line-height: 1.5;
-    text-rendering: optimizeLegibility;
+  background: transparent;
+  color: #18181b;
+  font-family: 'Outfit Variable', Outfit, ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
 }
 
-#newdebugbar .ndb-section-dragging {
-    opacity: 0.4;
-    box-shadow: inset 0 0 0 1px rgb(129 140 248 / 70%);
+#newdebugbar .ndb-inspector-dragging {
+  opacity: 0.4;
+  box-shadow: inset 0 0 0 1px rgb(129 140 248 / 70%);
 }
 
 #newdebugbar .ndb-loading-pulse {
-    animation: ndb-debug-bar-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: ndb-debug-bar-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 @keyframes ndb-debug-bar-pulse {
-    50% {
-        opacity: 0.5;
-    }
+  50% {
+    opacity: 0.5;
+  }
 }
 
-#newdebugbar[data-ndb-theme="dark"] {
-    color: #f4f4f5;
+#newdebugbar[data-ndb-theme='dark'] {
+  color: #f4f4f5;
 }
 
 #newdebugbar :where(h1, h2, h3, h4, h5, h6, p, pre, dl, dd, dt, ul, ol, menu) {
-    margin: 0;
+  margin: 0;
 }
 
 #newdebugbar :where(ul, ol, menu) {
-    list-style: none;
-    padding: 0;
+  list-style: none;
+  padding: 0;
 }
 
 #newdebugbar :where(details, summary) {
-    margin: 0;
+  margin: 0;
 }
 
 #newdebugbar details {
-    background: transparent;
-    border: 0;
-    padding: 0;
+  background: transparent;
+  border: 0;
+  padding: 0;
 }
 
 #newdebugbar :where(dl, dd, dt) {
-    background: transparent;
-    color: inherit;
-    font: inherit;
+  background: transparent;
+  color: inherit;
+  font: inherit;
 }
 
 #newdebugbar :where(pre, code) {
-    background: transparent;
-    color: inherit;
-    font-family: var(--ndb-font-mono);
-    font-feature-settings:
-        "calt" 1,
-        "liga" 1;
-    font-variant-ligatures: contextual common-ligatures discretionary-ligatures;
+  background: transparent;
+  color: inherit;
+  font-family: var(--ndb-font-mono);
+  font-feature-settings:
+    'calt' 1,
+    'liga' 1;
+  font-variant-ligatures: contextual common-ligatures discretionary-ligatures;
 }
 
 #newdebugbar :where(button, input, select) {
-    letter-spacing: inherit;
+  letter-spacing: inherit;
 }
 
 #newdebugbar button,
 #newdebugbar input,
 #newdebugbar select {
-    color: inherit;
-    font: inherit;
+  color: inherit;
+  font: inherit;
 }
 
 #newdebugbar button {
-    appearance: none;
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    height: auto;
-    margin: 0;
-    padding: 0;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  height: auto;
+  margin: 0;
+  padding: 0;
 }
 
 #newdebugbar [x-cloak] {
-    display: none !important;
+  display: none !important;
 }
 
-#newdebugbar [data-ndb-section-panel][hidden],
+#newdebugbar [data-ndb-inspector-panel][hidden],
 #newdebugbar [data-ndb-timeline-item][hidden],
 #newdebugbar [data-ndb-log-entry][hidden] {
-    display: none !important;
+  display: none !important;
 }
 
 #newdebugbar details[open] > summary .ndb-details-chevron {
-    transform: rotate(180deg);
+  transform: rotate(180deg);
 }
 
 #newdebugbar .ndb-code {
-    font-family: var(--ndb-font-mono);
-    font-feature-settings:
-        "calt" 1,
-        "liga" 1;
-    font-variant-ligatures: contextual common-ligatures discretionary-ligatures;
-    tab-size: 2;
+  font-family: var(--ndb-font-mono);
+  font-feature-settings:
+    'calt' 1,
+    'liga' 1;
+  font-variant-ligatures: contextual common-ligatures discretionary-ligatures;
+  tab-size: 2;
 }
 
 #newdebugbar .ndb-code code {
-    background: transparent;
-    color: inherit;
-    display: block;
-    font: inherit;
-    padding: 0;
+  background: transparent;
+  color: inherit;
+  display: block;
+  font: inherit;
+  padding: 0;
 }
 
 #newdebugbar .hljs-keyword,
 #newdebugbar .hljs-literal,
 #newdebugbar .hljs-selector-tag {
-    color: #6d28d9;
+  color: #6d28d9;
 }
 
 #newdebugbar .hljs-string,
 #newdebugbar .hljs-attribute,
 #newdebugbar .hljs-template-variable {
-    color: #15803d;
+  color: #15803d;
 }
 
 #newdebugbar .hljs-number,
 #newdebugbar .hljs-built_in,
 #newdebugbar .hljs-type {
-    color: #b45309;
+  color: #b45309;
 }
 
 #newdebugbar .hljs-title,
 #newdebugbar .hljs-property,
 #newdebugbar .hljs-variable {
-    color: #0369a1;
+  color: #0369a1;
 }
 
 #newdebugbar .hljs-comment,
 #newdebugbar .hljs-meta {
-    color: #71717a;
-    font-style: italic;
+  color: #71717a;
+  font-style: italic;
 }
 
 #newdebugbar .hljs-attr {
-    color: #3f3f46;
+  color: #3f3f46;
 }
 
-#newdebugbar[data-ndb-theme="dark"] :is(.hljs-keyword, .hljs-literal, .hljs-selector-tag) {
-    color: #c4b5fd;
+#newdebugbar[data-ndb-theme='dark'] :is(.hljs-keyword, .hljs-literal, .hljs-selector-tag) {
+  color: #c4b5fd;
 }
 
-#newdebugbar[data-ndb-theme="dark"] :is(.hljs-string, .hljs-attribute, .hljs-template-variable) {
-    color: #86efac;
+#newdebugbar[data-ndb-theme='dark'] :is(.hljs-string, .hljs-attribute, .hljs-template-variable) {
+  color: #86efac;
 }
 
-#newdebugbar[data-ndb-theme="dark"] :is(.hljs-number, .hljs-built_in, .hljs-type) {
-    color: #fcd34d;
+#newdebugbar[data-ndb-theme='dark'] :is(.hljs-number, .hljs-built_in, .hljs-type) {
+  color: #fcd34d;
 }
 
-#newdebugbar[data-ndb-theme="dark"] :is(.hljs-title, .hljs-property, .hljs-variable) {
-    color: #7dd3fc;
+#newdebugbar[data-ndb-theme='dark'] :is(.hljs-title, .hljs-property, .hljs-variable) {
+  color: #7dd3fc;
 }
 
-#newdebugbar[data-ndb-theme="dark"] .hljs-attr {
-    color: #d4d4d8;
+#newdebugbar[data-ndb-theme='dark'] .hljs-attr {
+  color: #d4d4d8;
 }
 
 #newdebugbar summary::-webkit-details-marker {
-    display: none;
+  display: none;
 }
 
 #newdebugbar
-    :is(
-        [data-ndb-model-summary],
-        [data-ndb-model-list],
-        [data-ndb-model-list-heading],
-        [data-ndb-model-group],
-        [data-ndb-model-detail-empty],
-        [data-ndb-model-detail],
-        [data-ndb-model-records],
-        [data-ndb-model-record],
-        [data-ndb-model-sources],
-        [data-ndb-model-source],
-        [data-ndb-model-source-gap],
-        [data-ndb-model-compiled-source],
-        [data-ndb-model-retrieved-column],
-        [data-ndb-model-write-column],
-        [data-ndb-model-extra-column],
-        [data-ndb-inspector-focus-list],
-        [data-ndb-inspector-focus-detail],
-        [data-ndb-inspector-focus-back],
-        #newdebugbar-model-detail
-    ) {
-    background: transparent;
-    border-left-width: 0;
-    color: inherit;
-    font-size: inherit;
-    height: auto;
-    padding: 0;
+  :is(
+    [data-ndb-model-summary],
+    [data-ndb-model-list],
+    [data-ndb-model-list-heading],
+    [data-ndb-model-group],
+    [data-ndb-model-detail-empty],
+    [data-ndb-model-detail],
+    [data-ndb-model-records],
+    [data-ndb-model-record],
+    [data-ndb-model-sources],
+    [data-ndb-model-source],
+    [data-ndb-model-source-gap],
+    [data-ndb-model-compiled-source],
+    [data-ndb-model-retrieved-column],
+    [data-ndb-model-write-column],
+    [data-ndb-model-extra-column],
+    [data-ndb-inspector-focus-list],
+    [data-ndb-inspector-focus-detail],
+    [data-ndb-inspector-focus-back],
+    #newdebugbar-model-detail
+  ) {
+  background: transparent;
+  border-left-width: 0;
+  color: inherit;
+  font-size: inherit;
+  height: auto;
+  padding: 0;
 }
 
-#newdebugbar .ndb-section-active {
-    background: linear-gradient(110deg, rgba(219, 234, 254, 0.96), rgba(224, 231, 255, 0.92)) !important;
+#newdebugbar .ndb-inspector-active {
+  background: linear-gradient(110deg, rgba(219, 234, 254, 0.96), rgba(224, 231, 255, 0.92)) !important;
 }
 
-#newdebugbar[data-ndb-theme="dark"] .ndb-section-active {
-    background: linear-gradient(110deg, rgba(30, 58, 138, 0.58), rgba(49, 46, 129, 0.52)) !important;
+#newdebugbar[data-ndb-theme='dark'] .ndb-inspector-active {
+  background: linear-gradient(110deg, rgba(30, 58, 138, 0.58), rgba(49, 46, 129, 0.52)) !important;
 }
 
-#newdebugbar .ndb-section-active :is(.ndb-section-label, .ndb-section-star-outline) {
-    color: #1d4ed8 !important;
+#newdebugbar .ndb-inspector-active :is(.ndb-inspector-label, .ndb-inspector-star-outline) {
+  color: #1d4ed8 !important;
 }
 
-#newdebugbar .ndb-section-active .ndb-section-count {
-    color: rgba(30, 64, 175, 0.62) !important;
+#newdebugbar .ndb-inspector-active .ndb-inspector-count {
+  color: rgba(30, 64, 175, 0.62) !important;
 }
 
-#newdebugbar[data-ndb-theme="dark"] .ndb-section-active :is(.ndb-section-label, .ndb-section-star-outline) {
-    color: #dbeafe !important;
+#newdebugbar[data-ndb-theme='dark']
+  .ndb-inspector-active
+  :is(.ndb-inspector-label, .ndb-inspector-star-outline) {
+  color: #dbeafe !important;
 }
 
-#newdebugbar[data-ndb-theme="dark"] .ndb-section-active .ndb-section-count {
-    color: rgba(191, 219, 254, 0.7) !important;
+#newdebugbar[data-ndb-theme='dark'] .ndb-inspector-active .ndb-inspector-count {
+  color: rgba(191, 219, 254, 0.7) !important;
 }
 
 #newdebugbar .ndb-inspector-panel.ndb-inspector-onscreen {
-    transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
 }
 
 #newdebugbar .ndb-inspector-panel.ndb-inspector-offscreen {
-    transform: translate3d(0, 100%, 0);
+  transform: translate3d(0, 100%, 0);
 }
 
-#newdebugbar .ndb-inspector-panel[data-ndb-placement="top"].ndb-inspector-offscreen {
-    transform: translate3d(0, -100%, 0);
+#newdebugbar .ndb-inspector-panel[data-ndb-placement='top'].ndb-inspector-offscreen {
+  transform: translate3d(0, -100%, 0);
 }
 
 #newdebugbar .ndb-favorite-star {
-    color: #f59e0b !important;
+  color: #f59e0b !important;
 }
 
 #newdebugbar .ndb-toolbar-facts {
-    scrollbar-width: none;
+  scrollbar-width: none;
 }
 
 #newdebugbar .ndb-toolbar-facts::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 #newdebugbar .ndb-toolbar-draggable {
-    cursor: grab;
-    touch-action: none;
-    transform: translate3d(var(--ndb-toolbar-drag-x, 0), var(--ndb-toolbar-drag-y, 0), 0);
-    transition:
-        transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
-        border-color 180ms ease,
-        box-shadow 180ms ease;
-    user-select: none;
-    will-change: transform;
+  cursor: grab;
+  touch-action: none;
+  transform: translate3d(var(--ndb-toolbar-drag-x, 0), var(--ndb-toolbar-drag-y, 0), 0);
+  transition:
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+  user-select: none;
+  will-change: transform;
 }
 
-#newdebugbar .ndb-toolbar-draggable[data-ndb-dragging="true"] {
-    cursor: grabbing;
-    transform: translate3d(var(--ndb-toolbar-drag-x, 0), var(--ndb-toolbar-drag-y, 0), 0) scale(0.985);
-    transition: none;
+#newdebugbar .ndb-toolbar-draggable[data-ndb-dragging='true'] {
+  cursor: grabbing;
+  transform: translate3d(var(--ndb-toolbar-drag-x, 0), var(--ndb-toolbar-drag-y, 0), 0) scale(0.985);
+  transition: none;
 }
 
-#newdebugbar .ndb-toolbar-draggable[data-ndb-rebasing="true"] {
-    transition: none;
+#newdebugbar .ndb-toolbar-draggable[data-ndb-rebasing='true'] {
+  transition: none;
 }
 
-#newdebugbar .ndb-toolbar-draggable[data-ndb-dragging="true"],
-#newdebugbar .ndb-toolbar-draggable[data-ndb-dragging="true"] * {
-    cursor: grabbing !important;
+#newdebugbar .ndb-toolbar-draggable[data-ndb-dragging='true'],
+#newdebugbar .ndb-toolbar-draggable[data-ndb-dragging='true'] * {
+  cursor: grabbing !important;
 }
 
-#newdebugbar .ndb-toolbar-draggable[data-ndb-drag-target^="top"][data-ndb-dragging="true"] {
-    border-color: rgb(129 140 248 / 70%);
-    box-shadow: 0 -18px 60px -18px rgb(79 70 229 / 35%);
+#newdebugbar .ndb-toolbar-draggable[data-ndb-drag-target^='top'][data-ndb-dragging='true'] {
+  border-color: rgb(129 140 248 / 70%);
+  box-shadow: 0 -18px 60px -18px rgb(79 70 229 / 35%);
 }
 
-#newdebugbar .ndb-toolbar-draggable[data-ndb-drag-target^="bottom"][data-ndb-dragging="true"] {
-    border-color: rgb(129 140 248 / 70%);
-    box-shadow: 0 18px 60px -18px rgb(79 70 229 / 35%);
+#newdebugbar .ndb-toolbar-draggable[data-ndb-drag-target^='bottom'][data-ndb-dragging='true'] {
+  border-color: rgb(129 140 248 / 70%);
+  box-shadow: 0 18px 60px -18px rgb(79 70 229 / 35%);
 }
 
 #newdebugbar .ndb-star-button:hover {
-    background: transparent !important;
+  background: transparent !important;
 }
 
 #newdebugbar .ndb-scrollbar {
-    scrollbar-color: #d4d4d8 transparent;
-    scrollbar-width: thin;
+  scrollbar-color: #d4d4d8 transparent;
+  scrollbar-width: thin;
 }
 
-#newdebugbar[data-ndb-theme="dark"] .ndb-scrollbar {
-    scrollbar-color: #3f3f46 transparent;
+#newdebugbar[data-ndb-theme='dark'] .ndb-scrollbar {
+  scrollbar-color: #3f3f46 transparent;
 }
 
 #newdebugbar .ndb-scrollbar::-webkit-scrollbar {
-    height: 8px;
-    width: 8px;
+  height: 8px;
+  width: 8px;
 }
 
 #newdebugbar .ndb-scrollbar::-webkit-scrollbar-thumb {
-    background: #d4d4d8;
-    border: 2px solid transparent;
-    border-radius: 999px;
-    background-clip: padding-box;
+  background: #d4d4d8;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
 }
 
-#newdebugbar[data-ndb-theme="dark"] .ndb-scrollbar::-webkit-scrollbar-thumb {
-    background: #3f3f46;
-    background-clip: padding-box;
+#newdebugbar[data-ndb-theme='dark'] .ndb-scrollbar::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  background-clip: padding-box;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    #newdebugbar,
-    #newdebugbar * {
-        animation-duration: 0.001ms !important;
-        animation-iteration-count: 1 !important;
-        scroll-behavior: auto !important;
-        transition-delay: 0s !important;
-        transition-duration: 0.001ms !important;
-    }
+  #newdebugbar,
+  #newdebugbar * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-delay: 0s !important;
+    transition-duration: 0.001ms !important;
+  }
 }

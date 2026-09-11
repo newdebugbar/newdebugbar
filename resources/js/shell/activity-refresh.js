@@ -57,7 +57,8 @@ export function createActivityRefresh(context) {
       if (!this.inspectorOpen || this.activityRefreshPending) return;
 
       const island = this.$wire?.$island;
-      const scopedWire = typeof island === 'function' ? island.call(this.$wire, 'section-details') : this.$wire;
+      const scopedWire =
+        typeof island === 'function' ? island.call(this.$wire, 'inspector-details') : this.$wire;
       const action = scopedWire?.refreshRelatedActivity;
       if (typeof action !== 'function') return;
       if (!reset && (!this.hasPendingActivity() || this.activityPollAttempts >= ACTIVITY_POLL_LIMIT)) return;
@@ -101,17 +102,25 @@ export function createActivityRefresh(context) {
 
         return !existing || JSON.stringify({ ...existing, ...profile }) !== JSON.stringify(existing);
       });
-      const sectionNeedsRefresh =
-        ['timeline', 'queue', 'mail', 'notifications'].includes(this.selected) && (backgroundChanged || relatedChanged);
+      const inspectorNeedsRefresh =
+        ['timeline', 'queue', 'mail', 'notifications'].includes(this.selected) &&
+        (backgroundChanged || relatedChanged);
 
       this.summary = nextSummary;
       this.activityRefreshError = null;
       this.rememberProfile(this.summary);
-      (Array.isArray(relatedProfiles) ? relatedProfiles : []).forEach((profile) => this.receiveProfile(profile));
+      (Array.isArray(relatedProfiles) ? relatedProfiles : []).forEach((profile) =>
+        this.receiveProfile(profile),
+      );
       this.activityRefreshPending = false;
 
-      if (sectionNeedsRefresh && this.inspectorOpen && this.loadedSection === this.selected && !this.sectionLoading) {
-        this.requestSection(this.selected, true);
+      if (
+        inspectorNeedsRefresh &&
+        this.inspectorOpen &&
+        this.loadedInspector === this.selected &&
+        !this.inspectorLoading
+      ) {
+        this.requestInspector(this.selected, true);
       }
 
       if (this.hasPendingActivity()) this.scheduleActivityRefresh();

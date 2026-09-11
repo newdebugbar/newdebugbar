@@ -6,7 +6,7 @@ use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Tool;
 use NewDebugBar\Mcp\Tools\GetDebugFindings;
 use NewDebugBar\Mcp\Tools\GetDebugProfileData;
-use NewDebugBar\Mcp\Tools\GetDebugProfileSection;
+use NewDebugBar\Mcp\Tools\GetDebugProfileInspector;
 use NewDebugBar\Mcp\Tools\InspectDebugQueries;
 use NewDebugBar\Mcp\Tools\ListDebugProfiles;
 
@@ -16,12 +16,12 @@ final class NewDebugBarServer extends Server
 
     protected string $version = '1.1.0';
 
-    protected string $instructions = 'Read bounded Laravel debug profiles. Use the exact X-NewDebugBar-Profile ID, inspect findings and a small section first, then use get-debug-profile-data with /sections and returned JSON Pointer paths when deeper evidence is needed. A tool error with structured status partial retains captured data but could not refresh background activity: inspect background_error, treat background_pending null as unknown, and retry later. For Queries, follow /sections/queries/payload/records for grouped records and per-run evidence. For Models, follow /sections/models/payload/model_groups to reach folded writes, identifiers, changed attributes, sources, timings, related queries, and guidance. For Redis, focused items include bounded key evidence and application call sites; follow /sections/redis/payload/items/{index}/callsite for the exact file and line. For Exceptions, focused items summarize retained causes; follow /sections/exceptions/payload/items/{index}/causes for full retained cause evidence.';
+    protected string $instructions = 'Read bounded Laravel debug profiles. Use the exact X-NewDebugBar-Profile ID, inspect findings and a small inspector first, then use get-debug-profile-data with /inspectors and returned JSON Pointer paths when deeper evidence is needed. A tool error with structured status partial retains captured data but could not refresh background activity: inspect background_error, treat background_pending null as unknown, and retry later. For Queries, follow /inspectors/queries/payload/records for grouped records and per-run evidence. For Models, follow /inspectors/models/payload/model_groups to reach folded writes, identifiers, changed attributes, sources, timings, related queries, and guidance. For Redis, focused items include bounded key evidence and application call sites; follow /inspectors/redis/payload/items/{index}/callsite for the exact file and line. For Exceptions, focused items summarize retained causes; follow /inspectors/exceptions/payload/items/{index}/causes for full retained cause evidence.';
 
     /** @var array<int, class-string<Tool>> */
     protected array $tools = [
         ListDebugProfiles::class,
-        GetDebugProfileSection::class,
+        GetDebugProfileInspector::class,
         GetDebugProfileData::class,
         InspectDebugQueries::class,
         GetDebugFindings::class,

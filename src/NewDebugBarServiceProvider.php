@@ -17,10 +17,10 @@ use Laravel\Mcp\Facades\Mcp;
 use Livewire\Livewire;
 use NewDebugBar\Analysis\CacheAnalyzer;
 use NewDebugBar\Analysis\HttpClientAnalyzer;
+use NewDebugBar\Analysis\InspectorAnalyzer;
 use NewDebugBar\Analysis\LogAnalyzer;
 use NewDebugBar\Analysis\ProfileAnalyzer;
 use NewDebugBar\Analysis\QueryAnalyzer;
-use NewDebugBar\Analysis\SectionAnalyzer;
 use NewDebugBar\Analysis\TimelineBuilder;
 use NewDebugBar\Collectors\CacheCollector;
 use NewDebugBar\Collectors\ExceptionCollector;
@@ -98,7 +98,7 @@ final class NewDebugBarServiceProvider extends ServiceProvider
             maxFindings: (int) config('newdebugbar.findings.max_findings', 50),
         ));
         $this->app->singleton(ProfileSummaryPresenter::class);
-        $this->app->singleton(SectionAnalyzer::class);
+        $this->app->singleton(InspectorAnalyzer::class);
         $this->app->singleton(TimelineBuilder::class);
         $this->app->singleton(CallSiteResolver::class, fn (): CallSiteResolver => new CallSiteResolver(
             projectPath: (string) (config('newdebugbar.collection.application_path') ?: base_path()),

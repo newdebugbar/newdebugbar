@@ -7,7 +7,7 @@ it('applies numeric property edits with Enter', function () {
         ->resize(1024, 900)
         ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
 
-    DebugBarBrowser::selectSectionViaPalette($page, 'livewire');
+    DebugBarBrowser::selectInspectorViaPalette($page, 'livewire');
 
     $page
         ->click('[data-ndb-livewire-tab="components"]')
@@ -25,7 +25,7 @@ it('keeps property shortcuts local to textarea controls', function (string $shor
         ->resize(1024, 900)
         ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
 
-    DebugBarBrowser::selectSectionViaPalette($page, 'livewire');
+    DebugBarBrowser::selectInspectorViaPalette($page, 'livewire');
 
     $page
         ->click('[data-ndb-livewire-tab="components"]')

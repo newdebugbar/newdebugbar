@@ -25,7 +25,7 @@ test('restores safe local preferences', () => {
     theme: 'light',
     toolbarAnchor: 'top',
     favorites: ['logs'],
-    sectionOrder: [],
+    inspectorOrder: [],
   });
 });
 

@@ -34,14 +34,14 @@ it('reports unreadable background activity as unknown while retaining captured j
     $profile = $presenter->present([
         'id' => '550e8400-e29b-41d4-a716-446655440000',
         'completion_state' => 'complete',
-        'sections' => ['queue' => ['payload' => ['items' => [[
+        'inspectors' => ['queue' => ['payload' => ['items' => [[
             'status' => 'queued',
             'correlation_key' => str_repeat('a', 64),
         ]]]]],
     ]);
     $summary = (new ProfileSummaryPresenter(new Redactor))->present($profile);
 
-    expect($profile['sections']['queue']['payload']['items'][0]['status'])->toBe('queued')
+    expect($profile['inspectors']['queue']['payload']['items'][0]['status'])->toBe('queued')
         ->and($profile['background_activity']['pending'])->toBeNull()
         ->and($profile['background_activity']['error'])->toBe(BackgroundActivityPresenter::READ_ERROR)
         ->and($summary['background_pending'])->toBeNull()

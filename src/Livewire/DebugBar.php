@@ -13,17 +13,17 @@ use NewDebugBar\Presentation\ProfileSummaryPresenter;
 use NewDebugBar\Storage\ProfileStore;
 use NewDebugBar\Support\QueryExplainer;
 
-/** Loads a request summary first and renders one inspector section at a time. */
+/** Loads a request summary first and renders one inspector at a time. */
 final class DebugBar extends Component
 {
-    private const DEFAULT_SECTION = 'request';
+    private const DEFAULT_INSPECTOR = 'request';
 
     private const TIMELINE_PAGE_SIZE = 50;
 
-    private const TIMELINE_KEY_SECTIONS = ['request', 'queries', 'http_client', 'exceptions', 'authorization', 'validation', 'queue'];
+    private const TIMELINE_KEY_INSPECTORS = ['request', 'queries', 'http_client', 'exceptions', 'authorization', 'validation', 'queue'];
 
     /** @var array<string, string> */
-    private const SECTION_DESCRIPTIONS = [
+    private const INSPECTOR_DESCRIPTIONS = [
         'authorization' => 'See what Laravel allowed or denied, for which user and arguments, then inspect the policy or Gate and source.',
         'cache' => 'Review cache reads, writes, deletes, stores, results, and timing.',
         'events' => 'See which events Laravel dispatched, where they came from, and how they were handled.',
@@ -51,10 +51,10 @@ final class DebugBar extends Component
     public array $summary = [];
 
     #[Locked]
-    public bool $sectionLoaded = false;
+    public bool $inspectorLoaded = false;
 
     #[Locked]
-    public string $selectedSection = self::DEFAULT_SECTION;
+    public string $selectedInspector = self::DEFAULT_INSPECTOR;
 
     #[Locked]
     public int $timelineLimit = self::TIMELINE_PAGE_SIZE;
@@ -88,8 +88,8 @@ final class DebugBar extends Component
         $this->summary = $this->makeSummary($profile, $summaries);
     }
 
-    public function loadSection(
-        string $section,
+    public function loadInspector(
+        string $inspector,
         ProfileStore $store,
         ProfilePresenter $presenter,
     ): void {
@@ -98,19 +98,19 @@ final class DebugBar extends Component
 
         $profile = $presenter->present($stored);
         abort_unless(
-            $section !== 'overview' && array_key_exists($section, (array) ($profile['sections'] ?? [])),
+            $inspector !== 'overview' && array_key_exists($inspector, (array) ($profile['inspectors'] ?? [])),
             422,
         );
 
-        if ($this->selectedSection !== $section) {
+        if ($this->selectedInspector !== $inspector) {
             $this->timelineLimit = self::TIMELINE_PAGE_SIZE;
             $this->timelineFilter = 'key';
             $this->timelineSearch = '';
         }
 
-        $this->selectedSection = $section;
-        $this->sectionLoaded = true;
-        $this->dispatch('newdebugbar-section-loaded', section: $section, profileId: $this->profileId);
+        $this->selectedInspector = $inspector;
+        $this->inspectorLoaded = true;
+        $this->dispatch('newdebugbar-inspector-loaded', inspector: $inspector, profileId: $this->profileId);
         $this->dispatch('newdebugbar-content-updated');
     }
 
@@ -118,21 +118,21 @@ final class DebugBar extends Component
         ProfileStore $store,
         ProfilePresenter $presenter,
     ): void {
-        abort_unless($this->sectionLoaded && $this->selectedSection === 'timeline', 422);
+        abort_unless($this->inspectorLoaded && $this->selectedInspector === 'timeline', 422);
         $stored = $store->get($this->profileId);
         abort_if($stored === null, 404);
 
         $profile = $presenter->present($stored);
-        $items = $this->filteredTimelineItems((array) ($profile['sections']['timeline']['payload']['items'] ?? []));
+        $items = $this->filteredTimelineItems((array) ($profile['inspectors']['timeline']['payload']['items'] ?? []));
         $this->timelineLimit = min(count($items), $this->timelineLimit + self::TIMELINE_PAGE_SIZE);
-        $this->dispatch('newdebugbar-section-loaded', section: 'timeline', profileId: $this->profileId);
+        $this->dispatch('newdebugbar-inspector-loaded', inspector: 'timeline', profileId: $this->profileId);
         $this->dispatch('newdebugbar-content-updated');
     }
 
     public function filterTimeline(string $filter, string $search): void
     {
-        abort_unless($this->sectionLoaded && $this->selectedSection === 'timeline', 422);
-        abort_unless(in_array($filter, ['all', 'key', ...array_keys(self::SECTION_DESCRIPTIONS)], true), 422);
+        abort_unless($this->inspectorLoaded && $this->selectedInspector === 'timeline', 422);
+        abort_unless(in_array($filter, ['all', 'key', ...array_keys(self::INSPECTOR_DESCRIPTIONS)], true), 422);
         abort_if(mb_strlen($search) > 500, 422);
 
         $this->timelineFilter = $filter;
@@ -148,10 +148,10 @@ final class DebugBar extends Component
         ProfileStore $store,
         ProfilePresenter $presenter,
     ): array {
-        abort_unless($this->sectionLoaded && $this->selectedSection === 'views' && $renderOrder > 0, 422);
+        abort_unless($this->inspectorLoaded && $this->selectedInspector === 'views' && $renderOrder > 0, 422);
         $profile = $presenter->present($store->get($this->profileId) ?? []);
 
-        foreach ((array) ($profile['sections']['views']['payload']['groups'] ?? []) as $group) {
+        foreach ((array) ($profile['inspectors']['views']['payload']['groups'] ?? []) as $group) {
             foreach ((array) ($group['items'] ?? []) as $view) {
                 if ((int) ($view['render_order'] ?? 0) === $renderOrder) {
                     return is_array($view['data'] ?? null) ? $view['data'] : [];
@@ -204,7 +204,7 @@ final class DebugBar extends Component
     ): void {
         abort_unless($execution > 0, 422);
         $profile = $presenter->present($store->get($this->profileId) ?? []);
-        $query = collect($profile['sections']['queries']['payload']['items'] ?? [])
+        $query = collect($profile['inspectors']['queries']['payload']['items'] ?? [])
             ->firstWhere('execution', $execution);
         abort_unless(is_array($query), 404);
 
@@ -264,8 +264,8 @@ final class DebugBar extends Component
 
         $this->profileId = $profileId;
         $this->summary = $this->makeSummary($presenter->present($profile), $summaries);
-        $this->sectionLoaded = false;
-        $this->selectedSection = self::DEFAULT_SECTION;
+        $this->inspectorLoaded = false;
+        $this->selectedInspector = self::DEFAULT_INSPECTOR;
         $this->timelineLimit = self::TIMELINE_PAGE_SIZE;
         $this->timelineFilter = 'key';
         $this->timelineSearch = '';
@@ -278,25 +278,25 @@ final class DebugBar extends Component
     #[Computed]
     public function profile(): array
     {
-        if (! $this->sectionLoaded) {
+        if (! $this->inspectorLoaded) {
             return [];
         }
 
         $profile = app(ProfilePresenter::class)->present(app(ProfileStore::class)->get($this->profileId) ?? []);
 
-        if ($this->selectedSection === 'timeline') {
-            $items = (array) ($profile['sections']['timeline']['payload']['items'] ?? []);
-            $profile['sections']['timeline']['payload']['available_sections'] = array_values(array_unique(array_column($items, 'section')));
-            $profile['sections']['timeline']['payload']['total_item_count'] = count($items);
-            $profile['sections']['timeline']['payload']['total_duration_ms'] = max(0.001, ...array_column($items, 'at_ms'));
+        if ($this->selectedInspector === 'timeline') {
+            $items = (array) ($profile['inspectors']['timeline']['payload']['items'] ?? []);
+            $profile['inspectors']['timeline']['payload']['available_inspectors'] = array_values(array_unique(array_column($items, 'inspector')));
+            $profile['inspectors']['timeline']['payload']['total_item_count'] = count($items);
+            $profile['inspectors']['timeline']['payload']['total_duration_ms'] = max(0.001, ...array_column($items, 'at_ms'));
             $items = $this->filteredTimelineItems($items);
-            $profile['sections']['timeline']['payload']['matching_item_count'] = count($items);
-            $profile['sections']['timeline']['payload']['items'] = array_slice($items, 0, $this->timelineLimit);
-            $profile['sections']['timeline']['payload']['has_more'] = count($items) > $this->timelineLimit;
+            $profile['inspectors']['timeline']['payload']['matching_item_count'] = count($items);
+            $profile['inspectors']['timeline']['payload']['items'] = array_slice($items, 0, $this->timelineLimit);
+            $profile['inspectors']['timeline']['payload']['has_more'] = count($items) > $this->timelineLimit;
         }
 
-        if ($this->selectedSection === 'views') {
-            $groups = &$profile['sections']['views']['payload']['groups'];
+        if ($this->selectedInspector === 'views') {
+            $groups = &$profile['inspectors']['views']['payload']['groups'];
 
             foreach ($groups as &$group) {
                 foreach ($group['items'] as &$view) {
@@ -316,18 +316,18 @@ final class DebugBar extends Component
         $search = mb_strtolower(trim($this->timelineSearch));
 
         return array_values(array_filter($items, function (array $item) use ($search): bool {
-            $section = $item['section'];
-            $matchesSection = $this->timelineFilter === 'all'
-                || ($this->timelineFilter === 'key' && in_array($section, self::TIMELINE_KEY_SECTIONS, true))
-                || $section === $this->timelineFilter;
+            $inspector = $item['inspector'];
+            $matchesInspector = $this->timelineFilter === 'all'
+                || ($this->timelineFilter === 'key' && in_array($inspector, self::TIMELINE_KEY_INSPECTORS, true))
+                || $inspector === $this->timelineFilter;
             $source = $item['source'] ?? [];
             $text = mb_strtolower(implode(' ', [
                 $item['label'],
-                $item['section_label'] ?? str_replace('_', ' ', $section),
+                $item['inspector_label'] ?? str_replace('_', ' ', $inspector),
                 isset($source['file']) ? $source['file'].':'.($source['line'] ?? 1) : '',
             ]));
 
-            return $matchesSection && ($search === '' || str_contains($text, $search));
+            return $matchesInspector && ($search === '' || str_contains($text, $search));
         }));
     }
 
@@ -342,46 +342,46 @@ final class DebugBar extends Component
      */
     private function makeSummary(array $profile, ProfileSummaryPresenter $summaries): array
     {
-        $sections = $profile['sections'] ?? [];
+        $inspectors = $profile['inspectors'] ?? [];
         $findings = is_array($profile['findings'] ?? null) ? $profile['findings'] : [];
         $summary = $summaries->present($profile);
         $findingCounts = [];
-        $sectionLinks = [];
-        $sectionCounts = [];
+        $inspectorLinks = [];
+        $inspectorCounts = [];
 
         foreach ($findings as $finding) {
-            $sectionKey = is_array($finding) ? ($finding['section'] ?? null) : null;
+            $inspectorKey = is_array($finding) ? ($finding['inspector'] ?? null) : null;
 
-            if (is_string($sectionKey)) {
-                $findingCounts[$sectionKey] = ($findingCounts[$sectionKey] ?? 0) + 1;
+            if (is_string($inspectorKey)) {
+                $findingCounts[$inspectorKey] = ($findingCounts[$inspectorKey] ?? 0) + 1;
             }
         }
 
-        foreach ($sections as $key => $section) {
+        foreach ($inspectors as $key => $inspector) {
             if ($key === 'overview') {
                 continue;
             }
 
             $label = $key === 'request'
                 ? 'Requests'
-                : (string) ($section['label'] ?? ucfirst($key));
+                : (string) ($inspector['label'] ?? ucfirst($key));
             $count = match ($key) {
-                'models' => $section['summary']['activity_count'] ?? $section['summary']['count'] ?? null,
-                'notifications' => $section['summary']['notification_count'] ?? $section['summary']['count'] ?? null,
-                default => $section['summary']['count'] ?? null,
+                'models' => $inspector['summary']['activity_count'] ?? $inspector['summary']['count'] ?? null,
+                'notifications' => $inspector['summary']['notification_count'] ?? $inspector['summary']['count'] ?? null,
+                default => $inspector['summary']['count'] ?? null,
             };
-            $dropped = (int) ($section['summary']['dropped_count'] ?? 0);
-            $secondaryDropped = (int) ($section['summary']['transaction_dropped_count'] ?? 0);
-            $truncated = (bool) ($section['summary']['truncated'] ?? false)
+            $dropped = (int) ($inspector['summary']['dropped_count'] ?? 0);
+            $secondaryDropped = (int) ($inspector['summary']['transaction_dropped_count'] ?? 0);
+            $truncated = (bool) ($inspector['summary']['truncated'] ?? false)
                 || $dropped > 0
                 || $secondaryDropped > 0;
-            $incomplete = (bool) ($section['payload']['incomplete'] ?? false);
+            $incomplete = (bool) ($inspector['payload']['incomplete'] ?? false);
             $findingCount = $findingCounts[$key] ?? 0;
             $attention = $findingCount > 0 || $truncated || $incomplete;
-            $sectionLinks[] = [
+            $inspectorLinks[] = [
                 'key' => $key,
                 'label' => $label,
-                'description' => $this->sectionDescription((string) $key, $label),
+                'description' => $this->inspectorDescription((string) $key, $label),
                 'layout' => 'workspace',
                 'count' => $count,
                 'active' => $count === null || (int) $count > 0 || $attention,
@@ -390,7 +390,7 @@ final class DebugBar extends Component
                 'truncated' => $truncated,
                 'incomplete' => $incomplete,
             ];
-            $sectionCounts[$key] = $count;
+            $inspectorCounts[$key] = $count;
         }
 
         return [
@@ -400,14 +400,14 @@ final class DebugBar extends Component
             'environment' => (string) ($summary['environment'] ?? app()->environment()),
             'method' => $summary['method'] ?? 'GET',
             'path' => $summary['path'] ?? '/',
-            'sections' => $sectionLinks,
-            'section_counts' => $sectionCounts,
+            'inspectors' => $inspectorLinks,
+            'inspector_counts' => $inspectorCounts,
         ];
     }
 
-    private function sectionDescription(string $key, string $label): string
+    private function inspectorDescription(string $key, string $label): string
     {
-        return self::SECTION_DESCRIPTIONS[$key]
+        return self::INSPECTOR_DESCRIPTIONS[$key]
             ?? 'Review the collected '.strtolower($label).' details for this request.';
     }
 

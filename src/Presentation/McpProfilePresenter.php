@@ -9,10 +9,10 @@ use NewDebugBar\Support\Redactor;
 /** Builds the bounded, versioned contract exposed through local MCP tools. */
 final class McpProfilePresenter
 {
-    public const RESPONSE_VERSION = 1;
+    public const RESPONSE_VERSION = 2;
 
     /** @var list<string> */
-    private const SECTION_NAMES = [
+    private const INSPECTOR_NAMES = [
         'overview',
         'request',
         'timeline',
@@ -54,7 +54,7 @@ final class McpProfilePresenter
         foreach ($this->store->recent($this->store->maxProfiles()) as $profile) {
             $presented = $this->profiles->present($profile);
             $summary = $this->summaries->present($presented);
-            $summary['available_sections'] = array_values(array_keys($presented['sections'] ?? []));
+            $summary['available_inspectors'] = array_values(array_keys($presented['inspectors'] ?? []));
             $summary['data_path'] = '';
 
             if (! $this->matchesFilters($summary, $filters)) {
@@ -77,7 +77,7 @@ final class McpProfilePresenter
     }
 
     /** @return array<string, mixed> */
-    public function section(string $profileId, string $section, int $cursor, int $limit): array
+    public function inspector(string $profileId, string $inspector, int $cursor, int $limit): array
     {
         $profile = $this->find($profileId);
 
@@ -87,19 +87,19 @@ final class McpProfilePresenter
 
         $context = $this->backgroundContext($profile);
 
-        if (! in_array($section, self::SECTION_NAMES, true) || ! isset($profile['sections'][$section])) {
+        if (! in_array($inspector, self::INSPECTOR_NAMES, true) || ! isset($profile['inspectors'][$inspector])) {
             return $this->response([
                 'profile_id' => $profileId,
                 ...$context,
-                'section' => $section,
-                'available_sections' => array_values(array_keys($profile['sections'] ?? [])),
+                'inspector' => $inspector,
+                'available_inspectors' => array_values(array_keys($profile['inspectors'] ?? [])),
             ], 'not_found');
         }
 
-        $sectionData = $profile['sections'][$section];
+        $inspectorData = $profile['inspectors'][$inspector];
 
-        $items = $sectionData['payload']['items'] ?? [];
-        $payload = $this->safeSectionPayload($section, $sectionData['payload'] ?? []);
+        $items = $inspectorData['payload']['items'] ?? [];
+        $payload = $this->safeInspectorPayload($inspector, $inspectorData['payload'] ?? []);
         unset($payload['items']);
 
         return $this->paginatedResponse(
@@ -109,12 +109,12 @@ final class McpProfilePresenter
             fn (array $page, array $pagination): array => [
                 'profile_id' => $profileId,
                 ...$context,
-                'section' => $section,
-                'label' => $sectionData['label'] ?? ucfirst($section),
-                'summary' => $this->clean($sectionData['summary'] ?? []),
+                'inspector' => $inspector,
+                'label' => $inspectorData['label'] ?? ucfirst($inspector),
+                'summary' => $this->clean($inspectorData['summary'] ?? []),
                 'payload' => [
                     ...$payload,
-                    'items' => array_map(fn (mixed $item): mixed => $this->safeItem($section, $item), $page),
+                    'items' => array_map(fn (mixed $item): mixed => $this->safeItem($inspector, $item), $page),
                 ],
                 'pagination' => $pagination,
             ],
@@ -138,11 +138,11 @@ final class McpProfilePresenter
 
         $context = $this->backgroundContext($profile);
 
-        $section = $profile['sections']['queries'] ?? ['summary' => [], 'payload' => []];
+        $inspector = $profile['inspectors']['queries'] ?? ['summary' => [], 'payload' => []];
         $items = $filter === 'repeated'
-            ? ($section['payload']['repeated_groups'] ?? [])
+            ? ($inspector['payload']['repeated_groups'] ?? [])
             : array_values(array_filter(
-                $section['payload']['items'] ?? [],
+                $inspector['payload']['items'] ?? [],
                 fn (array $query): bool => $filter === 'all'
                     || ($filter === 'slow' && ($query['slow'] ?? false))
                     || in_array($filter, ['read', 'write'], true) && ($query['query_type'] ?? null) === $filter,
@@ -174,7 +174,7 @@ final class McpProfilePresenter
                 'filter' => $filter,
                 'search' => $search,
                 'sort' => $sort,
-                'summary' => $this->clean($section['summary'] ?? []),
+                'summary' => $this->clean($inspector['summary'] ?? []),
                 $filter === 'repeated' ? 'repeated_groups' : 'items' => array_map(
                     fn (mixed $item): mixed => $this->safeItem('queries', $item),
                     $page,
@@ -273,9 +273,9 @@ final class McpProfilePresenter
     }
 
     /** @return list<string> */
-    public function sectionNames(): array
+    public function inspectorNames(): array
     {
-        return self::SECTION_NAMES;
+        return self::INSPECTOR_NAMES;
     }
 
     public function maxItems(): int
@@ -318,13 +318,13 @@ final class McpProfilePresenter
     }
 
     /** @param array<string, mixed> $payload @return array<string, mixed> */
-    private function safeSectionPayload(string $section, array $payload): array
+    private function safeInspectorPayload(string $inspector, array $payload): array
     {
-        if ($section === 'queries') {
+        if ($inspector === 'queries') {
             unset($payload['records']);
         }
 
-        if ($section !== 'request') {
+        if ($inspector !== 'request') {
             unset(
                 $payload['items'],
                 $payload['groups'],
@@ -378,15 +378,15 @@ final class McpProfilePresenter
         ]);
     }
 
-    private function safeItem(string $section, mixed $item): mixed
+    private function safeItem(string $inspector, mixed $item): mixed
     {
         if (! is_array($item)) {
             return $this->clean($item);
         }
 
-        if ($section === 'queries') {
+        if ($inspector === 'queries') {
             $item = $this->safeQueryItem($item);
-        } elseif ($section === 'logs') {
+        } elseif ($inspector === 'logs') {
             $item = [
                 'at_ms' => $item['at_ms'] ?? null,
                 'occurred_at' => $item['occurred_at'] ?? null,
@@ -402,7 +402,7 @@ final class McpProfilePresenter
                     'line' => $item['related_exception']['line'] ?? null,
                 ] : null,
             ];
-        } elseif ($section === 'exceptions') {
+        } elseif ($inspector === 'exceptions') {
             $causes = array_slice(array_values(array_filter(
                 is_array($item['causes'] ?? null) ? $item['causes'] : [],
                 'is_array',
@@ -422,17 +422,17 @@ final class McpProfilePresenter
                 ], $causes),
                 'chain_truncated' => (bool) ($item['chain_truncated'] ?? false),
             ];
-        } elseif ($section === 'models' && array_key_exists('key', $item)) {
+        } elseif ($inspector === 'models' && array_key_exists('key', $item)) {
             $item['key'] = $item['key'] === null ? null : '[identifier]';
-        } elseif ($section === 'views' && is_array($item['data'] ?? null)) {
+        } elseif ($inspector === 'views' && is_array($item['data'] ?? null)) {
             $item['data'] = $this->redactor->cleanBindings($item['data'], 'safe');
-        } elseif ($section === 'timeline') {
-            if (($item['section'] ?? null) === 'logs') {
+        } elseif ($inspector === 'timeline') {
+            if (($item['inspector'] ?? null) === 'logs') {
                 $item['label'] = '[log message hidden]';
-            } elseif (($item['section'] ?? null) === 'queries' && is_string($item['label'] ?? null)) {
+            } elseif (($item['inspector'] ?? null) === 'queries' && is_string($item['label'] ?? null)) {
                 $item['label'] = $this->redactor->cleanSql($item['label']);
             }
-        } elseif ($section === 'mail' && is_array($item['preview'] ?? null)) {
+        } elseif ($inspector === 'mail' && is_array($item['preview'] ?? null)) {
             $preview = $item['preview'];
             $item['preview'] = [
                 'available' => true,
@@ -745,7 +745,7 @@ final class McpProfilePresenter
         $data = is_array($response['data'] ?? null) ? $response['data'] : [];
         $minimal = [];
 
-        foreach (['profile_id', 'section', 'filter', 'search', 'sort', 'path', 'type', 'background_error'] as $key) {
+        foreach (['profile_id', 'inspector', 'filter', 'search', 'sort', 'path', 'type', 'background_error'] as $key) {
             if (array_key_exists($key, $data)) {
                 $minimal[$key] = $data[$key];
             }

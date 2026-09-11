@@ -28,7 +28,7 @@ it('profiles class components without rendering their view methods inside named 
         ->assertHeader('X-NewDebugBar-Profile');
     $profileId = $response->headers->get('X-NewDebugBar-Profile');
     $profile = app(ProfileStore::class)->get($profileId);
-    $views = $profile['sections']['views']['payload']['items'];
+    $views = $profile['inspectors']['views']['payload']['items'];
     $iconIndex = collect($views)->search(fn (array $view): bool => $view['name'] === 'profiled-slot-icon');
 
     expect($iconIndex)->not->toBeFalse()
@@ -37,12 +37,12 @@ it('profiles class components without rendering their view methods inside named 
 
     $data = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
         'profile_id' => $profileId,
-        'path' => '/sections/views/payload/items/'.$iconIndex.'/data/blade',
+        'path' => '/inspectors/views/payload/items/'.$iconIndex.'/data/blade',
     ])->assertOk());
 
     expect($data['data']['value'])->toBe('['.InvokableComponentVariable::class.']')
         ->and(app(GetDebugProfileData::class)->description())
-        ->toContain('/sections/views/payload/items/{index}/data', 'class labels');
+        ->toContain('/inspectors/views/payload/items/{index}/data', 'class labels');
 });
 
 it('does not add renders for view objects supplied as data on repeated profiled requests', function () {
@@ -59,7 +59,7 @@ it('does not add renders for view objects supplied as data on repeated profiled 
     foreach (range(1, 2) as $request) {
         $response = $this->get('/profiled-lazy-view')->assertOk()->assertHeader('X-NewDebugBar-Profile');
         $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-        $views = collect($profile['sections']['views']['payload']['items']);
+        $views = collect($profile['inspectors']['views']['payload']['items']);
 
         // Laravel itself renders Renderable view data once when gathering template data.
         expect($compositions)->toBe($request)

@@ -23,12 +23,12 @@ it('renders structured log details without repeating the raw record', function (
             'occurred_at' => '2026-08-24T16:32:10.123+02:00',
         ],
     ]);
-    $section = [
+    $inspector = [
         'summary' => ['count' => 1, ...$analysis['summary']],
         'payload' => ['items' => $analysis['items'], 'groups' => $analysis['groups']],
     ];
 
-    $html = view('newdebugbar::livewire.sections.logs', compact('section'))->render();
+    $html = view('newdebugbar::livewire.inspectors.logs', compact('inspector'))->render();
 
     expect($html)
         ->toContain(
@@ -83,7 +83,7 @@ it('renders structured log details without repeating the raw record', function (
 });
 
 it('renders a truthful empty state when no log records were captured', function () {
-    $section = [
+    $inspector = [
         'summary' => [
             'count' => 0,
             'attention_count' => 0,
@@ -95,7 +95,7 @@ it('renders a truthful empty state when no log records were captured', function 
         'payload' => ['items' => [], 'groups' => []],
     ];
 
-    $html = view('newdebugbar::livewire.sections.logs', compact('section'))->render();
+    $html = view('newdebugbar::livewire.inspectors.logs', compact('inspector'))->render();
 
     expect($html)
         ->toContain('data-ndb-log-empty', 'No log records were captured for this request.')

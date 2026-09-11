@@ -55,7 +55,7 @@ it('opens every actionable compact toolbar destination and leaves display facts 
         'request' => 'request',
         'duration' => 'request',
         'queries' => 'queries',
-    ] as $toolbar => $section) {
+    ] as $toolbar => $inspector) {
         $selector = $toolbar === 'expand'
             ? '[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]'
             : "[data-ndb-toolbar=\"{$toolbar}\"]";
@@ -63,7 +63,7 @@ it('opens every actionable compact toolbar destination and leaves display facts 
         $page
             ->click($selector);
 
-        DebugBarBrowser::assertSectionSelected($page, $section);
+        DebugBarBrowser::assertInspectorSelected($page, $inspector);
 
         if ($toolbar === 'expand') {
             $page
@@ -91,9 +91,9 @@ it('opens every actionable compact toolbar destination and leaves display facts 
 
                             return bounds.top + bounds.height / 2;
                         };
-                        const section = document.querySelector('[data-ndb-section="queries"]');
-                        const favorite = section.querySelector('[data-ndb-toggle-favorite]');
-                        const count = section.querySelector('.ndb-section-count');
+                        const inspector = document.querySelector('[data-ndb-inspector="queries"]');
+                        const favorite = inspector.querySelector('[data-ndb-toggle-favorite]');
+                        const count = inspector.querySelector('.ndb-inspector-count');
                         const theme = document.querySelector('[data-ndb-inspector-action="theme"]');
                         const themeIcon = theme.querySelector('span:not([style*="display: none"]) svg');
 

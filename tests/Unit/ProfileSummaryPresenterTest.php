@@ -3,13 +3,13 @@
 use NewDebugBar\Presentation\ProfileSummaryPresenter;
 use NewDebugBar\Support\Redactor;
 
-$summaryProfile = function (string $requestType, array $request = [], array $sections = []): array {
+$summaryProfile = function (string $requestType, array $request = [], array $inspectors = []): array {
     return [
         'id' => '550e8400-e29b-41d4-a716-446655440000',
         'environment' => 'testing',
         'metrics' => ['duration_ms' => 10, 'peak_memory_mb' => 8],
         'findings' => [],
-        'sections' => [
+        'inspectors' => [
             'request' => [
                 'summary' => ['method' => 'POST', 'status' => 200],
                 'payload' => [
@@ -22,7 +22,7 @@ $summaryProfile = function (string $requestType, array $request = [], array $sec
             'queries' => ['summary' => []],
             'cache' => ['summary' => []],
             'exceptions' => ['summary' => ['count' => 0]],
-            ...$sections,
+            ...$inspectors,
         ],
     ];
 };
@@ -31,7 +31,7 @@ it('summarizes status families and response sizes for the request header', funct
     $profile = $summaryProfile('full_page', [
         'response_size_bytes' => 2_621_440,
     ]);
-    $profile['sections']['request']['summary']['status'] = $status;
+    $profile['inspectors']['request']['summary']['status'] = $status;
 
     $summary = (new ProfileSummaryPresenter(new Redactor))->present($profile);
 
@@ -69,7 +69,7 @@ it('prepares request titles and type labels for the request picker', function (s
 it('formats request and query durations for every toolbar placement', function () use ($summaryProfile) {
     $profile = $summaryProfile('full_page');
     $profile['metrics']['duration_ms'] = 1_453.51;
-    $profile['sections']['queries']['summary']['total_time_ms'] = 0.19;
+    $profile['inspectors']['queries']['summary']['total_time_ms'] = 0.19;
 
     $summary = (new ProfileSummaryPresenter(new Redactor))->present($profile);
 

@@ -207,8 +207,8 @@ it('collapses duplicate MIME mail logs into a link to the Mail collector', funct
     ]);
 
     expect($logs->payload()['items'][0])->toMatchArray([
-        'message' => 'Mail content captured. Open the Mail section for its preview.',
-        'context' => ['linked_section' => 'mail', 'collapsed' => 'mime_message'],
+        'message' => 'Mail content captured. Open the Mail inspector for its preview.',
+        'context' => ['linked_inspector' => 'mail', 'collapsed' => 'mime_message'],
     ])->and($logs->payload()['items'][0]['message'])->not->toContain('private body');
 });
 

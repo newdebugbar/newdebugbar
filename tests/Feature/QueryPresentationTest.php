@@ -18,14 +18,14 @@ it('reuses the query analysis that prepared the profile when building findings',
     $profile = app(ProfilePresenter::class)->present([
         'id' => (string) Str::uuid(),
         'metrics' => ['duration_ms' => 200],
-        'sections' => ['queries' => [
+        'inspectors' => ['queries' => [
             'label' => 'Queries',
             'summary' => ['count' => 1],
             'payload' => ['items' => [['sql' => 'select 1', 'duration_ms' => 60]]],
         ]],
     ]);
 
-    expect($profile['sections']['queries']['payload']['records'][0]['slow'])->toBeTrue()
+    expect($profile['inspectors']['queries']['payload']['records'][0]['slow'])->toBeTrue()
         ->and(array_column($profile['findings'], 'rule_id'))->toContain('query.slow')
         ->and(array_column(app(ProfileAnalyzer::class)->analyze($profile), 'rule_id'))->not->toContain('query.slow');
 });
@@ -38,11 +38,11 @@ it('preserves grouped execution identities and transient EXPLAIN results in prep
     ]);
     $presenter = new QueryRecordPresenter;
     $records = $presenter->present($analysis);
-    $section = ['summary' => $analysis['summary'], 'payload' => ['records' => $records]];
+    $inspector = ['summary' => $analysis['summary'], 'payload' => ['records' => $records]];
     $html = Blade::render(
-        '<x-newdebugbar::query-section :section="$section" :query-explains="$explains" :query-explain-errors="$errors" />',
+        '<x-newdebugbar::query-inspector :inspector="$inspector" :query-explains="$explains" :query-explain-errors="$errors" />',
         [
-            'section' => $section,
+            'inspector' => $inspector,
             'explains' => [1 => ['driver' => 'sqlite', 'rows' => [['detail' => 'SCAN CONSTANT ROW']]]],
             'errors' => [3 => 'The database connection is unavailable.'],
         ],
@@ -67,7 +67,7 @@ it('preserves grouped execution identities and transient EXPLAIN results in prep
 it('exposes prepared query records and per-run evidence through bounded MCP paths', function () {
     $profileId = $this->get('/profiled', ['Accept' => 'text/html'])->assertOk()->headers->get('X-NewDebugBar-Profile');
     $profile = app(ProfilePresenter::class)->present(app(ProfileStore::class)->get($profileId));
-    $record = $profile['sections']['queries']['payload']['records'][0];
+    $record = $profile['inspectors']['queries']['payload']['records'][0];
     $run = $record['executions'][1];
 
     foreach ([
@@ -81,7 +81,7 @@ it('exposes prepared query records and per-run evidence through bounded MCP path
     ] as $path => $value) {
         $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
             'profile_id' => $profileId,
-            'path' => '/sections/queries/payload/records/0'.$path,
+            'path' => '/inspectors/queries/payload/records/0'.$path,
         ])->assertOk());
         expect($content['data']['value'])->toBe($value);
     }

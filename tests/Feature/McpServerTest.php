@@ -6,7 +6,7 @@ use Laravel\Mcp\Facades\Mcp;
 use NewDebugBar\Mcp\NewDebugBarServer;
 use NewDebugBar\Mcp\Tools\GetDebugFindings;
 use NewDebugBar\Mcp\Tools\GetDebugProfileData;
-use NewDebugBar\Mcp\Tools\GetDebugProfileSection;
+use NewDebugBar\Mcp\Tools\GetDebugProfileInspector;
 use NewDebugBar\Mcp\Tools\InspectDebugQueries;
 use NewDebugBar\Mcp\Tools\ListDebugProfiles;
 use NewDebugBar\Presentation\BackgroundActivityPresenter;
@@ -52,7 +52,7 @@ it('registers one local read only server with five schema backed tools', functio
 
     foreach ([
         ListDebugProfiles::class => 'list-debug-profiles',
-        GetDebugProfileSection::class => 'get-debug-profile-section',
+        GetDebugProfileInspector::class => 'get-debug-profile-inspector',
         GetDebugProfileData::class => 'get-debug-profile-data',
         InspectDebugQueries::class => 'inspect-debug-queries',
         GetDebugFindings::class => 'get-debug-findings',
@@ -71,16 +71,16 @@ it('registers one local read only server with five schema backed tools', functio
     $dataSchema = app(GetDebugProfileData::class)->toArray();
     $serverDefaults = (new ReflectionClass(NewDebugBarServer::class))->getDefaultProperties();
 
-    expect($dataSchema['inputSchema']['properties']['path']['default'])->toBe('/sections')
+    expect($dataSchema['inputSchema']['properties']['path']['default'])->toBe('/inspectors')
         ->and($dataSchema['inputSchema']['properties']['limit']['default'])->toBe(10)
         ->and($dataSchema['outputSchema']['properties']['data']['properties'])
         ->toHaveKeys(['profile_id', 'path', 'type', 'entries', 'value', 'pagination'])
         ->and(app(GetDebugProfileData::class)->description())
-        ->toContain('/sections/models/payload/model_groups', 'folded model operations', 'query correlation', 'guidance', '/sections/redis/payload/items/{index}/callsite', '/sections/exceptions/payload/items/{index}/causes')
-        ->and(app(GetDebugProfileSection::class)->description())
+        ->toContain('/inspectors/models/payload/model_groups', 'folded model operations', 'query correlation', 'guidance', '/inspectors/redis/payload/items/{index}/callsite', '/inspectors/exceptions/payload/items/{index}/causes')
+        ->and(app(GetDebugProfileInspector::class)->description())
         ->toContain('Redis items', 'application call sites', 'bounded cause locations', 'retained exception causes')
         ->and($serverDefaults['instructions'])
-        ->toContain('/sections/models/payload/model_groups', 'identifiers', 'changed attributes', 'related queries', '/sections/redis/payload/items/{index}/callsite', '/sections/exceptions/payload/items/{index}/causes')
+        ->toContain('/inspectors/models/payload/model_groups', 'identifiers', 'changed attributes', 'related queries', '/inspectors/redis/payload/items/{index}/callsite', '/inspectors/exceptions/payload/items/{index}/causes')
         ->and(app(InspectDebugQueries::class)->description())
         ->toContain('database driver')
         ->and(app(ListDebugProfiles::class)->description())
@@ -110,7 +110,7 @@ it('correlates the exact response profile while unrelated profiles exist', funct
     ])->assertOk());
 
     expect($queries)
-        ->version->toBe(1)
+        ->version->toBe(2)
         ->status->toBe('ok')
         ->data->profile_id->toBe($first)
         ->data->summary->repeated_pattern_count->toBe(1)
@@ -149,28 +149,28 @@ it('lists and filters bounded profile summaries', function () {
         ->warning->toBeTrue()
         ->duration_label->toBe(DurationFormatter::format($failed['data']['profiles'][0]['duration_ms']))
         ->query_time_label->toBe(DurationFormatter::format($failed['data']['profiles'][0]['query_time_ms']))
-        ->and($failed['data']['profiles'][0]['available_sections'])
+        ->and($failed['data']['profiles'][0]['available_inspectors'])
         ->toContain('overview', 'request', 'timeline', 'livewire')
         ->and($failed['data']['profiles'][0]['data_path'])->toBe('');
 });
 
-it('keeps every presented section reachable through MCP', function () {
+it('keeps every presented inspector reachable through MCP', function () {
     $response = $this->get('/profiled-livewire', ['Accept' => 'text/html'])->assertOk();
     $profileId = $response->headers->get('X-NewDebugBar-Profile');
     $profile = app(ProfilePresenter::class)->present(app(ProfileStore::class)->get($profileId));
-    $presentedSections = array_keys($profile['sections']);
-    $mcpSections = app(McpProfilePresenter::class)->sectionNames();
+    $presentedInspectors = array_keys($profile['inspectors']);
+    $mcpInspectors = app(McpProfilePresenter::class)->inspectorNames();
 
-    sort($presentedSections);
-    sort($mcpSections);
+    sort($presentedInspectors);
+    sort($mcpInspectors);
 
-    expect($mcpSections)->toBe($presentedSections);
+    expect($mcpInspectors)->toBe($presentedInspectors);
 
-    foreach ($presentedSections as $section) {
-        $focused = app(McpProfilePresenter::class)->section($profileId, $section, 0, 1);
+    foreach ($presentedInspectors as $inspector) {
+        $focused = app(McpProfilePresenter::class)->inspector($profileId, $inspector, 0, 1);
         $complete = app(McpProfilePresenter::class)->data(
             $profileId,
-            '/sections/'.str_replace(['~', '/'], ['~0', '~1'], $section),
+            '/inspectors/'.str_replace(['~', '/'], ['~0', '~1'], $inspector),
             0,
             1,
         );
@@ -224,7 +224,7 @@ it('keeps complete Models evidence reachable through bounded generic MCP paths',
         ->assertOk();
     $profileId = $response->headers->get('X-NewDebugBar-Profile');
     $profile = app(ProfilePresenter::class)->present(app(ProfileStore::class)->get($profileId));
-    $groups = $profile['sections']['models']['payload']['model_groups'];
+    $groups = $profile['inspectors']['models']['payload']['model_groups'];
     $clientIndex = array_search(Client::class, array_column($groups, 'model'), true);
     $jobIndex = array_search(JobActivity::class, array_column($groups, 'model'), true);
     $proofIndex = array_search(ProofVersion::class, array_column($groups, 'model'), true);
@@ -243,25 +243,25 @@ it('keeps complete Models evidence reachable through bounded generic MCP paths',
         ->and($queryGuidanceIndex)->not->toBeFalse();
 
     $paths = [
-        '/sections/models/summary/model_change_count' => $profile['sections']['models']['summary']['model_change_count'],
-        '/sections/models/summary/retrieval_count' => $profile['sections']['models']['summary']['retrieval_count'],
-        "/sections/models/payload/model_groups/{$clientIndex}/model" => Client::class,
-        "/sections/models/payload/model_groups/{$clientIndex}/connection" => 'testing',
-        "/sections/models/payload/model_groups/{$clientIndex}/table" => 'clients',
-        "/sections/models/payload/model_groups/{$clientIndex}/change_operations/0/event" => 'updated',
-        "/sections/models/payload/model_groups/{$clientIndex}/change_operations/0/key" => 4,
-        "/sections/models/payload/model_groups/{$clientIndex}/change_operations/0/lifecycle_events/updating" => 1,
-        "/sections/models/payload/model_groups/{$clientIndex}/change_operations/0/changes/status" => 'approved',
-        "/sections/models/payload/model_groups/{$clientIndex}/change_operations/0/changes/api_token" => '[redacted]',
-        "/sections/models/payload/model_groups/{$clientIndex}/change_operations/0/at_ms" => $groups[$clientIndex]['change_operations'][0]['at_ms'],
-        "/sections/models/payload/model_groups/{$clientIndex}/sources/0/callsite/file" => $groups[$clientIndex]['sources'][0]['callsite']['file'],
-        "/sections/models/payload/model_groups/{$jobIndex}/records/0/key" => $groups[$jobIndex]['records'][0]['key'],
-        "/sections/models/payload/model_groups/{$proofIndex}/records/0/sources/1/callsite/file" => $groups[$proofIndex]['records'][0]['sources'][1]['callsite']['file'],
-        "/sections/models/payload/model_groups/{$proofIndex}/records/0/sources/1/callsite/line" => $groups[$proofIndex]['records'][0]['sources'][1]['callsite']['line'],
-        "/sections/models/payload/model_groups/{$jobIndex}/sources/{$jobSourceIndex}/query_count" => 1,
-        "/sections/models/payload/model_groups/{$jobIndex}/sources/{$jobSourceIndex}/query_read_count" => 1,
-        "/sections/models/payload/model_groups/{$jobIndex}/guidance/{$queryGuidanceIndex}/type" => 'query_correlation',
-        "/sections/models/payload/model_groups/{$jobIndex}/guidance/{$queryGuidanceIndex}/why" => $groups[$jobIndex]['guidance'][$queryGuidanceIndex]['why'],
+        '/inspectors/models/summary/model_change_count' => $profile['inspectors']['models']['summary']['model_change_count'],
+        '/inspectors/models/summary/retrieval_count' => $profile['inspectors']['models']['summary']['retrieval_count'],
+        "/inspectors/models/payload/model_groups/{$clientIndex}/model" => Client::class,
+        "/inspectors/models/payload/model_groups/{$clientIndex}/connection" => 'testing',
+        "/inspectors/models/payload/model_groups/{$clientIndex}/table" => 'clients',
+        "/inspectors/models/payload/model_groups/{$clientIndex}/change_operations/0/event" => 'updated',
+        "/inspectors/models/payload/model_groups/{$clientIndex}/change_operations/0/key" => 4,
+        "/inspectors/models/payload/model_groups/{$clientIndex}/change_operations/0/lifecycle_events/updating" => 1,
+        "/inspectors/models/payload/model_groups/{$clientIndex}/change_operations/0/changes/status" => 'approved',
+        "/inspectors/models/payload/model_groups/{$clientIndex}/change_operations/0/changes/api_token" => '[redacted]',
+        "/inspectors/models/payload/model_groups/{$clientIndex}/change_operations/0/at_ms" => $groups[$clientIndex]['change_operations'][0]['at_ms'],
+        "/inspectors/models/payload/model_groups/{$clientIndex}/sources/0/callsite/file" => $groups[$clientIndex]['sources'][0]['callsite']['file'],
+        "/inspectors/models/payload/model_groups/{$jobIndex}/records/0/key" => $groups[$jobIndex]['records'][0]['key'],
+        "/inspectors/models/payload/model_groups/{$proofIndex}/records/0/sources/1/callsite/file" => $groups[$proofIndex]['records'][0]['sources'][1]['callsite']['file'],
+        "/inspectors/models/payload/model_groups/{$proofIndex}/records/0/sources/1/callsite/line" => $groups[$proofIndex]['records'][0]['sources'][1]['callsite']['line'],
+        "/inspectors/models/payload/model_groups/{$jobIndex}/sources/{$jobSourceIndex}/query_count" => 1,
+        "/inspectors/models/payload/model_groups/{$jobIndex}/sources/{$jobSourceIndex}/query_read_count" => 1,
+        "/inspectors/models/payload/model_groups/{$jobIndex}/guidance/{$queryGuidanceIndex}/type" => 'query_correlation',
+        "/inspectors/models/payload/model_groups/{$jobIndex}/guidance/{$queryGuidanceIndex}/why" => $groups[$jobIndex]['guidance'][$queryGuidanceIndex]['why'],
     ];
 
     foreach ($paths as $path => $expected) {
@@ -277,9 +277,9 @@ it('keeps complete Models evidence reachable through bounded generic MCP paths',
             ->data->value->toBe($expected);
     }
 
-    $focused = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileSection::class, [
+    $focused = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileInspector::class, [
         'profile_id' => $profileId,
-        'section' => 'models',
+        'inspector' => 'models',
         'limit' => 50,
     ])->assertOk());
 
@@ -293,7 +293,7 @@ it('keeps full log context values reachable beyond their compact previews', func
     $response = $this->get('/profiled-logs', ['Accept' => 'text/html'])->assertOk();
     $profileId = $response->headers->get('X-NewDebugBar-Profile');
     $profile = app(ProfilePresenter::class)->present(app(ProfileStore::class)->get($profileId));
-    $groups = $profile['sections']['logs']['payload']['groups'];
+    $groups = $profile['inspectors']['logs']['payload']['groups'];
     $groupIndex = array_search('critical', array_column($groups, 'level'), true);
     $expected = str_repeat('Retained diagnostic context. ', 12)."\nFinal retained line.";
 
@@ -305,8 +305,8 @@ it('keeps full log context values reachable beyond their compact previews', func
         ->and($groups[$groupIndex]['context_fields'][$fieldIndex]['preview'])->not->toBe($expected);
 
     foreach ([
-        "/sections/logs/payload/groups/{$groupIndex}/context/detail",
-        "/sections/logs/payload/groups/{$groupIndex}/context_fields/{$fieldIndex}/value",
+        "/inspectors/logs/payload/groups/{$groupIndex}/context/detail",
+        "/inspectors/logs/payload/groups/{$groupIndex}/context_fields/{$fieldIndex}/value",
     ] as $path) {
         $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
             'profile_id' => $profileId,
@@ -325,7 +325,7 @@ it('keeps Redis client call sites reachable through focused and generic MCP resp
     $response = $this->get('/profiled-redis-client', ['Accept' => 'text/html'])->assertOk();
     $profileId = $response->headers->get('X-NewDebugBar-Profile');
     $profile = app(ProfilePresenter::class)->present(app(ProfileStore::class)->get($profileId));
-    $items = $profile['sections']['redis']['payload']['items'];
+    $items = $profile['inspectors']['redis']['payload']['items'];
 
     expect($items)->not->toBeEmpty();
 
@@ -335,7 +335,7 @@ it('keeps Redis client call sites reachable through focused and generic MCP resp
             ->line->toBeGreaterThan(0);
 
         foreach (['file', 'line'] as $field) {
-            $path = "/sections/redis/payload/items/{$index}/callsite/{$field}";
+            $path = "/inspectors/redis/payload/items/{$index}/callsite/{$field}";
             $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
                 'profile_id' => $profileId,
                 'path' => $path,
@@ -348,9 +348,9 @@ it('keeps Redis client call sites reachable through focused and generic MCP resp
         }
     }
 
-    $focused = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileSection::class, [
+    $focused = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileInspector::class, [
         'profile_id' => $profileId,
-        'section' => 'redis',
+        'inspector' => 'redis',
         'limit' => 10,
     ])->assertOk());
 
@@ -366,22 +366,22 @@ it('discovers and pages nested profile data with JSON Pointer paths', function (
     $response = $this->get('/profiled-livewire', ['Accept' => 'text/html'])->assertOk();
     $profileId = $response->headers->get('X-NewDebugBar-Profile');
 
-    $sections = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
+    $inspectors = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
         'profile_id' => $profileId,
-        'path' => '/sections',
+        'path' => '/inspectors',
         'limit' => 2,
     ])->assertOk());
     $components = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
         'profile_id' => $profileId,
-        'path' => '/sections/livewire/payload/components',
+        'path' => '/inspectors/livewire/payload/components',
         'limit' => 1,
     ])->assertOk());
 
-    expect($sections['data'])
+    expect($inspectors['data'])
         ->type->toBe('object')
         ->count->toBeGreaterThan(2)
-        ->and($sections['data']['entries'])->toHaveCount(2)
-        ->and($sections['data']['pagination'])
+        ->and($inspectors['data']['entries'])->toHaveCount(2)
+        ->and($inspectors['data']['pagination'])
         ->returned->toBe(2)
         ->truncated->toBeTrue()
         ->next_cursor->toBe(2)
@@ -389,7 +389,7 @@ it('discovers and pages nested profile data with JSON Pointer paths', function (
         ->type->toBe('list')
         ->count->toBe(1)
         ->and($components['data']['entries'][0])
-        ->path->toBe('/sections/livewire/payload/components/0')
+        ->path->toBe('/inspectors/livewire/payload/components/0')
         ->type->toBe('object');
 });
 
@@ -397,14 +397,14 @@ it('resolves escaped JSON Pointer keys without changing retained values', functi
     $profileId = (string) Str::uuid();
     $absoluteFile = '/private/project/app/Exact.php';
     app(ProfileStore::class)->put([
-        'schema_version' => 1,
+        'schema_version' => 2,
         'id' => $profileId,
         'metrics' => ['duration_ms' => 1],
         'custom/key~name' => [
             'exact' => 'reachable-value',
             'file' => $absoluteFile,
         ],
-        'sections' => [],
+        'inspectors' => [],
     ]);
 
     $exact = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
@@ -423,7 +423,7 @@ it('resolves escaped JSON Pointer keys without changing retained values', functi
     expect($exact['data']['value'])->toBe('reachable-value')
         ->and($file['data']['value'])->toBe($absoluteFile)
         ->and($missing)->toBe([
-            'version' => 1,
+            'version' => 2,
             'status' => 'not_found',
             'data' => [
                 'profile_id' => $profileId,
@@ -438,11 +438,11 @@ it('keeps oversized retained strings reachable in bounded chunks', function () {
     $profileId = (string) Str::uuid();
     $value = str_repeat('chunk-', 2_000);
     app(ProfileStore::class)->put([
-        'schema_version' => 1,
+        'schema_version' => 2,
         'id' => $profileId,
         'metrics' => ['duration_ms' => 1],
         'large_value' => $value,
-        'sections' => [],
+        'inspectors' => [],
     ]);
 
     $responses = [];
@@ -478,11 +478,11 @@ it('keeps string chunks reachable under the smallest supported response budget',
     $profileId = (string) Str::uuid();
     $value = str_repeat('é漢🙂-', 80);
     app(ProfileStore::class)->put([
-        'schema_version' => 1,
+        'schema_version' => 2,
         'id' => $profileId,
         'metrics' => ['duration_ms' => 1],
         'large_value' => $value,
-        'sections' => [],
+        'inspectors' => [],
     ]);
 
     $chunks = [];
@@ -510,20 +510,20 @@ it('exposes queued communication facts and correlated worker outcomes through MC
         ->headers->get('X-NewDebugBar-Profile');
     $stored = app(ProfileStore::class)->get($originId);
     $presented = app(ProfilePresenter::class)->present($stored);
-    $mailItem = $presented['sections']['mail']['payload']['items'][0];
-    $notificationItem = $presented['sections']['notifications']['payload']['items'][0];
+    $mailItem = $presented['inspectors']['mail']['payload']['items'][0];
+    $notificationItem = $presented['inspectors']['notifications']['payload']['items'][0];
 
     $profiles = McpResponse::structuredContent(NewDebugBarServer::tool(ListDebugProfiles::class, [
         'limit' => 10,
     ])->assertOk());
     $originSummary = collect($profiles['data']['profiles'])->firstWhere('id', $originId);
-    $mail = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileSection::class, [
+    $mail = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileInspector::class, [
         'profile_id' => $originId,
-        'section' => 'mail',
+        'inspector' => 'mail',
     ])->assertOk());
-    $notifications = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileSection::class, [
+    $notifications = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileInspector::class, [
         'profile_id' => $originId,
-        'section' => 'notifications',
+        'inspector' => 'notifications',
     ])->assertOk());
 
     expect($originSummary)
@@ -559,13 +559,13 @@ it('reports background read failures while retaining bounded MCP evidence and ca
     $profileId = $this->get('/profiled-queued-communications', ['Accept' => 'text/html'])
         ->assertOk()->headers->get('X-NewDebugBar-Profile');
     $profile = app(ProfileStore::class)->get($profileId);
-    $key = $profile['sections']['queue']['payload']['items'][0]['correlation_key'];
+    $key = $profile['inspectors']['queue']['payload']['items'][0]['correlation_key'];
     $filename = config('newdebugbar.storage.path').'/background/'.$key.'.json';
     $original = File::get($filename);
     File::put($filename, '{broken');
     $calls = [
         ListDebugProfiles::class => ['limit' => 10],
-        GetDebugProfileSection::class => ['profile_id' => $profileId, 'section' => 'queue'],
+        GetDebugProfileInspector::class => ['profile_id' => $profileId, 'inspector' => 'queue'],
         InspectDebugQueries::class => ['profile_id' => $profileId],
         GetDebugFindings::class => ['profile_id' => $profileId],
         GetDebugProfileData::class => ['profile_id' => $profileId, 'path' => '/background_activity/pending'],
@@ -577,7 +577,7 @@ it('reports background read failures while retaining bounded MCP evidence and ca
         expect($content['status'])->toBe('partial')
             ->and($content['data']['background_error'])->toBe(BackgroundActivityPresenter::READ_ERROR);
 
-        if ($tool === GetDebugProfileSection::class) {
+        if ($tool === GetDebugProfileInspector::class) {
             expect($content['data']['payload']['items'][0]['status'])->toBe('delayed');
         } elseif ($tool === GetDebugProfileData::class) {
             expect($content['data']['value'])->toBeNull();
@@ -612,20 +612,20 @@ it('reports background read failures while retaining bounded MCP evidence and ca
     }
 });
 
-it('exposes every recorded context section through the bounded section tool', function () {
+it('exposes every recorded context inspector through the bounded inspector tool', function () {
     $response = $this->get('/profiled-context', ['Accept' => 'text/html'])->assertOk();
     $profileId = $response->headers->get('X-NewDebugBar-Profile');
 
-    foreach (['authorization', 'validation'] as $section) {
-        $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileSection::class, [
+    foreach (['authorization', 'validation'] as $inspector) {
+        $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileInspector::class, [
             'profile_id' => $profileId,
-            'section' => $section,
+            'inspector' => $inspector,
         ])->assertOk());
 
         expect($content['status'])->toBe('ok')
-            ->and($content['data']['section'])->toBe($section);
+            ->and($content['data']['inspector'])->toBe($inspector);
 
-        if ($section === 'authorization') {
+        if ($inspector === 'authorization') {
             $decision = $content['data']['payload']['items'][0];
 
             expect($decision)
@@ -634,19 +634,19 @@ it('exposes every recorded context section through the bounded section tool', fu
         }
     }
 
-    $missing = app(McpProfilePresenter::class)->section($profileId, 'unknown-section', 0, 50);
+    $missing = app(McpProfilePresenter::class)->inspector($profileId, 'unknown-inspector', 0, 50);
 
     expect($missing['status'])->toBe('not_found')
-        ->and($missing['data']['available_sections'])->toContain('authorization', 'validation');
+        ->and($missing['data']['available_inspectors'])->toContain('authorization', 'validation');
 });
 
 it('keeps captured mail content out of MCP responses', function () {
     $response = $this->get('/profiled-messages', ['Accept' => 'text/html'])->assertOk();
     $profileId = $response->headers->get('X-NewDebugBar-Profile');
 
-    $mail = NewDebugBarServer::tool(GetDebugProfileSection::class, [
+    $mail = NewDebugBarServer::tool(GetDebugProfileInspector::class, [
         'profile_id' => $profileId,
-        'section' => 'mail',
+        'inspector' => 'mail',
     ])->assertOk()
         ->assertDontSee([
             'private body',
@@ -673,7 +673,7 @@ it('masks full query bindings and log labels again at the MCP boundary', functio
     $response = $this->get('/profiled-private-query', ['Accept' => 'text/html'])->assertOk();
     $profileId = $response->headers->get('X-NewDebugBar-Profile');
 
-    expect(json_encode(app(ProfileStore::class)->get($profileId)['sections']['queries']))
+    expect(json_encode(app(ProfileStore::class)->get($profileId)['inspectors']['queries']))
         ->toContain('private-alpha', 'private-beta', 'private-gamma');
 
     $queries = McpResponse::structuredContent(NewDebugBarServer::tool(InspectDebugQueries::class, [
@@ -681,13 +681,13 @@ it('masks full query bindings and log labels again at the MCP boundary', functio
         'filter' => 'repeated',
     ])->assertOk()
         ->assertDontSee(['private-alpha', 'private-beta', 'private-gamma']));
-    NewDebugBarServer::tool(GetDebugProfileSection::class, [
+    NewDebugBarServer::tool(GetDebugProfileInspector::class, [
         'profile_id' => $profileId,
-        'section' => 'queries',
+        'inspector' => 'queries',
     ])->assertOk()->assertDontSee(['private-alpha', 'private-beta', 'private-gamma']);
-    $timeline = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileSection::class, [
+    $timeline = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileInspector::class, [
         'profile_id' => $profileId,
-        'section' => 'timeline',
+        'inspector' => 'timeline',
         'limit' => 50,
     ])->assertOk()
         ->assertDontSee('private timeline log message'));
@@ -698,7 +698,7 @@ it('masks full query bindings and log labels again at the MCP boundary', functio
         ->bindings_complete->toBeFalse()
         ->runnable_available->toBeFalse()
         ->not->toHaveKey('runnable_sql')
-        ->and(collect($timeline['data']['payload']['items'])->firstWhere('section', 'logs')['label'])
+        ->and(collect($timeline['data']['payload']['items'])->firstWhere('inspector', 'logs')['label'])
         ->toBe('[log message hidden]');
 });
 
@@ -706,12 +706,12 @@ it('masks captured view values at the MCP boundary', function () {
     $response = $this->get('/profiled-context', ['Accept' => 'text/html'])->assertOk();
     $profileId = $response->headers->get('X-NewDebugBar-Profile');
 
-    expect(json_encode(app(ProfileStore::class)->get($profileId)['sections']['views']))
+    expect(json_encode(app(ProfileStore::class)->get($profileId)['inspectors']['views']))
         ->toContain('view-data-value');
 
-    $views = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileSection::class, [
+    $views = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileInspector::class, [
         'profile_id' => $profileId,
-        'section' => 'views',
+        'inspector' => 'views',
     ])->assertOk()
         ->assertDontSee('view-data-value'));
 
@@ -721,16 +721,16 @@ it('masks captured view values at the MCP boundary', function () {
         ->rows->toBe('[array]');
 });
 
-it('paginates one section and hides private request values', function () {
+it('paginates one inspector and hides private request values', function () {
     $response = $this->post('/profiled-input?name=query-secret', [
         'clinic' => ['name' => 'patient-secret'],
         'token' => 'token-secret',
     ], ['Accept' => 'text/html'])->assertOk();
     $profileId = $response->headers->get('X-NewDebugBar-Profile');
 
-    $request = NewDebugBarServer::tool(GetDebugProfileSection::class, [
+    $request = NewDebugBarServer::tool(GetDebugProfileInspector::class, [
         'profile_id' => $profileId,
-        'section' => 'request',
+        'inspector' => 'request',
         'cursor' => 0,
         'limit' => 1,
     ])->assertOk()
@@ -759,11 +759,11 @@ it('summarizes exception causes while keeping full retained evidence reachable',
         ->assertOk();
     $profileId = $response->headers->get('X-NewDebugBar-Profile');
     $profile = app(ProfilePresenter::class)->present(app(ProfileStore::class)->get($profileId));
-    $cause = $profile['sections']['exceptions']['payload']['items'][0]['causes'][0];
+    $cause = $profile['inspectors']['exceptions']['payload']['items'][0]['causes'][0];
 
-    $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileSection::class, [
+    $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileInspector::class, [
         'profile_id' => $profileId,
-        'section' => 'exceptions',
+        'inspector' => 'exceptions',
     ])->assertOk());
     $item = $content['data']['payload']['items'][0];
 
@@ -784,7 +784,7 @@ it('summarizes exception causes while keeping full retained evidence reachable',
         ->and(json_encode($content))
         ->not->toContain(base_path().'/', 'Earlier itinerary failure.');
 
-    $causeObjectPath = '/sections/exceptions/payload/items/0/causes/0';
+    $causeObjectPath = '/inspectors/exceptions/payload/items/0/causes/0';
     $causeObject = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
         'profile_id' => $profileId,
         'path' => $causeObjectPath,
@@ -801,7 +801,7 @@ it('summarizes exception causes while keeping full retained evidence reachable',
         "{$causeObjectPath}/frames/application/0/file" => $cause['frames']['application'][0]['file'],
         "{$causeObjectPath}/source/focus_line" => $cause['source']['focus_line'],
         "{$causeObjectPath}/source/lines/0/code" => $cause['source']['lines'][0]['code'],
-        '/sections/exceptions/payload/items/0/chain_truncated' => false,
+        '/inspectors/exceptions/payload/items/0/chain_truncated' => false,
     ] as $path => $expected) {
         $evidence = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
             'profile_id' => $profileId,
@@ -823,7 +823,7 @@ it('returns stable not found results and validation errors', function () {
     ])->assertOk());
 
     expect($content)->toBe([
-        'version' => 1,
+        'version' => 2,
         'status' => 'not_found',
         'data' => ['profile_id' => $missing],
     ]);
@@ -837,8 +837,8 @@ it('returns stable not found results and validation errors', function () {
         'filter' => 'unsafe',
     ])->assertHasErrors(['filter']);
 
-    expect(app(McpProfilePresenter::class)->section($wrongVersion, 'overview', 0, 1))->toBe([
-        'version' => 1,
+    expect(app(McpProfilePresenter::class)->inspector($wrongVersion, 'overview', 0, 1))->toBe([
+        'version' => 2,
         'status' => 'not_found',
         'data' => ['profile_id' => $wrongVersion],
     ]);
@@ -855,15 +855,15 @@ it('enforces byte depth and item limits without exposing corrupt profiles', func
     $corruptId = (string) Str::uuid();
     File::put(config('newdebugbar.storage.path').'/'.$corruptId.'.json', '{broken');
 
-    $events = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileSection::class, [
+    $events = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileInspector::class, [
         'profile_id' => $profileId,
-        'section' => 'events',
+        'inspector' => 'events',
         'limit' => 2,
     ])->assertOk());
     $profiles = McpResponse::structuredContent(NewDebugBarServer::tool(ListDebugProfiles::class)->assertOk());
-    $models = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileSection::class, [
+    $models = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileInspector::class, [
         'profile_id' => $profileId,
-        'section' => 'models',
+        'inspector' => 'models',
         'limit' => 2,
     ])->assertOk());
 
@@ -878,7 +878,7 @@ it('enforces byte depth and item limits without exposing corrupt profiles', func
 
     NewDebugBarServer::tool(GetDebugProfileData::class, [
         'profile_id' => $corruptId,
-        'path' => '/sections/models',
+        'path' => '/inspectors/models',
     ])->assertHasErrors(['The debug profile could not be processed.']);
 });
 
@@ -887,10 +887,10 @@ it('advances past an item that cannot fit within the MCP byte limit', function (
     app()->forgetInstance(McpProfilePresenter::class);
     $profileId = (string) Str::uuid();
     app(ProfileStore::class)->put([
-        'schema_version' => 1,
+        'schema_version' => 2,
         'id' => $profileId,
         'metrics' => ['duration_ms' => 1],
-        'sections' => [
+        'inspectors' => [
             'events' => [
                 'label' => 'Events',
                 'summary' => ['count' => 1],
@@ -901,9 +901,9 @@ it('advances past an item that cannot fit within the MCP byte limit', function (
         ],
     ]);
 
-    $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileSection::class, [
+    $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileInspector::class, [
         'profile_id' => $profileId,
-        'section' => 'events',
+        'inspector' => 'events',
         'limit' => 1,
     ])->assertOk());
 
@@ -914,15 +914,15 @@ it('advances past an item that cannot fit within the MCP byte limit', function (
         ->next_cursor->toBeNull();
 });
 
-it('falls back to bounded identity metadata when section metadata is oversized', function () {
+it('falls back to bounded identity metadata when inspector metadata is oversized', function () {
     config()->set('newdebugbar.mcp.max_bytes', 700);
     app()->forgetInstance(McpProfilePresenter::class);
     $profileId = (string) Str::uuid();
     app(ProfileStore::class)->put([
-        'schema_version' => 1,
+        'schema_version' => 2,
         'id' => $profileId,
         'metrics' => ['duration_ms' => 1],
-        'sections' => [
+        'inspectors' => [
             'request' => [
                 'label' => 'Request',
                 'summary' => ['method' => 'GET', 'status' => 200],
@@ -934,15 +934,15 @@ it('falls back to bounded identity metadata when section metadata is oversized',
         ],
     ]);
 
-    $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileSection::class, [
+    $content = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileInspector::class, [
         'profile_id' => $profileId,
-        'section' => 'request',
+        'inspector' => 'request',
     ])->assertOk());
 
     expect(strlen(json_encode($content)))->toBeLessThanOrEqual(700)
         ->and($content['data'])
         ->profile_id->toBe($profileId)
-        ->section->toBe('request')
+        ->inspector->toBe('request')
         ->content_omitted->toBeTrue()
         ->and($content['data']['pagination']['truncated'])->toBeTrue();
 });
@@ -950,10 +950,10 @@ it('falls back to bounded identity metadata when section metadata is oversized',
 it('bounds deeply nested focused values and surfaces malformed profile processing errors', function () {
     $profileId = (string) Str::uuid();
     app(ProfileStore::class)->put([
-        'schema_version' => 1,
+        'schema_version' => 2,
         'id' => $profileId,
         'metrics' => ['duration_ms' => 1],
-        'sections' => [
+        'inspectors' => [
             'events' => [
                 'label' => 'Events',
                 'summary' => ['count' => 1],
@@ -965,9 +965,9 @@ it('bounds deeply nested focused values and surfaces malformed profile processin
         ],
     ]);
 
-    NewDebugBarServer::tool(GetDebugProfileSection::class, [
+    NewDebugBarServer::tool(GetDebugProfileInspector::class, [
         'profile_id' => $profileId,
-        'section' => 'events',
+        'inspector' => 'events',
     ])->assertOk()
         ->assertSee('[maximum depth reached]')
         ->assertDontSee('private-deep-value');
@@ -975,7 +975,7 @@ it('bounds deeply nested focused values and surfaces malformed profile processin
     $malformedId = (string) Str::uuid();
     File::put(config('newdebugbar.storage.path').'/'.$malformedId.'.json', json_encode([
         'id' => $malformedId,
-        'sections' => ['queries' => ['payload' => ['items' => ['not-an-item']]]],
+        'inspectors' => ['queries' => ['payload' => ['items' => ['not-an-item']]]],
     ]));
     NewDebugBarServer::tool(GetDebugFindings::class, [
         'profile_id' => $malformedId,
@@ -984,16 +984,16 @@ it('bounds deeply nested focused values and surfaces malformed profile processin
         ->assertHasErrors(['The debug profile could not be processed.']);
 });
 
-it('exposes the same prepared inspector evidence through bounded MCP paths while retaining captures', function (string $route, string $section, string $records, string $raw) {
+it('exposes the same prepared inspector evidence through bounded MCP paths while retaining captures', function (string $route, string $inspector, string $records, string $raw) {
     $id = $this->get($route, ['Accept' => 'text/html'])->assertOk()->headers->get('X-NewDebugBar-Profile');
     $stored = app(ProfileStore::class)->get($id);
     $profile = app(ProfilePresenter::class)->present($stored);
-    $payload = $profile['sections'][$section]['payload'];
+    $payload = $profile['inspectors'][$inspector]['payload'];
     expect($payload[$records])->not->toBeEmpty()
         ->and($payload[$raw])->not->toBeEmpty();
 
-    $field = $section === 'livewire' ? 'title' : 'search';
-    $path = "/sections/{$section}/payload/{$records}/0/{$field}";
+    $field = $inspector === 'livewire' ? 'title' : 'search';
+    $path = "/inspectors/{$inspector}/payload/{$records}/0/{$field}";
     $response = McpResponse::structuredContent(NewDebugBarServer::tool(GetDebugProfileData::class, [
         'profile_id' => $id,
         'path' => $path,

@@ -4,23 +4,23 @@ import test from 'node:test';
 import { createNewDebugBar } from '../../resources/js/state.js';
 import { runtime, summary } from './state-test-support.js';
 
-test('the command palette jumps to sections and changes settings', async () => {
+test('the command palette jumps to inspectors and changes settings', async () => {
   let highlighted = 0;
   const browser = runtime();
   browser.highlight = () => highlighted++;
   const state = createNewDebugBar(summary, browser);
-  let sectionsLoaded = 0;
-  state.$wire = { loadSection: async () => sectionsLoaded++ };
+  let inspectorsLoaded = 0;
+  state.$wire = { loadInspector: async () => inspectorsLoaded++ };
   state.$nextTick = (callback) => callback();
   const opener = { focus() {} };
   state.paletteOpen = true;
   state.paletteReturnFocus = opener;
 
-  state.runCommand('section:queries');
+  state.runCommand('inspector:queries');
   await Promise.resolve();
   assert.equal(state.inspectorOpen, true);
   assert.equal(state.selected, 'queries');
-  assert.equal(sectionsLoaded, 1);
+  assert.equal(inspectorsLoaded, 1);
   assert.equal(highlighted, 2);
   assert.equal(state.inspectorReturnFocus, opener);
   assert.equal(state.paletteReturnFocus, null);
@@ -39,7 +39,7 @@ test('the command palette jumps to sections and changes settings', async () => {
 test('the command palette keeps quiet collectors behind one reveal action', () => {
   const state = createNewDebugBar(
     {
-      sections: [
+      inspectors: [
         { key: 'request', label: 'Requests', active: true },
         { key: 'queries', label: 'Queries', active: true },
         { key: 'redis', label: 'Redis', active: false },
@@ -50,26 +50,30 @@ test('the command palette keeps quiet collectors behind one reveal action', () =
   );
 
   assert.deepEqual(
-    state.filteredCommands.filter((command) => command.id.startsWith('section:')).map((command) => command.id),
-    ['section:queries', 'section:request'],
+    state.filteredCommands
+      .filter((command) => command.id.startsWith('inspector:'))
+      .map((command) => command.id),
+    ['inspector:queries', 'inspector:request'],
   );
   assert.equal(state.filteredCommands.at(-1).id, 'collectors:show');
 
   state.runCommand('collectors:show');
   assert.deepEqual(
-    state.filteredCommands.filter((command) => command.id.startsWith('section:')).map((command) => command.id),
-    ['section:queries', 'section:request', 'section:mail', 'section:redis'],
+    state.filteredCommands
+      .filter((command) => command.id.startsWith('inspector:'))
+      .map((command) => command.id),
+    ['inspector:queries', 'inspector:request', 'inspector:mail', 'inspector:redis'],
   );
 
   state.paletteSearch = 'redis';
   state.paletteShowQuiet = false;
   assert.deepEqual(
     state.filteredCommands.map((command) => command.id),
-    ['section:redis'],
+    ['inspector:redis'],
   );
 });
 
-test('pinning from the command palette shrinks the inspector and keeps its selected section', () => {
+test('pinning from the command palette shrinks the inspector and keeps its selected inspector', () => {
   for (const placement of ['top', 'bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right']) {
     const state = createNewDebugBar(summary, runtime());
     state.inspectorOpen = true;
@@ -113,12 +117,24 @@ test('the palette filters, wraps, restores focus, and handles layered shortcuts'
   assert.equal(state.paletteIndex, state.allCommands.length - 1);
 
   let prevented = 0;
-  state.handleShortcut({ metaKey: true, ctrlKey: false, shiftKey: true, key: 'P', preventDefault: () => prevented++ });
+  state.handleShortcut({
+    metaKey: true,
+    ctrlKey: false,
+    shiftKey: true,
+    key: 'P',
+    preventDefault: () => prevented++,
+  });
   assert.equal(state.paletteOpen, false);
   assert.equal(prevented, 1);
   assert.equal(focused, 2);
 
   state.openInspector();
-  state.handleShortcut({ metaKey: false, ctrlKey: false, shiftKey: false, key: 'Escape', preventDefault() {} });
+  state.handleShortcut({
+    metaKey: false,
+    ctrlKey: false,
+    shiftKey: false,
+    key: 'Escape',
+    preventDefault() {},
+  });
   assert.equal(state.inspectorOpen, false);
 });

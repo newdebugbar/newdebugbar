@@ -16,7 +16,7 @@ it('keeps the response profile open through terminate without inflating HTTP dur
         ->and($contentBeforeTerminate)->toContain('Original response', 'id="newdebugbar"')
         ->and($provisional)
         ->completion_state->toBe('terminating')
-        ->sections->mail->summary->count->toBe(0);
+        ->inspectors->mail->summary->count->toBe(0);
 
     $kernel->terminate($request, $response);
 
@@ -28,12 +28,12 @@ it('keeps the response profile open through terminate without inflating HTTP dur
         ->completion_state->toBe('complete')
         ->metrics->duration_ms->toBe($provisional['metrics']['duration_ms'])
         ->metrics->after_response_duration_ms->toBeGreaterThanOrEqual(80)
-        ->sections->queue->summary->executed_count->toBe(1)
-        ->sections->mail->summary->count->toBe(2)
-        ->sections->queries->summary->count->toBeGreaterThanOrEqual(2)
-        ->and(array_unique(array_column($profile['sections']['mail']['payload']['items'], 'lifecycle')))
+        ->inspectors->queue->summary->executed_count->toBe(1)
+        ->inspectors->mail->summary->count->toBe(2)
+        ->inspectors->queries->summary->count->toBeGreaterThanOrEqual(2)
+        ->and(array_unique(array_column($profile['inspectors']['mail']['payload']['items'], 'lifecycle')))
         ->toBe(['after_response'])
-        ->and($profile['sections']['queue']['payload']['items'][0])
+        ->and($profile['inspectors']['queue']['payload']['items'][0])
         ->status->toBe('completed')
         ->lifecycle->toBe('after_response');
 });

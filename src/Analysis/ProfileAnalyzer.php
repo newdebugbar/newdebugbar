@@ -24,17 +24,17 @@ final class ProfileAnalyzer
      */
     public function analyze(array $profile, ?array $queryAnalysis = null): array
     {
-        $sections = is_array($profile['sections'] ?? null) ? $profile['sections'] : [];
+        $inspectors = is_array($profile['inspectors'] ?? null) ? $profile['inspectors'] : [];
         $requestDuration = (float) ($profile['metrics']['duration_ms'] ?? 0);
-        $queryItems = $sections['queries']['payload']['items'] ?? [];
+        $queryItems = $inspectors['queries']['payload']['items'] ?? [];
         $queryAnalysis ??= $this->queries->analyze(is_array($queryItems) ? $queryItems : [], $requestDuration);
-        $status = (int) ($sections['request']['summary']['status'] ?? 0);
-        $runtimeType = $sections['request']['payload']['runtime_type'] ?? null;
-        $exitCode = $sections['request']['summary']['exit_code'] ?? null;
-        $exceptionCount = (int) ($sections['exceptions']['summary']['count'] ?? 0);
+        $status = (int) ($inspectors['request']['summary']['status'] ?? 0);
+        $runtimeType = $inspectors['request']['payload']['runtime_type'] ?? null;
+        $exitCode = $inspectors['request']['summary']['exit_code'] ?? null;
+        $exceptionCount = (int) ($inspectors['exceptions']['summary']['count'] ?? 0);
         $findings = [];
 
-        $exception = collect($sections['exceptions']['payload']['items'] ?? [])->first(fn (mixed $item): bool => is_array($item));
+        $exception = collect($inspectors['exceptions']['payload']['items'] ?? [])->first(fn (mixed $item): bool => is_array($item));
 
         if (is_array($exception)) {
             $class = class_basename((string) ($exception['class'] ?? 'Exception'));
@@ -54,7 +54,7 @@ final class ProfileAnalyzer
                     'why' => 'The request stopped because the application threw this exception.',
                     'location' => $exception['location'] ?? $this->location($exception),
                     'next' => 'Open the application frame and inspect the values that reached it.',
-                    'action' => ['label' => 'Inspect exception', 'section' => 'exceptions'],
+                    'action' => ['label' => 'Inspect exception', 'inspector' => 'exceptions'],
                 ],
             );
         } elseif ($status >= 400 || (is_int($exitCode) && $exitCode !== 0) || $exceptionCount > 0) {
@@ -71,12 +71,12 @@ final class ProfileAnalyzer
                         ? 'A non-zero exit code means the operation did not complete successfully.'
                         : 'The response status says the application could not complete the request normally.',
                     'next' => 'Inspect the request, response, logs, and related failure collector.',
-                    'action' => ['label' => 'Inspect request', 'section' => 'request'],
+                    'action' => ['label' => 'Inspect request', 'inspector' => 'request'],
                 ],
             );
         }
 
-        $failedHttp = collect($sections['http_client']['payload']['items'] ?? [])->first(
+        $failedHttp = collect($inspectors['http_client']['payload']['items'] ?? [])->first(
             fn (mixed $item): bool => is_array($item)
                 && (($item['failed'] ?? false) || (int) ($item['status'] ?? 0) >= 400),
         );
@@ -96,12 +96,12 @@ final class ProfileAnalyzer
                     'why' => $cause,
                     'location' => $failedHttp['callsite'] ?? null,
                     'next' => 'Check the endpoint, connection settings, timeout, and retry behavior.',
-                    'action' => ['label' => 'Inspect HTTP failure', 'section' => 'http_client'],
+                    'action' => ['label' => 'Inspect HTTP failure', 'inspector' => 'http_client'],
                 ],
             );
         }
 
-        $denied = collect($sections['authorization']['payload']['items'] ?? [])->first(
+        $denied = collect($inspectors['authorization']['payload']['items'] ?? [])->first(
             fn (mixed $item): bool => is_array($item) && ($item['result'] ?? null) === 'denied',
         );
 
@@ -118,12 +118,12 @@ final class ProfileAnalyzer
                     'why' => sprintf('%s returned a denied result.', $handler),
                     'location' => $denied['callsite'] ?? null,
                     'next' => 'Check the user, arguments, policy or Gate, and expected permission for this action.',
-                    'action' => ['label' => 'Inspect authorization', 'section' => 'authorization', 'filter' => 'denied'],
+                    'action' => ['label' => 'Inspect authorization', 'inspector' => 'authorization', 'filter' => 'denied'],
                 ],
             );
         }
 
-        $validation = collect($sections['validation']['payload']['items'] ?? [])->first(
+        $validation = collect($inspectors['validation']['payload']['items'] ?? [])->first(
             fn (mixed $item): bool => is_array($item),
         );
 
@@ -145,7 +145,7 @@ final class ProfileAnalyzer
                     'next' => $fromPreviousRequest
                         ? 'Inspect the messages, then reproduce the failed request to capture its rules and source.'
                         : 'Inspect the field messages and rules, then compare them with the submitted form.',
-                    'action' => ['label' => 'Inspect validation', 'section' => 'validation'],
+                    'action' => ['label' => 'Inspect validation', 'inspector' => 'validation'],
                 ],
             );
         }
@@ -162,7 +162,7 @@ final class ProfileAnalyzer
                 [
                     'why' => sprintf('This is above the configured %s threshold.', DurationFormatter::format($this->slowRequestMs)),
                     'next' => 'Inspect Timeline to find where the request spent time.',
-                    'action' => ['label' => 'Review request timing', 'section' => 'timeline'],
+                    'action' => ['label' => 'Review request timing', 'inspector' => 'timeline'],
                 ],
             );
         }
@@ -192,7 +192,7 @@ final class ProfileAnalyzer
                     'why' => sprintf('The slowest query took %s.', DurationFormatter::format($slowest['duration_ms'] ?? 0)),
                     'location' => $slowest['callsite'] ?? null,
                     'next' => 'Review the SQL, bindings, call site, and database plan.',
-                    'action' => ['label' => 'Review slow queries', 'section' => 'queries', 'filter' => 'slow'],
+                    'action' => ['label' => 'Review slow queries', 'inspector' => 'queries', 'filter' => 'slow'],
                 ],
             );
         }
@@ -218,7 +218,7 @@ final class ProfileAnalyzer
                         'why' => 'The same application call site ran one query for several different records. This is likely an N+1 query.',
                         'location' => $group['shared_callsite'],
                         'next' => 'Check whether the related data can be eager loaded or fetched in one query.',
-                        'action' => ['label' => 'Review grouped queries', 'section' => 'queries', 'filter' => 'repeated'],
+                        'action' => ['label' => 'Review grouped queries', 'inspector' => 'queries', 'filter' => 'repeated'],
                     ],
                 );
 
@@ -246,12 +246,12 @@ final class ProfileAnalyzer
                     'why' => sprintf('%d executions repeated work that one execution may have covered.', $group['extra_executions']),
                     'location' => $group['shared_callsite'],
                     'next' => 'Inspect the grouped executions and decide whether the result can be reused or the query can be moved.',
-                    'action' => ['label' => 'Review grouped queries', 'section' => 'queries', 'filter' => 'repeated'],
+                    'action' => ['label' => 'Review grouped queries', 'inspector' => 'queries', 'filter' => 'repeated'],
                 ],
             );
         }
 
-        $cache = $sections['cache']['summary'] ?? [];
+        $cache = $inspectors['cache']['summary'] ?? [];
         $cacheReads = (int) ($cache['hits'] ?? 0) + (int) ($cache['misses'] ?? 0);
         $missRate = $cacheReads > 0 ? (int) ($cache['misses'] ?? 0) / $cacheReads : 0;
 
@@ -269,18 +269,18 @@ final class ProfileAnalyzer
                 [
                     'why' => 'The application paid the cache lookup cost but usually still had to rebuild the value.',
                     'next' => 'Inspect the missed key groups, expiry, and the code that fills them.',
-                    'action' => ['label' => 'Inspect cache misses', 'section' => 'cache'],
+                    'action' => ['label' => 'Inspect cache misses', 'inspector' => 'cache'],
                 ],
             );
         }
 
-        foreach ($sections as $key => $section) {
-            $dropped = (int) ($section['summary']['dropped_count'] ?? 0);
+        foreach ($inspectors as $key => $inspector) {
+            $dropped = (int) ($inspector['summary']['dropped_count'] ?? 0);
 
             if ($dropped > 0) {
-                $retained = (int) ($section['summary']['retained_count'] ?? count($section['payload']['items'] ?? []));
-                $total = (int) ($section['summary']['count'] ?? ($retained + $dropped));
-                $label = strtolower((string) ($section['label'] ?? str($key)->replace('_', ' ')));
+                $retained = (int) ($inspector['summary']['retained_count'] ?? count($inspector['payload']['items'] ?? []));
+                $total = (int) ($inspector['summary']['count'] ?? ($retained + $dropped));
+                $label = strtolower((string) ($inspector['label'] ?? str($key)->replace('_', ' ')));
                 $findings[] = $this->finding(
                     'collector.truncated',
                     'info',
@@ -291,11 +291,11 @@ final class ProfileAnalyzer
                 );
             }
 
-            $transactionDropped = (int) ($section['summary']['transaction_dropped_count'] ?? 0);
+            $transactionDropped = (int) ($inspector['summary']['transaction_dropped_count'] ?? 0);
 
             if ($transactionDropped > 0) {
-                $transactionRetained = (int) ($section['summary']['transaction_retained_count'] ?? count($section['payload']['transactions'] ?? []));
-                $transactionTotal = (int) ($section['summary']['transaction_count'] ?? ($transactionRetained + $transactionDropped));
+                $transactionRetained = (int) ($inspector['summary']['transaction_retained_count'] ?? count($inspector['payload']['transactions'] ?? []));
+                $transactionTotal = (int) ($inspector['summary']['transaction_count'] ?? ($transactionRetained + $transactionDropped));
                 $findings[] = $this->finding(
                     'collector.truncated',
                     'info',
@@ -314,7 +314,7 @@ final class ProfileAnalyzer
     private function finding(
         string $ruleId,
         string $severity,
-        string $section,
+        string $inspector,
         string $summary,
         array $evidence,
         array $guidance = [],
@@ -322,7 +322,7 @@ final class ProfileAnalyzer
         return [
             'rule_id' => $ruleId,
             'severity' => $severity,
-            'section' => $section,
+            'inspector' => $inspector,
             'summary' => $summary,
             'why' => $guidance['why'] ?? null,
             'location' => $guidance['location'] ?? null,

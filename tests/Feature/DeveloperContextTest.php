@@ -22,17 +22,17 @@ it('captures Laravel decisions sources transactions and view data', function () 
     $stored = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
     $profile = app(ProfilePresenter::class)->present($stored);
 
-    expect($profile['sections']['authorization']['payload']['items'][0])
+    expect($profile['inspectors']['authorization']['payload']['items'][0])
         ->ability->toBe('inspect-profile')
         ->result->toBe('allowed')
         ->handler->toBe('callback')
         ->argument_types->toBe([ProfiledModel::class])
-        ->and($profile['sections']['queries']['summary'])
+        ->and($profile['inspectors']['queries']['summary'])
         ->transaction_count->toBe(2)
         ->rollback_count->toBe(1)
-        ->and(array_column($profile['sections']['queries']['payload']['transactions'], 'kind'))
+        ->and(array_column($profile['inspectors']['queries']['payload']['transactions'], 'kind'))
         ->toBe(['begin', 'rollback'])
-        ->and($profile['sections']['views']['payload']['items'][0])
+        ->and($profile['inspectors']['views']['payload']['items'][0])
         ->data->label->toBe('Context view')
         ->data->private_value->toBe('view-data-value')
         ->data->rows->toBe([[
@@ -43,7 +43,7 @@ it('captures Laravel decisions sources transactions and view data', function () 
         ->render_order->toBe(1)
         ->source->file->toBe('tests/Fixtures/views/context.blade.php');
 
-    $event = collect($profile['sections']['events']['payload']['items'])
+    $event = collect($profile['inspectors']['events']['payload']['items'])
         ->firstWhere('name', ProfiledApplicationEvent::class);
 
     expect($event)->not->toBeNull()
@@ -67,7 +67,7 @@ it('captures validation field and rule names with the rendered redirect status',
 
     $response->assertRedirect('/form')->assertHeader('X-NewDebugBar-Profile');
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $validation = $profile['sections']['validation']['payload']['items'][0];
+    $validation = $profile['inspectors']['validation']['payload']['items'][0];
 
     expect($validation)
         ->source->toBe('exception')
@@ -81,10 +81,10 @@ it('captures validation field and rule names with the rendered redirect status',
         ->exception_status->toBe(422)
         ->response_status->toBe(302)
         ->callsite->file->toBe('tests/Support/DefinesTestApplication.php')
-        ->and($profile['sections']['exceptions']['summary']['count'])->toBe(0);
+        ->and($profile['inspectors']['exceptions']['summary']['count'])->toBe(0);
 
     Livewire::test(DebugBar::class, ['profileId' => $response->headers->get('X-NewDebugBar-Profile')])
-        ->call('loadSection', 'validation')
+        ->call('loadInspector', 'validation')
         ->assertSee('2 fields failed validation')
         ->assertSee('signup bag')
         ->assertSee('Validation 422')
@@ -107,7 +107,7 @@ it('carries redirected validation messages into the next profiled page', functio
         ->assertOk()
         ->assertHeader('X-NewDebugBar-Profile');
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $validation = $profile['sections']['validation']['payload']['items'][0];
+    $validation = $profile['inspectors']['validation']['payload']['items'][0];
 
     expect($validation)
         ->source->toBe('session')
@@ -117,10 +117,10 @@ it('carries redirected validation messages into the next profiled page', functio
         ->messages->email->toBe(['The email has already been taken.'])
         ->error_bag->toBe('checkout')
         ->not->toHaveKey('response_status')
-        ->and($profile['sections']['validation']['summary']['count'])->toBe(1);
+        ->and($profile['inspectors']['validation']['summary']['count'])->toBe(1);
 
     Livewire::test(DebugBar::class, ['profileId' => $response->headers->get('X-NewDebugBar-Profile')])
-        ->call('loadSection', 'validation')
+        ->call('loadInspector', 'validation')
         ->assertSee('Carried from the previous request.')
         ->assertSee('The email has already been taken.')
         ->assertSee('Failed rules and source code are not available on this request.');

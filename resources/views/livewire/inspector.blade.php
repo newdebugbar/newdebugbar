@@ -1,4 +1,4 @@
-{{-- Renders the expanded inspector shell, navigation, and section content. --}}
+{{-- Renders the expanded inspector shell, navigation, and inspector content. --}}
 <div
     x-cloak
     x-show.important="barVisible && inspectorOpen"
@@ -52,13 +52,13 @@
 
         <div class="ndb:relative ndb:isolate ndb:flex ndb:min-h-0 ndb:flex-1 ndb:flex-col ndb:sm:flex-row">
             <nav
-                id="newdebugbar-section-navigation"
-                aria-label="Debug sections"
+                id="newdebugbar-inspector-navigation"
+                aria-label="Debug inspectors"
                 class="ndb:hidden ndb:w-[210px] ndb:shrink-0 ndb:flex-col ndb:border-r ndb:border-zinc-200/80 ndb:bg-zinc-50/95 ndb:p-3 ndb:sm:flex ndb:dark:border-zinc-800/80 ndb:dark:bg-zinc-900/60"
             >
                 <template x-if="! mobileToolbarMenu">
-                    <x-newdebugbar::section-navigation
-                        id="newdebugbar-section-list"
+                    <x-newdebugbar::inspector-navigation
+                        id="newdebugbar-inspector-list"
                         class="ndb-scrollbar ndb:overflow-y-auto"
                     />
                 </template>
@@ -69,38 +69,38 @@
                 x-ref="content"
                 class="ndb-scrollbar ndb:min-w-0 ndb:flex-1 ndb:overflow-y-auto ndb:bg-white/70 ndb:lg:flex ndb:lg:flex-col ndb:dark:bg-zinc-950/70"
             >
-                <x-newdebugbar::section-heading>
+                <x-newdebugbar::inspector-heading>
                     <x-slot:heading
-                        data-ndb-section-heading
-                        x-ref="sectionHeading"
+                        data-ndb-inspector-heading
+                        x-ref="inspectorHeading"
                         tabindex="-1"
-                        x-bind:aria-describedby="selected === 'request' ? null : 'newdebugbar-section-description'"
-                        x-text="selectedSection.label"
+                        x-bind:aria-describedby="selected === 'request' ? null : 'newdebugbar-inspector-description'"
+                        x-text="selectedInspector.label"
                     ></x-slot:heading>
                     <x-slot:description
-                        id="newdebugbar-section-description"
-                        data-ndb-section-description
-                        x-ref="sectionDescription"
+                        id="newdebugbar-inspector-description"
+                        data-ndb-inspector-description
+                        x-ref="inspectorDescription"
                         x-show.important="selected !== 'request'"
-                        x-text="selectedSection.description"
+                        x-text="selectedInspector.description"
                     ></x-slot:description>
-                </x-newdebugbar::section-heading>
+                </x-newdebugbar::inspector-heading>
 
                 <div
-                    data-ndb-section-stage
-                    :aria-busy="sectionLoading ? 'true' : 'false'"
+                    data-ndb-inspector-stage
+                    :aria-busy="inspectorLoading ? 'true' : 'false'"
                     class="ndb:relative ndb:min-h-64 ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col"
                 >
                     <div
                         x-cloak
-                        x-show.important="sectionLoadingIndicator"
+                        x-show.important="inspectorLoadingIndicator"
                         x-transition:enter="ndb:transition-opacity ndb:duration-150 ndb:ease-out ndb:motion-reduce:transition-none"
                         x-transition:enter-start="ndb:opacity-0"
                         x-transition:enter-end="ndb:opacity-100"
                         x-transition:leave="ndb:transition-opacity ndb:duration-100 ndb:ease-in ndb:motion-reduce:transition-none"
                         x-transition:leave-start="ndb:opacity-100"
                         x-transition:leave-end="ndb:opacity-0"
-                        data-ndb-section-loading
+                        data-ndb-inspector-loading
                         role="status"
                         aria-live="polite"
                         aria-atomic="true"
@@ -111,18 +111,18 @@
                                 class="ndb-loading-pulse ndb:grid ndb:size-8 ndb:shrink-0 ndb:place-items-center ndb:rounded-lg ndb:bg-indigo-50 ndb:text-indigo-600 ndb:dark:bg-indigo-950 ndb:dark:text-indigo-300"
                                 ><x-newdebugbar::icon name="clock" class="ndb:size-4" /></span
                             ><span class="ndb:text-sm ndb:font-semibold"
-                                >Loading <span x-text="selectedSection.label.toLowerCase()"></span>…</span>
+                                >Loading <span x-text="selectedInspector.label.toLowerCase()"></span>…</span>
                         </div>
                     </div>
 
                     <div
-                        data-ndb-section-content
-                        :class="sectionTransitioning ? 'ndb:opacity-0' : 'ndb:opacity-100'"
+                        data-ndb-inspector-body
+                        :class="inspectorTransitioning ? 'ndb:opacity-0' : 'ndb:opacity-100'"
                         class="ndb:transition-opacity ndb:duration-150 ndb:ease-out ndb:lg:flex ndb:lg:min-h-0 ndb:lg:flex-1 ndb:lg:flex-col ndb:motion-reduce:transition-none"
                     >
                         <div
                             x-cloak
-                            x-show.important="sectionError"
+                            x-show.important="inspectorError"
                             role="alert"
                             class="ndb:m-4 ndb:rounded-xl ndb:border ndb:border-red-200 ndb:bg-red-50/70 ndb:p-4 ndb:dark:border-red-950 ndb:dark:bg-red-950/25 ndb:sm:m-6"
                         >
@@ -136,10 +136,10 @@
                             <div class="ndb:mt-3 ndb:flex ndb:flex-wrap ndb:gap-2">
                                 <button
                                     type="button"
-                                    @click="requestSection(selected, true)"
+                                    @click="requestInspector(selected, true)"
                                     class="ndb:rounded-lg ndb:bg-red-700 ndb:px-3 ndb:py-2 ndb:text-xs ndb:font-bold ndb:text-white ndb:focus-visible:outline-2 ndb:focus-visible:outline-offset-2 ndb:focus-visible:outline-red-500 ndb:dark:bg-red-300 ndb:dark:text-red-950"
                                 >
-                                    Retry section</button
+                                    Retry inspector</button
                                 ><button
                                     type="button"
                                     @click="window.location.reload()"
@@ -150,15 +150,15 @@
                             </div>
                         </div>
 
-                        @island(name: 'section-details', skip: true, always: true)
+                        @island(name: 'inspector-details', skip: true, always: true)
                             @placeholder
-                                <span data-ndb-section-placeholder hidden></span>
+                                <span data-ndb-inspector-placeholder hidden></span>
                             @endplaceholder
 
                             @php($profile = $this->profile)
-                            @php($sectionKey = $selectedSection)
-                            @php($section = $profile['sections'][$sectionKey] ?? null)
-                            @include('newdebugbar::livewire.section-panel')
+                            @php($inspectorKey = $selectedInspector)
+                            @php($inspector = $profile['inspectors'][$inspectorKey] ?? null)
+                            @include('newdebugbar::livewire.inspector-panel')
                         @endisland
                     </div>
                 </div>

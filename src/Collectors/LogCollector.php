@@ -13,8 +13,8 @@ final class LogCollector extends AbstractCollector
         $message = (string) ($item['message'] ?? '');
 
         if ($this->looksLikeMimeMessage($message)) {
-            $item['message'] = 'Mail content captured. Open the Mail section for its preview.';
-            $item['context'] = ['linked_section' => 'mail', 'collapsed' => 'mime_message'];
+            $item['message'] = 'Mail content captured. Open the Mail inspector for its preview.';
+            $item['context'] = ['linked_inspector' => 'mail', 'collapsed' => 'mime_message'];
         }
 
         parent::record($item);

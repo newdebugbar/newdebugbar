@@ -21,7 +21,7 @@ function inspectorPayload(string $html, string $attribute): array
 it('normalizes queue lifecycle and related worker evidence for one active detail', function () {
     $profileId = (string) Str::uuid();
     $workerId = (string) Str::uuid();
-    $section = [
+    $inspector = [
         'summary' => [
             'count' => 2,
             'queued_count' => 1,
@@ -68,8 +68,8 @@ it('normalizes queue lifecycle and related worker evidence for one active detail
     ];
     $profile = ['background_activity' => ['pending' => false]];
 
-    $section['payload']['records'] = app(QueueActivityPresenter::class)->present($section['payload']['items'], $profileId);
-    $html = view('newdebugbar::livewire.sections.queue', compact('profileId', 'profile', 'section'))->render();
+    $inspector['payload']['records'] = app(QueueActivityPresenter::class)->present($inspector['payload']['items'], $profileId);
+    $html = view('newdebugbar::livewire.inspectors.queue', compact('profileId', 'profile', 'inspector'))->render();
     $items = inspectorPayload($html, 'data-ndb-queue-payload');
 
     expect($html)
@@ -79,7 +79,7 @@ it('normalizes queue lifecycle and related worker evidence for one active detail
         ->and($items[0])
         ->status_group->toBe('completed')
         ->related_profile_id->toBe($workerId)
-        ->related_section->toBe('mail')
+        ->related_inspector->toBe('mail')
         ->at_label->toBe('12.5 ms')
         ->display_channels->toBe([])
         ->attempts->toHaveCount(1)
@@ -96,7 +96,7 @@ it('normalizes queue lifecycle and related worker evidence for one active detail
 
 it('keeps protected Redis identifiers out of rows and failure timing truthful', function () {
     $protected = '18b0b12c34d56e78';
-    $section = [
+    $inspector = [
         'summary' => ['count' => 2, 'failed_count' => 1, 'duration_ms' => 1.25],
         'payload' => ['items' => [
             [
@@ -134,8 +134,8 @@ it('keeps protected Redis identifiers out of rows and failure timing truthful', 
         ]],
     ];
 
-    $section['payload']['records'] = app(RedisCommandPresenter::class)->present($section['payload']['items']);
-    $html = view('newdebugbar::livewire.sections.redis', compact('section'))->render();
+    $inspector['payload']['records'] = app(RedisCommandPresenter::class)->present($inspector['payload']['items']);
+    $html = view('newdebugbar::livewire.inspectors.redis', compact('inspector'))->render();
     $items = inspectorPayload($html, 'data-ndb-redis-payload');
     $document = new DOMDocument;
     $previousLibxmlState = libxml_use_internal_errors(true);
@@ -175,11 +175,11 @@ it('renders truthful Queue and Redis empty states', function () {
     $queue = ['summary' => ['duration_ms' => 0, 'failed_count' => 0], 'payload' => ['items' => []]];
     $redis = ['summary' => ['duration_ms' => 0, 'failed_count' => 0], 'payload' => ['items' => []]];
 
-    expect(view('newdebugbar::livewire.sections.queue', [
+    expect(view('newdebugbar::livewire.inspectors.queue', [
         'profileId' => $profileId,
         'profile' => $profile,
-        'section' => $queue,
+        'inspector' => $queue,
     ])->render())->toContain('No queue activity was captured.')
-        ->and(view('newdebugbar::livewire.sections.redis', ['section' => $redis])->render())
+        ->and(view('newdebugbar::livewire.inspectors.redis', ['inspector' => $redis])->render())
         ->toContain('No direct Redis commands were captured.');
 });

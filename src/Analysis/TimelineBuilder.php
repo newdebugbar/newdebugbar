@@ -9,12 +9,12 @@ final class TimelineBuilder
     public function build(array $profile): array
     {
         $duration = (float) ($profile['metrics']['duration_ms'] ?? 0);
-        $runtimeType = $profile['sections']['request']['payload']['runtime_type'] ?? null;
+        $runtimeType = $profile['inspectors']['request']['payload']['runtime_type'] ?? null;
         $subject = is_string($runtimeType) ? str($runtimeType)->title()->toString() : 'Request';
         $timeline = [[
             'id' => 'request-start',
-            'section' => 'request',
-            'section_label' => 'Request',
+            'inspector' => 'request',
+            'inspector_label' => 'Request',
             'kind' => 'milestone',
             'label' => $subject.' started',
             'source' => null,
@@ -23,14 +23,14 @@ final class TimelineBuilder
             'duration_ms' => null,
         ]];
 
-        foreach ($profile['sections'] ?? [] as $section => $data) {
-            if (in_array($section, ['overview', 'request', 'timeline'], true)) {
+        foreach ($profile['inspectors'] ?? [] as $inspector => $data) {
+            if (in_array($inspector, ['overview', 'request', 'timeline'], true)) {
                 continue;
             }
 
             $streams = [['name' => 'item', 'items' => $data['payload']['items'] ?? []]];
 
-            if ($section === 'queries') {
+            if ($inspector === 'queries') {
                 $streams[] = ['name' => 'transaction', 'items' => $data['payload']['transactions'] ?? []];
             }
 
@@ -46,12 +46,12 @@ final class TimelineBuilder
                     $hasDuration = $spanDuration !== null && $spanDuration > 0;
                     $timeline[] = [
                         'id' => $stream['name'] === 'item'
-                            ? $section.'-'.$index
-                            : $section.'-'.$stream['name'].'-'.$index,
-                        'section' => $section,
-                        'section_label' => $this->sectionLabel($section),
+                            ? $inspector.'-'.$index
+                            : $inspector.'-'.$stream['name'].'-'.$index,
+                        'inspector' => $inspector,
+                        'inspector_label' => $this->inspectorLabel($inspector),
                         'kind' => $hasDuration ? 'span' : 'point',
-                        'label' => $this->label($section, $item),
+                        'label' => $this->label($inspector, $item),
                         'source' => $this->source($item),
                         'at_ms' => round((float) $item['at_ms'], 3),
                         'start_ms' => $hasDuration ? round(max(0, (float) $item['at_ms'] - $spanDuration), 3) : null,
@@ -63,8 +63,8 @@ final class TimelineBuilder
 
         $timeline[] = [
             'id' => 'request-end',
-            'section' => 'request',
-            'section_label' => 'Request',
+            'inspector' => 'request',
+            'inspector_label' => 'Request',
             'kind' => 'milestone',
             'label' => $subject.' finished',
             'source' => null,
@@ -96,11 +96,11 @@ final class TimelineBuilder
     {
         $omitted = [];
 
-        foreach ($profile['sections'] ?? [] as $section => $data) {
+        foreach ($profile['inspectors'] ?? [] as $inspector => $data) {
             $dropped = (int) ($data['summary']['dropped_count'] ?? 0);
 
             if ($dropped > 0) {
-                $omitted[(string) $section] = $dropped;
+                $omitted[(string) $inspector] = $dropped;
             }
 
             $transactionDropped = (int) ($data['summary']['transaction_dropped_count'] ?? 0);
@@ -114,9 +114,9 @@ final class TimelineBuilder
     }
 
     /** @param array<string, mixed> $item */
-    private function label(string $section, array $item): string
+    private function label(string $inspector, array $item): string
     {
-        $label = match ($section) {
+        $label = match ($inspector) {
             'queries' => ($item['kind'] ?? null) !== null
                 ? 'Transaction '.$item['kind'].' '.($item['connection'] ?? '')
                 : ($item['normalized_sql'] ?? $item['sql'] ?? 'Query'),
@@ -133,7 +133,7 @@ final class TimelineBuilder
             'exceptions' => $item['class'] ?? 'Exception',
             'authorization' => trim(ucfirst((string) ($item['result'] ?? 'checked')).' '.($item['ability'] ?? 'authorization')),
             'validation' => $this->validationLabel($item),
-            default => $item['name'] ?? $item['event'] ?? $item['operation'] ?? ucfirst($section),
+            default => $item['name'] ?? $item['event'] ?? $item['operation'] ?? ucfirst($inspector),
         };
 
         $label = (string) $label;
@@ -141,13 +141,13 @@ final class TimelineBuilder
         return mb_strlen($label) > 140 ? mb_substr($label, 0, 139).'…' : $label;
     }
 
-    private function sectionLabel(string $section): string
+    private function inspectorLabel(string $inspector): string
     {
-        return match ($section) {
+        return match ($inspector) {
             'http_client' => 'HTTP Client',
             'redis' => 'Redis',
             'livewire' => 'Livewire',
-            default => str($section)->replace('_', ' ')->title()->toString(),
+            default => str($inspector)->replace('_', ' ')->title()->toString(),
         };
     }
 

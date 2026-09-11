@@ -11,7 +11,7 @@ export function createPreferences(context) {
     theme: ['system', 'light', 'dark'].includes(summary.theme) ? summary.theme : 'system',
     resolvedTheme: 'light',
     favorites: [],
-    sectionOrder: [],
+    inspectorOrder: [],
     colorScheme: null,
     colorSchemeListener: null,
 
@@ -26,9 +26,11 @@ export function createPreferences(context) {
           this.toolbarDragTarget = saved.toolbarAnchor;
           this.toolbarDragOriginPlacement = saved.toolbarAnchor;
         }
-        for (const preference of ['favorites', 'sectionOrder']) {
+        for (const preference of ['favorites', 'inspectorOrder']) {
           if (Array.isArray(saved[preference])) {
-            this[preference] = [...new Set(saved[preference])].filter((key) => this.sectionKeys.includes(key));
+            this[preference] = [...new Set(saved[preference])].filter((key) =>
+              this.inspectorKeys.includes(key),
+            );
           }
         }
       } catch {
@@ -44,7 +46,7 @@ export function createPreferences(context) {
             theme: this.theme,
             toolbarAnchor: this.toolbarPreferredPlacement,
             favorites: this.favorites,
-            sectionOrder: this.sectionOrder,
+            inspectorOrder: this.inspectorOrder,
           }),
         );
       } catch {
@@ -57,7 +59,7 @@ export function createPreferences(context) {
     },
 
     toggleFavorite(key) {
-      if (!this.sectionKeys.includes(key)) return;
+      if (!this.inspectorKeys.includes(key)) return;
 
       this.favorites = this.favorites.includes(key)
         ? this.favorites.filter((favorite) => favorite !== key)
@@ -66,14 +68,14 @@ export function createPreferences(context) {
       this.$nextTick?.(() => this.$root?.querySelector?.(`[data-ndb-toggle-favorite="${key}"]`)?.focus?.());
     },
 
-    get sectionSortConfig() {
+    get inspectorSortConfig() {
       return {
-        draggable: '[data-ndb-section]',
-        dataIdAttr: 'data-ndb-section',
-        ghostClass: 'ndb-section-dragging',
-        chosenClass: 'ndb-section-chosen',
-        dragClass: 'ndb-section-drag',
-        fallbackClass: 'ndb-section-drag',
+        draggable: '[data-ndb-inspector]',
+        dataIdAttr: 'data-ndb-inspector',
+        ghostClass: 'ndb-inspector-dragging',
+        chosenClass: 'ndb-inspector-chosen',
+        dragClass: 'ndb-inspector-drag',
+        fallbackClass: 'ndb-inspector-drag',
         delay: 180,
         delayOnTouchOnly: true,
         touchStartThreshold: 5,
@@ -81,7 +83,7 @@ export function createPreferences(context) {
         // Drag previews must not become Alpine components or alter the host body.
         onClone: ({ clone }) => clone.setAttribute('x-ignore', ''),
         onStart: ({ item }) => {
-          item.parentElement.querySelectorAll('.ndb-section-drag').forEach((preview) => {
+          item.parentElement.querySelectorAll('.ndb-inspector-drag').forEach((preview) => {
             if (preview !== item) preview.setAttribute('x-ignore', '');
           });
         },
@@ -89,21 +91,24 @@ export function createPreferences(context) {
       };
     },
 
-    moveSection(key, direction) {
-      const peers = this.navigationSections(this.isFavorite(key));
-      const index = peers.findIndex((section) => section.key === key);
-      if (index >= 0) this.sortSection(key, index + direction);
+    moveInspector(key, direction) {
+      const peers = this.navigationInspectors(this.isFavorite(key));
+      const index = peers.findIndex((inspector) => inspector.key === key);
+      if (index >= 0) this.sortInspector(key, index + direction);
     },
 
-    sortSection(key, position) {
-      const peers = this.navigationSections(this.isFavorite(key));
-      const index = peers.findIndex((section) => section.key === key);
+    sortInspector(key, position) {
+      const peers = this.navigationInspectors(this.isFavorite(key));
+      const index = peers.findIndex((inspector) => inspector.key === key);
       const target = peers[position]?.key;
       if (index < 0 || !target || target === key) return;
 
-      const preference = this.isFavorite(key) ? 'favorites' : 'sectionOrder';
-      const order = preference === 'favorites' ? this.favorites : this.sectionsInOrder.map((section) => section.key);
-      const reordered = order.filter((section) => section !== key);
+      const preference = this.isFavorite(key) ? 'favorites' : 'inspectorOrder';
+      const order =
+        preference === 'favorites'
+          ? this.favorites
+          : this.inspectorsInOrder.map((inspector) => inspector.key);
+      const reordered = order.filter((inspector) => inspector !== key);
       reordered.splice(reordered.indexOf(target) + (position > index ? 1 : 0), 0, key);
       this[preference] = reordered;
       this.persist();

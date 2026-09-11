@@ -303,8 +303,8 @@ it('uses only the existing request split button at every corner', function () {
         ->click('[data-ndb-corner-request]')
         ->assertVisible('[role="dialog"][aria-label="Request inspector"]')
         ->assertAttribute('[role="dialog"][aria-label="Request inspector"]', 'data-ndb-placement', 'bottom')
-        ->assertVisible('[data-ndb-section-panel="request"]')
-        ->assertScript('document.querySelector("[data-ndb-section-heading]").textContent.trim() === "Requests"')
+        ->assertVisible('[data-ndb-inspector-panel="request"]')
+        ->assertScript('document.querySelector("[data-ndb-inspector-heading]").textContent.trim() === "Requests"')
         ->click('[data-ndb-window-controls="expanded"] [data-ndb-window-action="shrink"]')
         ->assertVisible('[data-ndb-corner-toolbar]')
         ->assertNoJavaScriptErrors();

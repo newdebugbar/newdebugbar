@@ -8,7 +8,7 @@ it('stores and serves bounded local previews with downloadable attachments', fun
     $response = $this->get('/profiled-messages', ['Accept' => 'text/html'])->assertOk();
     $profileId = $response->headers->get('X-NewDebugBar-Profile');
     $profile = app(ProfileStore::class)->get($profileId);
-    $preview = $profile['sections']['mail']['payload']['items'][0]['preview'];
+    $preview = $profile['inspectors']['mail']['payload']['items'][0]['preview'];
 
     expect($preview)
         ->subject->toBe('private subject')
@@ -27,7 +27,7 @@ it('stores and serves bounded local previews with downloadable attachments', fun
         ]])
         ->and($preview['eml'])->toContain('private.txt', base64_encode('private attachment'));
 
-    $profile['sections']['mail']['payload']['items'][0]['preview']['html'] = '<script>window.top.location="https://example.test"</script><h1>Safe preview</h1>';
+    $profile['inspectors']['mail']['payload']['items'][0]['preview']['html'] = '<script>window.top.location="https://example.test"</script><h1>Safe preview</h1>';
     app(ProfileStore::class)->put($profile);
 
     $htmlResponse = $this->get(route('newdebugbar.mail-preview', [
@@ -81,7 +81,7 @@ it('stores and serves bounded local previews with downloadable attachments', fun
     expect($emlResponse->getContent())->toContain('private.txt', base64_encode('private attachment'));
 
     Livewire::test(DebugBar::class, ['profileId' => $profileId])
-        ->call('loadSection', 'mail')
+        ->call('loadInspector', 'mail')
         ->assertSee('Download .EML')
         ->assertSee('Download')
         ->assertSee('Open preview');

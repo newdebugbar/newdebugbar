@@ -39,13 +39,13 @@ it('stores an Artisan profile with argument names but never values', function ()
 
     expect($profile)
         ->profile_type->toBe('artisan')
-        ->sections->request->label->toBe('Runtime')
-        ->sections->request->summary->method->toBe('CLI')
-        ->sections->request->summary->exit_code->toBe(0)
-        ->sections->request->payload->path->toBe('artisan:clinic:sync')
-        ->sections->request->payload->context->argument_names->toBe(['command', 'clinic'])
-        ->sections->request->payload->context->option_names->toBe(['token'])
-        ->sections->queries->summary->count->toBe(1)
+        ->inspectors->request->label->toBe('Runtime')
+        ->inspectors->request->summary->method->toBe('CLI')
+        ->inspectors->request->summary->exit_code->toBe(0)
+        ->inspectors->request->payload->path->toBe('artisan:clinic:sync')
+        ->inspectors->request->payload->context->argument_names->toBe(['command', 'clinic'])
+        ->inspectors->request->payload->context->option_names->toBe(['token'])
+        ->inspectors->queries->summary->count->toBe(1)
         ->and(json_encode($profile))->not->toContain('private-clinic-id', 'private-token');
 });
 
@@ -63,7 +63,7 @@ it('stores a failed test command as a warning profile', function () {
 
     expect($profile)
         ->profile_type->toBe('test')
-        ->sections->request->summary->exit_code->toBe(1)
+        ->inspectors->request->summary->exit_code->toBe(1)
         ->and($summary)
         ->request_type->toBe('test')
         ->warning->toBeTrue()
@@ -80,18 +80,18 @@ it('stores successful and failed queue worker jobs as separate profiles', functi
     }
 
     $profiles = app(ProfileStore::class)->recent();
-    $failed = collect($profiles)->first(fn (array $profile): bool => $profile['sections']['request']['summary']['exit_code'] === 1);
-    $successful = collect($profiles)->first(fn (array $profile): bool => $profile['sections']['request']['summary']['exit_code'] === 0);
+    $failed = collect($profiles)->first(fn (array $profile): bool => $profile['inspectors']['request']['summary']['exit_code'] === 1);
+    $successful = collect($profiles)->first(fn (array $profile): bool => $profile['inspectors']['request']['summary']['exit_code'] === 0);
 
     expect($profiles)->toHaveCount(2)
         ->and($successful)
         ->profile_type->toBe('queue')
-        ->sections->queue->summary->executed_count->toBe(1)
-        ->sections->exceptions->summary->count->toBe(0)
+        ->inspectors->queue->summary->executed_count->toBe(1)
+        ->inspectors->exceptions->summary->count->toBe(0)
         ->and($failed)
         ->profile_type->toBe('queue')
-        ->sections->queue->summary->failed_count->toBe(1)
-        ->sections->exceptions->summary->count->toBe(1)
+        ->inspectors->queue->summary->failed_count->toBe(1)
+        ->inspectors->exceptions->summary->count->toBe(1)
         ->and(json_encode($profiles))->not->toContain('private successful payload', 'private failed payload', 'private failure message');
 });
 
@@ -106,7 +106,7 @@ it('resolves the profiler from the worker scope after Laravel forgets scoped ins
 
     expect(app(RuntimeProfiler::class))->not->toBe($bootProfiler)
         ->and($profile)->toBeArray()
-        ->and($profile['sections']['queue']['summary']['executed_count'])->toBe(1);
+        ->and($profile['inspectors']['queue']['summary']['executed_count'])->toBe(1);
 });
 
 it('does not wrap long running commands in one unbounded profile', function (string $command) {

@@ -253,11 +253,16 @@ export const defaultRuntime = () => ({
 });
 
 export function composeState(...parts) {
-  return Object.defineProperties({}, Object.assign({}, ...parts.map((part) => Object.getOwnPropertyDescriptors(part))));
+  return Object.defineProperties(
+    {},
+    Object.assign({}, ...parts.map((part) => Object.getOwnPropertyDescriptors(part))),
+  );
 }
 
-export function readSectionPayload(root, selector) {
+export function readInspectorPayload(root, selector) {
   const encoded = root?.querySelector?.(selector)?.textContent?.trim();
   if (!encoded) return null;
-  return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0))));
+  return JSON.parse(
+    new TextDecoder().decode(Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0))),
+  );
 }

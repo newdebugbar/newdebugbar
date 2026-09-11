@@ -13,7 +13,7 @@ Give each piece of content one clear job:
 3. **Evidence:** the retained body, values, records, changes, or source that lets the developer investigate. Let substantial content use the detail pane's width.
 4. **Interpretation:** a finding or explanation only when evidence needs context or a conditional next check.
 
-Use the order that fits the data. An HTTP response benefits from result facts before its body; a log needs its message before its context; Requests has a semantic lifecycle. Shared design language does not require identical tabs or a timeline in every section.
+Use the order that fits the data. An HTTP response benefits from result facts before its body; a log needs its message before its context; Requests has a semantic lifecycle. Shared design language does not require identical tabs or a timeline in every inspector.
 
 An identity header may include host, level, or another fact that helps identify the item. Do not force useful context into a tab solely because of its field name. Put one primary source location beside the evidence it explains and disclose supporting frames. When a stack is the primary evidence, show it directly. A dedicated Source tab is a choice for dense source evidence, not a universal requirement.
 
@@ -23,7 +23,7 @@ An identity header may include host, level, or another fact that helps identify 
 - Use one-pixel dividers, neutral surfaces, and the existing shared corner and control treatments. Avoid adding a box around every evidence group.
 - Keep code in a full-width evidence block when it is the main content. Use label/value rows for short comparable facts, not as a narrow column around a large payload.
 - Change shared typography, padding, dividers, tabs, and controls in their owning components. Remove conflicting consumer overrides during the migration instead of adding a second treatment.
-- Keep section-specific layout and content choices private. Extract a stable rule when independent sections actually share it; do not add props for imagined future uses.
+- Keep inspector-specific layout and content choices private. Extract a stable rule when independent inspectors actually share it; do not add props for imagined future uses.
 - Treat mockups as hierarchy and interaction guidance. Use arbitrary values only for a concrete constraint the normal scale cannot express, such as a measured column track or anchored geometry.
 
 ## Truth before presentation
@@ -65,7 +65,7 @@ Do not select the first item merely to fill space. When selection is not a delib
 
 ### Height and scrolling
 
-- Make the complete parent height chain support the intended section height.
+- Make the complete parent height chain support the intended inspector height.
 - Give each view one clear vertical scroll owner.
 - Avoid nested full-height scroll regions.
 - Verify that headers and controls stay reachable at short desktop heights.
@@ -103,13 +103,13 @@ Do not select the first item merely to fill space. When selection is not a delib
 - Put the search field first, with its search icon on the left and balanced inset spacing.
 - Put a compact filter dropdown on the right of search when the list needs one dimension of filtering.
 - Keep filtering in dropdowns. In a table-like list, put useful sorting on the comparable column heading instead of adding a separate sort dropdown.
-- Use the shared sortable heading, start with the most useful direction, then toggle the other direction and return to the section's deliberate default order. Keep a fixed indicator slot and change the active heading color so neither the label nor its column moves when the indicator appears or disappears.
+- Use the shared sortable heading, start with the most useful direction, then toggle the other direction and return to the inspector's deliberate default order. Keep a fixed indicator slot and change the active heading color so neither the label nor its column moves when the indicator appears or disappears.
 - Do not add sorting to a chronology or semantic sequence whose order already carries meaning.
 - Use a segmented control for a small, mutually exclusive set of detail views.
 - Center detail tabs in their container. Keep them left-aligned only when another control in the same row makes centered placement misleading, as in Mail.
 - Prefer explicit labels and stable widths. At a 390px viewport, an icon-only tab is acceptable only when the full set cannot fit, every icon has an accurate accessible label, and the meaning is familiar in context.
-- “All” is often useful, but it is not a universal default. Choose the state that suppresses noise and answers the common question for that section.
-- Keep active non-favorite sections in alphabetical navigation order, including Requests. A section's default-open behavior must not change its navigation position.
+- “All” is often useful, but it is not a universal default. Choose the state that suppresses noise and answers the common question for that inspector.
+- Keep active non-favorite inspectors in alphabetical navigation order, including Requests. An inspector's default-open behavior must not change its navigation position.
 
 ## Headers and facts
 
@@ -140,10 +140,10 @@ Do not explain Source, repeat a heading, or narrate ordinary table columns. A ne
 - Provide visible success or failure feedback after clipboard and async actions.
 - Remove actions that do not change what the developer can learn or do.
 
-## Section-specific defaults
+## Inspector-specific defaults
 
-- Inspector: do not expose a top-level Overview section unless user demand proves it useful. Open Requests by default, while retaining captured overview/runtime evidence for summaries, MCP, and other non-UI consumers. This does not affect section-specific detail tabs named Overview.
-- Requests: preserve the Received, Matched, and Responded lifecycle trace and collapsed Request details disclosure. Use quiet duotone icons; align each node, heading, and first evidence line on desktop, and stack the evidence below its heading on smaller screens. Keep the method badge borderless, omit a zero-byte request size, and show the response content type, size, and total request duration under Responded. Keep query counts and Timeline navigation in the existing toolbar and sidebar. It is an intentional exception to the shared inspector-workspace presentation; keep the global section shell, height chain, and host isolation around it without replacing its internal flow with tabs or list/detail controls.
+- Inspector: do not expose a top-level Overview inspector unless user demand proves it useful. Open Requests by default, while retaining captured overview/runtime evidence for summaries, MCP, and other non-UI consumers. This does not affect inspector-specific detail tabs named Overview.
+- Requests: preserve the Received, Matched, and Responded lifecycle trace and collapsed Request details disclosure. Use quiet duotone icons; align each node, heading, and first evidence line on desktop, and stack the evidence below its heading on smaller screens. Keep the method badge borderless, omit a zero-byte request size, and show the response content type, size, and total request duration under Responded. Keep query counts and Timeline navigation in the existing toolbar and sidebar. It is an intentional exception to the shared inspector-workspace presentation; keep the global inspector shell, height chain, and host isolation around it without replacing its internal flow with tabs or list/detail controls.
 - HTTP Client: list filter uses a dropdown and the detail opens on Response. Group the method and URL as identity, with host as supporting context when useful, then show response outcome and useful response facts before the body. Keep Request evidence available. Place the primary application source with the evidence it explains and disclose deeper retained source only as needed; do not require a separate Source tab.
 - Cache: list operation filter uses a dropdown; operation badge and key share one header line. Keep useful operation facts, a full-width captured value, and a compact source with supporting frames in one reading view.
 - Redis: keep command facts and key evidence in one selected-command reading view. Put the shared operation badge and primary key on one compact header line. Do not split sparse Overview and Keys content into tabs; place the copy action beside the keys and explain protected identifiers only when they are shown.

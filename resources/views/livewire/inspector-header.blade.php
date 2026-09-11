@@ -64,7 +64,7 @@
             </x-newdebugbar::toolbar-button>
 
             <x-newdebugbar::toolbar-button
-                section="request"
+                inspector="request"
                 data-ndb-header-fact="duration"
                 class="ndb:order-3 ndb:flex ndb:min-w-max ndb:shrink-0 ndb:sm:px-2 ndb:lg:px-2.5"
             >
@@ -104,7 +104,7 @@
             </x-newdebugbar::toolbar-button>
 
             <x-newdebugbar::toolbar-button
-                section="queries"
+                inspector="queries"
                 data-ndb-header-fact="queries"
                 class="ndb:order-2 ndb:flex ndb:min-w-max ndb:shrink-0 ndb:sm:px-2 ndb:lg:px-2.5"
             >

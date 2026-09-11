@@ -4,7 +4,7 @@
     $metrics = [
         [
             'key' => 'queries',
-            'section' => 'queries',
+            'inspector' => 'queries',
             'label' => 'Queries',
             'shortLabel' => 'QRY',
             'value' => 'summary.query_count',
@@ -12,7 +12,7 @@
         ],
         [
             'key' => 'duration',
-            'section' => 'request',
+            'inspector' => 'request',
             'label' => 'Time',
             'shortLabel' => 'Time',
             'value' => 'summary.duration_label',
@@ -20,7 +20,7 @@
         ],
         [
             'key' => 'memory',
-            'section' => null,
+            'inspector' => null,
             'label' => 'Peak MB',
             'shortLabel' => 'MB',
             'value' => 'summary.peak_memory_mb',
@@ -35,12 +35,12 @@
     {{ $attributes->class('ndb:grid ndb:w-[8.25rem] ndb:flex-none ndb:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)] ndb:items-stretch ndb:min-[360px]:w-36') }}
 >
     @foreach ($metrics as $metric)
-        @if ($metric['section'])
+        @if ($metric['inspector'])
             <button
                 type="button"
                 data-ndb-mobile-toolbar-metric="{{ $metric['key'] }}"
                 data-ndb-mobile-toolbar-metric-scope="{{ $scope }}"
-                @click="inspectorOpen ? inspector.selectSection(@js($metric['section'])) : openInspector(@js($metric['section']))"
+                @click="inspectorOpen ? inspector.selectInspector(@js($metric['inspector'])) : openInspector(@js($metric['inspector']))"
                 aria-label="{{ $metric['ariaLabel'] }}"
                 class="ndb:relative ndb:flex ndb:min-h-11 ndb:min-w-0 ndb:flex-col ndb:items-center ndb:justify-center ndb:rounded-lg ndb:transition-colors ndb:hover:bg-zinc-100/80 ndb:focus-visible:z-10 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500 ndb:dark:hover:bg-white/10"
             >
@@ -60,7 +60,7 @@
             data-ndb-mobile-toolbar-metric-label="{{ $metric['key'] }}"
             class="ndb:block ndb:max-w-full ndb:truncate ndb:text-xs ndb:font-semibold ndb:leading-[14px] ndb:uppercase ndb:tracking-normal ndb:text-zinc-400"
         >{{ $metric['shortLabel'] }}</span>
-        @if ($metric['section'])
+        @if ($metric['inspector'])
         </button>
         @else
         </div>

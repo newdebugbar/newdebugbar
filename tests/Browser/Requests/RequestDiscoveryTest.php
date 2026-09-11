@@ -238,7 +238,7 @@ it('collects background requests in the split button without changing the host p
             })()
             JS)
         ->assertNoJavaScriptErrors()
-        ->assertVisible('[data-ndb-section-panel="request"]')
+        ->assertVisible('[data-ndb-inspector-panel="request"]')
         ->assertVisible('[data-ndb-request-picker-trigger="header"]')
         ->assertSeeIn('[data-ndb-request-badge="header"]', '2')
         ->click('[data-ndb-request-picker-trigger="header"]')

@@ -96,7 +96,9 @@ export function createToolbar(context) {
     },
 
     toolbarPreviewHeight(placement) {
-      return TOOLBAR_CORNER_PLACEMENTS.includes(placement) ? this.toolbarCornerHeight : this.toolbarCenterHeight;
+      return TOOLBAR_CORNER_PLACEMENTS.includes(placement)
+        ? this.toolbarCornerHeight
+        : this.toolbarCenterHeight;
     },
 
     toolbarTargetAt(clientX, clientY) {
@@ -111,7 +113,10 @@ export function createToolbar(context) {
     startToolbarDrag(event) {
       if (!this.barVisible || this.inspectorOpen || this.toolbarDragPointerId !== null) return;
       if (event.isPrimary === false || (event.pointerType === 'mouse' && event.button !== 0)) return;
-      if (event.target?.closest?.('[role="menu"], [role="listbox"], [role="dialog"], input, select, textarea')) return;
+      if (
+        event.target?.closest?.('[role="menu"], [role="listbox"], [role="dialog"], input, select, textarea')
+      )
+        return;
 
       const toolbar = event.currentTarget;
       const box = toolbar?.getBoundingClientRect?.();
@@ -147,7 +152,10 @@ export function createToolbar(context) {
     moveToolbarDrag(event) {
       if (event.pointerId !== this.toolbarDragPointerId) return;
 
-      const distance = Math.hypot(event.clientX - this.toolbarDragStartX, event.clientY - this.toolbarDragStartY);
+      const distance = Math.hypot(
+        event.clientX - this.toolbarDragStartX,
+        event.clientY - this.toolbarDragStartY,
+      );
 
       if (!this.toolbarDragging && distance < 6) return;
 
@@ -347,7 +355,8 @@ export function createToolbar(context) {
 
             this.toolbarDragOffsetX = 0;
             this.toolbarDragOffsetY = 0;
-            this.toolbarSnapTimer = browser.schedule?.(() => this.finishToolbarSnap(snapVersion), 500) ?? null;
+            this.toolbarSnapTimer =
+              browser.schedule?.(() => this.finishToolbarSnap(snapVersion), 500) ?? null;
           };
 
           if (browser.nextFrame) browser.nextFrame(settle);
@@ -412,12 +421,12 @@ export function createToolbar(context) {
       });
     },
 
-    openSectionFromToolbar(section) {
+    openInspectorFromToolbar(inspector) {
       const returnFocus = this.mobileToolbarReturnFocus;
       this.closeMobileToolbarMenu(false);
 
-      if (this.inspectorOpen) this.selectSection(section, null, true);
-      else this.openInspector(section, returnFocus);
+      if (this.inspectorOpen) this.selectInspector(inspector, null, true);
+      else this.openInspector(inspector, returnFocus);
     },
 
     moveMobileToolbarMenu(direction, menu) {

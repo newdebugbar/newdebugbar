@@ -169,12 +169,16 @@
 
                     <x-newdebugbar::inspector-action
                         icon="external-link"
-                        data-ndb-event-related-section
-                        x-show.important="selectedEvent.related_section"
-                        @click="inspector.navigateToSection(selectedEvent.related_section.key)"
+                        data-ndb-event-related-inspector
+                        x-show.important="selectedEvent.related_inspector"
+                        @click="inspector.navigateToInspector(selectedEvent.related_inspector.key)"
                         class="ndb:mt-4 ndb:sm:mt-6"
                     >
-                        <span x-text="selectedEvent.related_section ? 'Open ' + selectedEvent.related_section.label : ''"></span>
+                        <span
+                            x-text="
+                                selectedEvent.related_inspector ? 'Open ' + selectedEvent.related_inspector.label : ''
+                            "
+                        ></span>
                     </x-newdebugbar::inspector-action>
 
                     <details

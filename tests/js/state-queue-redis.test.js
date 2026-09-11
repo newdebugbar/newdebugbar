@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { runtime, summary, sectionHarness, listRow } from './state-test-support.js';
+import { runtime, summary, inspectorHarness, listRow } from './state-test-support.js';
 
 function row(dataset, focused) {
   return { ...listRow(dataset), focus: (options) => focused.push([dataset, options]) };
@@ -9,7 +9,7 @@ function row(dataset, focused) {
 
 test('Queue searches, filters, selects, and restores mobile list focus', () => {
   const browser = runtime();
-  const { state, shell } = sectionHarness('queue', summary, browser);
+  const { state, shell } = inspectorHarness('queue', summary, browser);
   const focused = [];
   const detailScrolls = [];
   const contentScrolls = [];
@@ -102,7 +102,7 @@ test('Queue searches, filters, selects, and restores mobile list focus', () => {
 });
 
 test('Queue preserves retained attempts while filtering and changing the selection', () => {
-  const { state, shell } = sectionHarness('queue', summary, runtime());
+  const { state, shell } = inspectorHarness('queue', summary, runtime());
   const rows = [
     row({ ndbQueueExecution: '1', ndbQueueGroup: 'completed' }, []),
     row({ ndbQueueExecution: '2', ndbQueueGroup: 'failed' }, []),
@@ -145,7 +145,7 @@ test('Queue preserves retained attempts while filtering and changing the selecti
 
 test('Redis builds bounded search state and keeps failed filtering truthful', () => {
   const browser = runtime();
-  const { state, shell } = sectionHarness('redis', summary, browser);
+  const { state, shell } = inspectorHarness('redis', summary, browser);
   const focused = [];
   const rows = [
     row({ ndbRedisExecution: '1', ndbRedisFailed: 'false' }, focused),

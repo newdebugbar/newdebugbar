@@ -99,7 +99,7 @@
                     <x-newdebugbar::inspector-action
                         icon="external-link"
                         data-ndb-log-review-exception
-                        @click="inspector.navigateToSection('exceptions')"
+                        @click="inspector.navigateToInspector('exceptions')"
                         class="ndb:bg-transparent"
                     >
                         Review in Exceptions

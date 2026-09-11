@@ -15,10 +15,10 @@ it('keeps activity evidence and every trace step together with accessible help',
             ->click('[data-ndb-mobile-toolbar-action="inspector"]')
             ->click('[data-ndb-header-mobile-trigger="actions"]')
             ->click('[data-ndb-header-mobile-action="palette"]')
-            ->click('[data-ndb-command="section:livewire"]');
+            ->click('[data-ndb-command="inspector:livewire"]');
     } else {
         $page->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
-        DebugBarBrowser::selectSectionViaPalette($page, 'livewire');
+        DebugBarBrowser::selectInspectorViaPalette($page, 'livewire');
     }
 
     DebugBarBrowser::waitForDetails($page);
@@ -36,7 +36,7 @@ it('keeps activity evidence and every trace step together with accessible help',
         ->assertPresent('[data-ndb-livewire-trace]')
         ->assertScript(<<<'JS'
             (() => {
-                const state = Alpine.$data(document.querySelector('[data-ndb-loaded-section="livewire"]'));
+                const state = Alpine.$data(document.querySelector('[data-ndb-loaded-inspector="livewire"]'));
                 const phases = state.selectedLivewireActivity.phases;
                 const names = [...document.querySelectorAll('[data-ndb-livewire-phase]')].map((el) => el.dataset.ndbLivewirePhase);
 
@@ -48,7 +48,7 @@ it('keeps activity evidence and every trace step together with accessible help',
     // Retain repeated stream chunks without regrouping or deduplicating them.
     $page->script(<<<'JS'
         (() => {
-            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-section="livewire"]'));
+            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-inspector="livewire"]'));
             const selected = state.livewireSelectedActivityId;
             const item = state.selectedLivewireActivity;
             const sent = item.phases.find((phase) => phase.name === 'Sent');
@@ -70,7 +70,7 @@ it('keeps activity evidence and every trace step together with accessible help',
 
     $assertTrace = <<<'JS'
         (() => {
-            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-section="livewire"]'));
+            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-inspector="livewire"]'));
             const phases = state.selectedLivewireActivity.phases;
             const rows = [...document.querySelectorAll('[data-ndb-livewire-phase]')];
             const evidence = document.querySelector('[data-ndb-livewire-activity-evidence]');
@@ -97,7 +97,7 @@ it('keeps activity evidence and every trace step together with accessible help',
         JS;
     $assertHelp = <<<'JS'
         (() => {
-            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-section="livewire"]'));
+            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-inspector="livewire"]'));
             const open = document.querySelector('[data-ndb-livewire-phase-trigger][aria-expanded="true"]');
             const help = document.getElementById(open?.getAttribute('aria-describedby'));
             const name = open?.closest('[data-ndb-livewire-phase]').dataset.ndbLivewirePhase;
@@ -160,7 +160,7 @@ it('keeps activity evidence and every trace step together with accessible help',
     // A failed update keeps exactly the checkpoints it reached.
     $page->script(<<<'JS'
         (() => {
-            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-section="livewire"]'));
+            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-inspector="livewire"]'));
             const selected = state.livewireSelectedActivityId;
             state.livewireTrace = {
                 ...state.livewireTrace,
@@ -186,7 +186,7 @@ it('keeps activity evidence and every trace step together with accessible help',
 
     $page->script(<<<'JS'
         (() => {
-            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-section="livewire"]'));
+            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-inspector="livewire"]'));
             const other = state.livewireActivity.find((item) => item.id !== state.livewireSelectedActivityId);
             state.selectLivewireActivity(other.id);
         })()

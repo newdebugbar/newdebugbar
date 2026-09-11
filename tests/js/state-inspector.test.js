@@ -46,7 +46,7 @@ test('the request action reuses an open inspector and opens a closed one', () =>
   const opener = {};
   const state = createNewDebugBar(
     {
-      sections: [
+      inspectors: [
         { key: 'request', label: 'Request' },
         { key: 'queries', label: 'Queries' },
       ],
@@ -54,19 +54,19 @@ test('the request action reuses an open inspector and opens a closed one', () =>
     browser,
   );
   state.$root = { querySelectorAll: () => [] };
-  state.$wire = { loadSection: async () => {} };
+  state.$wire = { loadInspector: async () => {} };
   state.$nextTick = (callback) => callback();
-  state.loadedSection = 'request';
+  state.loadedInspector = 'request';
   state.inspectorOpen = true;
 
-  state.openRequestSection();
+  state.openRequestInspector();
 
   assert.equal(state.selected, 'request');
   assert.equal(browser.host.locks, 0);
 
   state.inspectorOpen = false;
-  state.selectSection('queries');
-  state.openRequestSection(opener);
+  state.selectInspector('queries');
+  state.openRequestInspector(opener);
 
   assert.equal(state.inspectorOpen, true);
   assert.equal(state.selected, 'request');
@@ -156,7 +156,7 @@ test('mobile toolbar menus manage focus and hand off to overlays', () => {
   const browser = runtime();
   browser.activeElement = () => active;
   const state = createNewDebugBar(summary, browser);
-  state.$wire = { loadSection: async () => {} };
+  state.$wire = { loadInspector: async () => {} };
   state.$refs = { paletteSearch };
   state.$root = {
     querySelector: (selector) => (selector.includes('data-ndb-mobile-toolbar-menu') ? menuItem : shrink),
@@ -174,7 +174,7 @@ test('mobile toolbar menus manage focus and hand off to overlays', () => {
   state.openMobileToolbarMenu('header-actions', actionsOpener);
   assert.equal(state.mobileToolbarMenu, 'header-actions');
   assert.equal(menuItemFocused, 1);
-  state.openSectionFromToolbar('queries');
+  state.openInspectorFromToolbar('queries');
   assert.equal(state.mobileToolbarMenu, null);
   assert.equal(state.selected, 'queries');
   assert.equal(state.inspectorOpen, true);
@@ -190,7 +190,13 @@ test('mobile toolbar menus manage focus and hand off to overlays', () => {
   assert.equal(state.mobileToolbarMenu, 'actions');
   assert.equal(menuItemFocused, 2);
 
-  state.handleShortcut({ metaKey: false, ctrlKey: false, shiftKey: false, key: 'Escape', preventDefault() {} });
+  state.handleShortcut({
+    metaKey: false,
+    ctrlKey: false,
+    shiftKey: false,
+    key: 'Escape',
+    preventDefault() {},
+  });
   assert.equal(state.mobileToolbarMenu, null);
   assert.equal(actionsFocused, 1);
 
@@ -222,7 +228,7 @@ test('mobile toolbar menus manage focus and hand off to overlays', () => {
   assert.equal(shrinkFocused, 1);
 });
 
-test('opening a section from the compact menu preserves the opener and focuses its heading on mobile', () => {
+test('opening an inspector from the compact menu preserves the opener and focuses its heading on mobile', () => {
   const browser = runtime();
   browser.viewportWidth = () => 390;
   let focused = null;
@@ -230,12 +236,12 @@ test('opening a section from the compact menu preserves the opener and focuses i
   const heading = { focus: () => (focused = 'heading') };
   const state = createNewDebugBar(summary, browser);
   state.$root = { querySelector: () => heading, querySelectorAll: () => [] };
-  state.$wire = { loadSection: async () => {} };
+  state.$wire = { loadInspector: async () => {} };
   state.$nextTick = (callback) => callback();
   state.mobileToolbarMenu = 'actions';
   state.mobileToolbarReturnFocus = opener;
 
-  state.openSectionFromToolbar('logs');
+  state.openInspectorFromToolbar('logs');
   assert.equal(state.inspectorOpen, true);
   assert.equal(state.selected, 'logs');
   assert.equal(state.mobileToolbarMenu, null);
@@ -344,7 +350,13 @@ test('theme menus expose explicit choices and manage layered focus', () => {
   assert.equal(openerFocused, 1);
 
   state.openThemeMenu('toolbar', opener);
-  state.handleShortcut({ metaKey: false, ctrlKey: false, shiftKey: false, key: 'Escape', preventDefault() {} });
+  state.handleShortcut({
+    metaKey: false,
+    ctrlKey: false,
+    shiftKey: false,
+    key: 'Escape',
+    preventDefault() {},
+  });
   assert.equal(state.themeMenuScope, null);
   assert.equal(openerFocused, 2);
 
@@ -445,7 +457,10 @@ test('copy feedback expires after three seconds and repeated copies replace its 
   await feedback.copyWithFeedback('https://example.test/trips?season=autumn');
   assert.equal(browser.timers.size, 1);
   assert.deepEqual(delays, [3000, 3000]);
-  assert.deepEqual(copies, ['https://example.test/trips?season=autumn', 'https://example.test/trips?season=autumn']);
+  assert.deepEqual(copies, [
+    'https://example.test/trips?season=autumn',
+    'https://example.test/trips?season=autumn',
+  ]);
   browser.runTimers();
   assert.equal(feedback.copyStatus, '');
 

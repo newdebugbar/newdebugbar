@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import serverActivity from './fixtures/livewire-server-activity.json' with { type: 'json' };
 
-import { runtime, sectionHarness } from './state-test-support.js';
+import { runtime, inspectorHarness } from './state-test-support.js';
 
 const livewireSummary = {
   id: '550e8400-e29b-41d4-a716-446655440000',
-  sections: [
+  inspectors: [
     { key: 'request', label: 'Requests' },
     { key: 'livewire', label: 'Livewire' },
   ],
@@ -147,7 +147,7 @@ function traceHarness(
 
 function stateHarness(trace = traceHarness()) {
   const browser = runtime();
-  const { state, shell } = sectionHarness('livewire', { ...livewireSummary }, browser, [], 20, trace);
+  const { state, shell } = inspectorHarness('livewire', { ...livewireSummary }, browser, [], 20, trace);
   state.$root = { querySelectorAll: () => [], querySelector: () => null };
   state.$nextTick = (callback) => callback();
   state.init();
@@ -222,7 +222,10 @@ test('orders several roots and nested instances while preserving stable instance
   assert.equal(state.livewireSelectedComponentId, 'root-1');
   assert.equal(state.livewireComponentPropertyCount(state.selectedLivewireComponent), 4);
   assert.equal(state.livewireComponentPropertyCountLabel(state.selectedLivewireComponent), '4 properties');
-  assert.equal(state.livewireComponentPropertyStateSummary(state.selectedLivewireComponent), '0 changed, 3 editable');
+  assert.equal(
+    state.livewireComponentPropertyStateSummary(state.selectedLivewireComponent),
+    '0 changed, 3 editable',
+  );
   state.livewireSearch = 'metric';
   assert.deepEqual(
     state.filteredLivewireComponents.map(({ id }) => id),
@@ -574,7 +577,10 @@ test('keeps related request and failure source evidence on the browser interacti
   assert.deepEqual(state.livewireActivityProfileIds(merged), [profileId]);
   assert.equal(state.livewireActivitySourceLabel(merged), 'app/Livewire/ControlPanel.php:42');
   assert.equal(state.livewireActivity.filter(({ kind }) => kind === 'failure').length, 0);
-  assert.equal(state.livewireActivity.find(({ id }) => id === 'older-failed-action').serverActivityIds, undefined);
+  assert.equal(
+    state.livewireActivity.find(({ id }) => id === 'older-failed-action').serverActivityIds,
+    undefined,
+  );
   state.livewireSearch = 'ControlPanel.php';
   assert.deepEqual(
     state.filteredLivewireActivity.map(({ id }) => id),
@@ -658,13 +664,22 @@ test('uses distinct plain-language explanations for every captured Livewire outc
   });
 
   assert.equal(state.livewireActivitySummary(item({ kind: 'mount' })), 'Metric Card was added to the page.');
-  assert.equal(state.livewireActivitySummary(item({ kind: 'unmount' })), 'Metric Card was removed from the page.');
-  assert.equal(state.livewireActivitySummary(item({ kind: 'poll' })), 'Metric Card asked the server for fresh state.');
+  assert.equal(
+    state.livewireActivitySummary(item({ kind: 'unmount' })),
+    'Metric Card was removed from the page.',
+  );
+  assert.equal(
+    state.livewireActivitySummary(item({ kind: 'poll' })),
+    'Metric Card asked the server for fresh state.',
+  );
   assert.equal(
     state.livewireActivitySummary(item({ kind: 'event', events: [{ name: 'saved' }] })),
     'Metric Card handled the saved event.',
   );
-  assert.equal(state.livewireActivitySummary(item({ kind: 'event' })), 'Metric Card handled a Livewire event.');
+  assert.equal(
+    state.livewireActivitySummary(item({ kind: 'event' })),
+    'Metric Card handled a Livewire event.',
+  );
   assert.equal(
     state.livewireActivitySummary(
       item({
@@ -713,7 +728,10 @@ test('uses distinct plain-language explanations for every captured Livewire outc
     ),
     'Metric Card ran 2 actions on the server.',
   );
-  assert.equal(state.livewireActivitySummary(item({ kind: 'other' })), 'Metric Card completed a Livewire update.');
+  assert.equal(
+    state.livewireActivitySummary(item({ kind: 'other' })),
+    'Metric Card completed a Livewire update.',
+  );
   assert.equal(state.livewireActivitySummary(null), '');
 
   assert.deepEqual(
@@ -1061,7 +1079,7 @@ test('falls back to stored server evidence when browser evidence is unavailable'
     activity: [],
     dropped: { components: 0, activity: 0 },
   });
-  const { state, shell } = sectionHarness('livewire', livewireSummary, runtime(), [], 20, trace);
+  const { state, shell } = inspectorHarness('livewire', livewireSummary, runtime(), [], 20, trace);
   state.$root = { querySelectorAll: () => [], querySelector: () => null };
   state.$nextTick = (callback) => callback();
   state.init();
@@ -1108,7 +1126,7 @@ test('pairs retained initial render evidence with a trace-ready browser mount', 
     activity: [browserMount],
     dropped: { components: 0, activity: 0 },
   });
-  const { state, shell } = sectionHarness('livewire', livewireSummary, runtime(), [], 20, trace);
+  const { state, shell } = inspectorHarness('livewire', livewireSummary, runtime(), [], 20, trace);
   state.$root = { querySelectorAll: () => [], querySelector: () => null };
   state.$nextTick = (callback) => callback();
   state.init();
@@ -1202,7 +1220,7 @@ test('reconciles retained lifecycle evidence without dropping browser-only or or
     activity: traceActivity,
     dropped: { components: 0, activity: 0 },
   });
-  const { state, shell } = sectionHarness('livewire', livewireSummary, runtime(), [], 20, trace);
+  const { state, shell } = inspectorHarness('livewire', livewireSummary, runtime(), [], 20, trace);
   state.$root = { querySelectorAll: () => [], querySelector: () => null };
   state.$nextTick = (callback) => callback();
   state.init();

@@ -65,40 +65,40 @@ it('captures a local web request and its Laravel activity', function () {
     $profile = json_decode(File::get($files[0]->getPathname()), true, flags: JSON_THROW_ON_ERROR);
 
     expect($profile)
-        ->schema_version->toBe(1)
+        ->schema_version->toBe(2)
         ->environment->toBe('testing')
-        ->sections->request->summary->method->toBe('GET')
-        ->sections->request->summary->status->toBe(200)
-        ->sections->request->payload->path->toBe('/profiled')
-        ->sections->request->payload->url->not->toContain('visible')
-        ->sections->request->payload->url->toContain('token=%5Bredacted%5D')
-        ->sections->request->payload->query->token->toBe('[redacted]')
-        ->sections->request->payload->headers->authorization->toBe('[redacted]')
-        ->sections->request->payload->content_type->toContain('text/html')
-        ->sections->request->payload->request_size_bytes->toBe(0)
-        ->sections->request->payload->response_size_bytes->toBeGreaterThan(0)
-        ->sections->request->payload->session_present->toBeFalse()
-        ->sections->request->payload->authenticated->toBeFalse()
-        ->sections->overview->payload->runtime->environment->toBe('testing')
-        ->sections->overview->payload->runtime->laravel->toBe(app()->version())
-        ->sections->overview->payload->drivers->database->toBe(config('database.default'))
-        ->sections->queries->summary->count->toBeGreaterThanOrEqual(1)
-        ->sections->queries->payload->items->{0}->driver->toBe('sqlite')
-        ->sections->models->summary->count->toBeGreaterThanOrEqual(1)
-        ->sections->cache->summary->hits->toBe(1)
-        ->sections->cache->summary->misses->toBe(1)
-        ->sections->logs->summary->count->toBe(1)
-        ->sections->events->summary->count->toBeGreaterThanOrEqual(1);
+        ->inspectors->request->summary->method->toBe('GET')
+        ->inspectors->request->summary->status->toBe(200)
+        ->inspectors->request->payload->path->toBe('/profiled')
+        ->inspectors->request->payload->url->not->toContain('visible')
+        ->inspectors->request->payload->url->toContain('token=%5Bredacted%5D')
+        ->inspectors->request->payload->query->token->toBe('[redacted]')
+        ->inspectors->request->payload->headers->authorization->toBe('[redacted]')
+        ->inspectors->request->payload->content_type->toContain('text/html')
+        ->inspectors->request->payload->request_size_bytes->toBe(0)
+        ->inspectors->request->payload->response_size_bytes->toBeGreaterThan(0)
+        ->inspectors->request->payload->session_present->toBeFalse()
+        ->inspectors->request->payload->authenticated->toBeFalse()
+        ->inspectors->overview->payload->runtime->environment->toBe('testing')
+        ->inspectors->overview->payload->runtime->laravel->toBe(app()->version())
+        ->inspectors->overview->payload->drivers->database->toBe(config('database.default'))
+        ->inspectors->queries->summary->count->toBeGreaterThanOrEqual(1)
+        ->inspectors->queries->payload->items->{0}->driver->toBe('sqlite')
+        ->inspectors->models->summary->count->toBeGreaterThanOrEqual(1)
+        ->inspectors->cache->summary->hits->toBe(1)
+        ->inspectors->cache->summary->misses->toBe(1)
+        ->inspectors->logs->summary->count->toBe(1)
+        ->inspectors->events->summary->count->toBeGreaterThanOrEqual(1);
 
-    expect(array_column($profile['sections']['models']['payload']['items'], 'event'))
+    expect(array_column($profile['inspectors']['models']['payload']['items'], 'event'))
         ->toContain('retrieved');
 
-    expect($profile['sections']['logs']['payload']['items'][0]['callsite'])
+    expect($profile['inspectors']['logs']['payload']['items'][0]['callsite'])
         ->toMatchArray(['file' => 'tests/Support/DefinesTestApplication.php'])
-        ->and($profile['sections']['logs']['payload']['items'][0]['stack'])->not->toBeEmpty();
+        ->and($profile['inspectors']['logs']['payload']['items'][0]['stack'])->not->toBeEmpty();
 
-    foreach ($profile['sections'] as $section) {
-        foreach ($section['payload']['items'] ?? [] as $item) {
+    foreach ($profile['inspectors'] as $inspector) {
+        foreach ($inspector['payload']['items'] ?? [] as $item) {
             expect($item['at_ms'])->toBeNumeric()->toBeGreaterThanOrEqual(0);
         }
     }
@@ -107,8 +107,8 @@ it('captures a local web request and its Laravel activity', function () {
 it('captures bounded cache timing source value and failure metadata', function () {
     $response = $this->get('/profiled-cache-rich', ['Accept' => 'text/html'])->assertOk();
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $section = $profile['sections']['cache'];
-    $items = collect($section['payload']['items']);
+    $inspector = $profile['inspectors']['cache'];
+    $items = collect($inspector['payload']['items']);
     $write = $items->firstWhere('key', 'trip:kyoto:weather');
     $hit = $items->where('key', 'trip:kyoto:weather')->firstWhere('operation', 'hit');
     $batchWrites = $items->where('operation', 'write')->where('duration_scope', 'batch')->values();
@@ -118,7 +118,7 @@ it('captures bounded cache timing source value and failure metadata', function (
     $flushCount = (int) class_exists(CacheFlushed::class);
     $cacheTimingAvailable = class_exists(WritingKey::class);
 
-    expect($section['summary'])
+    expect($inspector['summary'])
         ->hits->toBeGreaterThanOrEqual(2)
         ->misses->toBeGreaterThanOrEqual(3)
         ->writes->toBeGreaterThanOrEqual(4)
@@ -133,7 +133,7 @@ it('captures bounded cache timing source value and failure metadata', function (
         ->and($hit['value'])->toBe(['high' => 24, 'low' => 15]);
 
     if ($cacheTimingAvailable) {
-        expect($section['summary'])
+        expect($inspector['summary'])
             ->timed_count->toBeGreaterThan(0)
             ->duration_ms->toBeGreaterThanOrEqual(0.0)
             ->and($write)
@@ -144,7 +144,7 @@ it('captures bounded cache timing source value and failure metadata', function (
             ->and($batchWrites->pluck('batch_size')->unique()->all())->toBe([2])
             ->and($batchWrites->pluck('value')->all())->toBe(['A compact autumn itinerary', true]);
     } else {
-        expect($section['summary'])
+        expect($inspector['summary'])
             ->timed_count->toBe(0)
             ->duration_ms->toEqual(0)
             ->and($write)
@@ -161,7 +161,7 @@ it('captures bounded cache timing source value and failure metadata', function (
 it('presents model activity as useful record loads', function () {
     $response = $this->get('/profiled-models', ['Accept' => 'text/html'])->assertOk();
     $stored = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $models = app(ProfilePresenter::class)->present($stored)['sections']['models'];
+    $models = app(ProfilePresenter::class)->present($stored)['inspectors']['models'];
 
     expect($models['summary'])
         ->retrieval_count->toBe(44)
@@ -192,13 +192,13 @@ it('presents model activity as useful record loads', function () {
 it('captures model sources and folds lifecycle callbacks into logical write operations', function () {
     $response = $this->get('/profiled-models?changes=1', ['Accept' => 'text/html'])->assertOk();
     $stored = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $rawModels = collect($stored['sections']['models']['payload']['items']);
+    $rawModels = collect($stored['inspectors']['models']['payload']['items']);
     $clientLifecycle = $rawModels
         ->where('model', Client::class)
         ->whereIn('event', ['updating', 'updated', 'saved'])
         ->values();
     $updated = $clientLifecycle->firstWhere('event', 'updated');
-    $models = app(ProfilePresenter::class)->present($stored)['sections']['models'];
+    $models = app(ProfilePresenter::class)->present($stored)['inspectors']['models'];
 
     expect($clientLifecycle)->toHaveCount(3)
         ->and($clientLifecycle->pluck('operation_id')->unique()->filter())->toHaveCount(1)
@@ -238,11 +238,11 @@ it('captures compiled Blade provenance and correlates model activity with an exa
     $response = $this->get('/profiled-models?compiled=1', ['Accept' => 'text/html'])->assertOk();
     $stored = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
     $profile = app(ProfilePresenter::class)->present($stored);
-    $rawModel = collect($stored['sections']['models']['payload']['items'])
+    $rawModel = collect($stored['inspectors']['models']['payload']['items'])
         ->first(fn (array $item): bool => ($item['key'] ?? null) === 77);
-    $rawQuery = collect($stored['sections']['queries']['payload']['items'])
+    $rawQuery = collect($stored['inspectors']['queries']['payload']['items'])
         ->first(fn (array $item): bool => str_contains((string) ($item['sql'] ?? ''), 'select 77 as id'));
-    $group = collect($profile['sections']['models']['payload']['model_groups'])
+    $group = collect($profile['inspectors']['models']['payload']['model_groups'])
         ->firstWhere('model', JobActivity::class);
     $source = collect($group['sources'])
         ->first(fn (array $source): bool => ($source['callsite']['kind'] ?? null) === 'compiled_view');
@@ -278,13 +278,13 @@ it('captures bounded redacted outbound HTTP request and response evidence', func
 
     $response = $this->get('/profiled-http-client', ['Accept' => 'text/html'])->assertOk();
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $section = $profile['sections']['http_client'];
+    $inspector = $profile['inspectors']['http_client'];
 
-    expect($section['summary'])
+    expect($inspector['summary'])
         ->count->toBe(2)
         ->failed_count->toBe(1)
         ->duration_ms->toBeFloat()
-        ->and($section['payload']['items'][0])
+        ->and($inspector['payload']['items'][0])
         ->method->toBe('GET')
         ->url->toBe('https://api.example.test/v1/patients?token=%5Bredacted%5D&limit=5')
         ->status->toBe(202)
@@ -295,7 +295,7 @@ it('captures bounded redacted outbound HTTP request and response evidence', func
         ->response->headers->{'Set-Cookie'}->toBe('[redacted]')
         ->response->body->toBe(['private' => 'response-body'])
         ->stack->not->toBeEmpty()
-        ->and($section['payload']['items'][1])
+        ->and($inspector['payload']['items'][1])
         ->method->toBe('POST')
         ->url->toBe('https://down.example.test/v1/sync?api_key=%5Bredacted%5D')
         ->status->toBeNull()
@@ -307,7 +307,7 @@ it('captures bounded redacted outbound HTTP request and response evidence', func
             'patient' => 'visible-patient',
         ])
         ->response->toBeNull()
-        ->and(json_encode($section))->not->toContain(
+        ->and(json_encode($inspector))->not->toContain(
             'private-token',
             'private-key',
             'private-bearer',
@@ -321,33 +321,33 @@ it('captures bounded redacted outbound HTTP request and response evidence', func
 it('captures queued dispatches and synchronous execution without job data', function () {
     $response = $this->get('/profiled-queue', ['Accept' => 'text/html'])->assertOk();
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $section = $profile['sections']['queue'];
+    $inspector = $profile['inspectors']['queue'];
     $presented = app(ProfilePresenter::class)->present($profile);
     $activityStatuses = collect($presented['background_activity']['items'])->pluck('status')->all();
 
-    expect($section['summary'])
+    expect($inspector['summary'])
         ->count->toBe(3)
         ->queued_count->toBe(1)
         ->executed_count->toBe(2)
         ->failed_count->toBe(1)
         ->duration_ms->toBeFloat()
-        ->and($section['payload']['items'][0])
+        ->and($inspector['payload']['items'][0])
         ->kind->toBe('queued')
         ->connection->toBe('redis')
         ->queue->toBe('emails')
         ->job_id->toBe('job-1')
         ->delay_seconds->toBe(5)
-        ->and($section['payload']['items'][1])
+        ->and($inspector['payload']['items'][1])
         ->kind->toBe('executed')
         ->connection->toBe('sync')
         ->queue->toBe('sync')
         ->duration_ms->toBeGreaterThanOrEqual(0)
-        ->and($section['payload']['items'][2])
+        ->and($inspector['payload']['items'][2])
         ->kind->toBe('failed')
         ->status->toBe('failed')
         ->exception_class->toBe(RuntimeException::class)
         ->and($activityStatuses)->toBe(['delayed'])
-        ->and(json_encode($section))->not->toContain('private queued value', 'queued payload', 'private sync value', 'private failed value', 'private failure message');
+        ->and(json_encode($inspector))->not->toContain('private queued value', 'queued payload', 'private sync value', 'private failed value', 'private failure message');
 });
 
 it('shows queued communication facts and refreshes their correlated outcome', function () {
@@ -355,8 +355,8 @@ it('shows queued communication facts and refreshes their correlated outcome', fu
     $stored = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
     $initial = app(ProfilePresenter::class)->present($stored);
     $summary = app(ProfileSummaryPresenter::class)->present($initial);
-    $queuedMail = $initial['sections']['mail']['payload']['items'][0];
-    $queuedNotification = $initial['sections']['notifications']['payload']['items'][0];
+    $queuedMail = $initial['inspectors']['mail']['payload']['items'][0];
+    $queuedNotification = $initial['inspectors']['notifications']['payload']['items'][0];
 
     expect($summary)
         ->background_pending->toBeTrue()
@@ -393,7 +393,7 @@ it('shows queued communication facts and refreshes their correlated outcome', fu
     $refreshed = app(ProfilePresenter::class)->present($stored);
     $refreshedSummary = app(ProfileSummaryPresenter::class)->present($refreshed);
 
-    expect($refreshed['sections']['mail']['payload']['items'][0])
+    expect($refreshed['inspectors']['mail']['payload']['items'][0])
         ->status->toBe('sent')
         ->worker_profile_id->toBe($workerProfileId)
         ->attempts->toHaveCount(1)
@@ -404,8 +404,8 @@ it('shows queued communication facts and refreshes their correlated outcome', fu
 it('captures mail previews and notification shape by default', function () {
     $response = $this->get('/profiled-messages', ['Accept' => 'text/html'])->assertOk();
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $mail = $profile['sections']['mail'];
-    $notifications = $profile['sections']['notifications'];
+    $mail = $profile['inspectors']['mail'];
+    $notifications = $profile['inspectors']['notifications'];
 
     expect($mail['summary'])
         ->count->toBe(1)
@@ -456,8 +456,8 @@ it('captures mail previews and notification shape by default', function () {
 it('groups notification channel attempts and keeps delivery evidence', function () {
     $response = $this->get('/profiled-notifications-rich', ['Accept' => 'text/html'])->assertOk();
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $mail = $profile['sections']['mail'];
-    $notifications = $profile['sections']['notifications'];
+    $mail = $profile['inspectors']['mail'];
+    $notifications = $profile['inspectors']['notifications'];
     $items = $notifications['payload']['items'];
 
     expect($notifications['summary'])
@@ -510,7 +510,7 @@ it('groups notification channel attempts and keeps delivery evidence', function 
 it('captures crowded named mail recipients for compact inspection', function () {
     $response = $this->get('/profiled-mail-rich', ['Accept' => 'text/html'])->assertOk();
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $recipients = $profile['sections']['mail']['payload']['items'][0]['preview']['to'];
+    $recipients = $profile['inspectors']['mail']['payload']['items'][0]['preview']['to'];
 
     expect($recipients)
         ->toHaveCount(6)
@@ -527,8 +527,8 @@ it('captures crowded named mail recipients for compact inspection', function () 
 it('captures direct Redis commands and removes cache command duplicates', function () {
     $response = $this->get('/profiled-redis', ['Accept' => 'text/html'])->assertOk();
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $redis = $profile['sections']['redis'];
-    $cache = $profile['sections']['cache'];
+    $redis = $profile['inspectors']['redis'];
+    $cache = $profile['inspectors']['cache'];
     $storeAware = property_exists(CacheEvent::class, 'storeName');
     $flushAware = class_exists(CacheFlushed::class);
     $failureAware = class_exists(CommandFailed::class);
@@ -593,7 +593,7 @@ it('captures direct Redis commands and removes cache command duplicates', functi
 it('captures application call sites from real Redis client success and failure events', function () {
     $response = $this->get('/profiled-redis-client', ['Accept' => 'text/html'])->assertOk();
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $items = $profile['sections']['redis']['payload']['items'];
+    $items = $profile['inspectors']['redis']['payload']['items'];
     $read = new ReflectionMethod(ProfiledRedisCaller::class, 'read');
 
     expect($items[0])
@@ -631,8 +631,8 @@ it('captures application call sites from real Redis client success and failure e
 it('keeps direct Redis commands when a non Redis cache store emits a similar operation', function () {
     $response = $this->get('/profiled-redis-independent-cache', ['Accept' => 'text/html'])->assertOk();
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $redis = $profile['sections']['redis'];
-    $cache = $profile['sections']['cache'];
+    $redis = $profile['inspectors']['redis'];
+    $cache = $profile['inspectors']['cache'];
 
     expect($redis['summary']['count'])->toBe(1)
         ->and($redis['payload']['items'][0])
@@ -647,9 +647,9 @@ it('hashes bounded cache and Redis keys under the explicit hash policy', functio
 
     $response = $this->get('/profiled-redis', ['Accept' => 'text/html'])->assertOk();
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $cacheWrite = collect($profile['sections']['cache']['payload']['items'])->firstWhere('operation', 'write');
-    $cacheFlush = collect($profile['sections']['cache']['payload']['items'])->firstWhere('operation', 'flush');
-    $redisGet = collect($profile['sections']['redis']['payload']['items'])->firstWhere('command', 'GET');
+    $cacheWrite = collect($profile['inspectors']['cache']['payload']['items'])->firstWhere('operation', 'write');
+    $cacheFlush = collect($profile['inspectors']['cache']['payload']['items'])->firstWhere('operation', 'flush');
+    $redisGet = collect($profile['inspectors']['redis']['payload']['items'])->firstWhere('command', 'GET');
 
     expect($cacheWrite)
         ->key_policy->toBe('hash')
@@ -695,7 +695,7 @@ it('isolates mutable collector state between application lifecycles', function (
         ->map(fn ($file) => json_decode(File::get($file->getPathname()), true, flags: JSON_THROW_ON_ERROR));
 
     expect($profiles)->toHaveCount(2)
-        ->and($profiles->pluck('sections.request.payload.path')->sort()->values()->all())
+        ->and($profiles->pluck('inspectors.request.payload.path')->sort()->values()->all())
         ->toBe(['/profiled', '/profiled-next']);
 });
 
@@ -709,7 +709,7 @@ it('captures nested input without retaining uploaded files', function () {
 
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
 
-    expect($profile['sections']['request']['payload']['input'])->toBe([
+    expect($profile['inspectors']['request']['payload']['input'])->toBe([
         'clinic' => ['name' => 'Example Clinic'],
     ]);
 });
@@ -727,7 +727,7 @@ it('profiles partial models without requiring their primary key', function () {
 
     $files = File::files(config('newdebugbar.storage.path'));
     $profile = json_decode(File::get($files[0]->getPathname()), true, flags: JSON_THROW_ON_ERROR);
-    $models = $profile['sections']['models']['payload']['items'];
+    $models = $profile['inspectors']['models']['payload']['items'];
     $partialModel = collect($models)->first(
         fn (array $model): bool => $model['model'] === ProfiledModel::class
             && $model['event'] === 'retrieved',
@@ -744,7 +744,7 @@ it('captures structured log channels timing context and related exceptions', fun
         ->assertHeader('X-NewDebugBar-Profile');
     $stored = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
     $profile = app(ProfilePresenter::class)->present($stored);
-    $logs = $profile['sections']['logs'];
+    $logs = $profile['inspectors']['logs'];
     $audit = collect($logs['payload']['items'])->firstWhere('message', 'Audit channel accepted the refresh.');
     $failed = collect($logs['payload']['items'])->firstWhere('message', 'Rail reservation refresh failed.');
 
@@ -774,7 +774,7 @@ it('captures structured log channels timing context and related exceptions', fun
         ])
         ->occurred_at->toMatch('/^\d{4}-\d{2}-\d{2}T/')
         ->and($failed['context'])->not->toHaveKey('exception')
-        ->and($profile['sections']['exceptions']['summary']['count'])->toBe(1)
+        ->and($profile['inspectors']['exceptions']['summary']['count'])->toBe(1)
         ->and($logs['payload']['groups'][3]['repeat_count'])->toBe(3)
         ->and(array_column($logs['payload']['groups'][3]['occurrences'], 'sequence'))->toBe([4, 5, 6]);
 });
@@ -784,7 +784,7 @@ it('does not create package deprecation logs when no queue job context is active
         ->assertOk()
         ->assertHeader('X-NewDebugBar-Profile');
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $messages = array_column($profile['sections']['logs']['payload']['items'] ?? [], 'message');
+    $messages = array_column($profile['inspectors']['logs']['payload']['items'] ?? [], 'message');
 
     expect(implode("\n", $messages))->not->toContain('Using null as an array offset');
 });

@@ -23,10 +23,10 @@ Use the package's local MCP tools directly to read exact, saved Laravel request 
 1. Make the request in the browser when the user wants live proof.
 2. Use the `X-NewDebugBar-Profile` response header when it is available.
 3. Otherwise, list recent profiles and match the method, path, status, request kind, and time. Do not trust the newest item when background requests may have run.
-4. Set small limits instead of accepting maximums. Start with 10 profile summaries, 10 findings, and 5 items from a section or query search. Increase a limit or continue from a cursor only when the answer needs more evidence.
-5. Read findings first, then the smallest useful section. Inspect query details only when the request points to a database problem. Prefer `slow` or `repeated`, sort by duration, and return 5 items. Do not request every query by default.
-6. When a focused response omits needed detail, use `get-debug-profile-data` with the same exact profile ID. Start at `/sections`, use a small limit, and follow the returned JSON Pointer paths until the needed object, list, or exact value is reached. Continue from the returned cursor for later items or string chunks.
-7. For Models, follow `/sections/models/payload/model_groups`. It exposes complete folded write operations, record identifiers, capture-redacted changed attributes, source and compiled-Blade evidence, timings, exact-source query correlation, and state-specific guidance. The focused Models response intentionally stays small.
+4. Set small limits instead of accepting maximums. Start with 10 profile summaries, 10 findings, and 5 items from an inspector or query search. Increase a limit or continue from a cursor only when the answer needs more evidence.
+5. Read findings first, then use `get-debug-profile-inspector` with the `inspector` parameter for the smallest useful inspector. Inspect query details only when the request points to a database problem. Prefer `slow` or `repeated`, sort by duration, and return 5 items. Do not request every query by default.
+6. When a focused response omits needed detail, use `get-debug-profile-data` with the same exact profile ID. Start at `/inspectors`, use a small limit, and follow the returned JSON Pointer paths until the needed object, list, or exact value is reached. Continue from the returned cursor for later items or string chunks.
+7. For Models, follow `/inspectors/models/payload/model_groups`. It exposes complete folded write operations, record identifiers, capture-redacted changed attributes, source and compiled-Blade evidence, timings, exact-source query correlation, and state-specific guidance. The focused Models response intentionally stays small.
 8. Inspect no more than three profiles deeply unless the user asks for a broader review.
 9. Separate confirmed facts from guesses.
 
@@ -35,7 +35,7 @@ Use the package's local MCP tools directly to read exact, saved Laravel request 
 1. Use the same browser, account, and session for every page.
 2. Load each page twice and record the exact profile, path, request kind, status, and duration. Rank the second load so startup work does not decide the result.
 3. Do not cap the number of pages. When the review is larger than the profile retention limit, work in retention-safe batches. Save each page's second-load summary, inspect the useful profiles before they can be removed, then continue with the next batch.
-4. Compare all saved profile summaries first. Read findings and small sections only for the slowest or most useful second-load profiles.
+4. Compare all saved profile summaries first. Read findings and small inspectors only for the slowest or most useful second-load profiles.
 5. Treat local debug timings as relative evidence. Collector work affects the total, so confirm an important performance claim without the profiler before calling it an application benchmark.
 
 ## Interpret the evidence

@@ -70,7 +70,7 @@
             class="ndb:mx-2 ndb:my-2 ndb:h-px ndb:shrink-0 ndb:bg-zinc-200 ndb:dark:bg-zinc-800"
         ></div>
         <template x-if="mobileToolbarMenu === '{{ $menu }}'">
-            <x-newdebugbar::section-navigation mobile />
+            <x-newdebugbar::inspector-navigation mobile />
         </template>
     </div>
 </x-newdebugbar::popover-surface>

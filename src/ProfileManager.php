@@ -41,7 +41,7 @@ final class ProfileManager
 
     private string $profileType = 'http';
 
-    private string $primarySectionLabel = 'Request';
+    private string $primaryInspectorLabel = 'Request';
 
     private string $profileId = '';
 
@@ -307,14 +307,14 @@ final class ProfileManager
         return is_string($content) ? strlen($content) : 0;
     }
 
-    private function start(string $type, string $primarySectionLabel): void
+    private function start(string $type, string $primaryInspectorLabel): void
     {
         foreach ($this->collectors as $collector) {
             $collector->reset();
         }
 
         $this->profileType = $type;
-        $this->primarySectionLabel = $primarySectionLabel;
+        $this->primaryInspectorLabel = $primaryInspectorLabel;
         $this->profileId = (string) Str::uuid();
         $this->startedAt = hrtime(true);
         $this->responseHandledAt = 0;
@@ -379,14 +379,14 @@ final class ProfileManager
         if ($this->afterResponseActivity && $this->responseHandledAt > 0) {
             $metrics['after_response_duration_ms'] = round((hrtime(true) - $this->responseHandledAt) / 1_000_000, 2);
         }
-        $sections = [
+        $inspectors = [
             'overview' => [
                 'label' => 'Overview',
                 'summary' => $metrics,
                 'payload' => $this->runtimeContext?->build() ?? [],
             ],
             'request' => [
-                'label' => $this->primarySectionLabel,
+                'label' => $this->primaryInspectorLabel,
                 'summary' => [
                     'method' => $this->request['method'],
                     'status' => $this->request['status'],
@@ -397,7 +397,7 @@ final class ProfileManager
         ];
 
         foreach ($this->collectors as $collector) {
-            $sections[$collector->key()] = [
+            $inspectors[$collector->key()] = [
                 'label' => $collector->label(),
                 'summary' => $collector->summary(),
                 'payload' => $collector->payload(),
@@ -405,14 +405,14 @@ final class ProfileManager
         }
 
         return [
-            'schema_version' => 1,
+            'schema_version' => 2,
             'id' => $this->profileId !== '' ? $this->profileId : (string) Str::uuid(),
             'recorded_at' => now()->toIso8601String(),
             'profile_type' => $this->profileType,
             'completion_state' => $completionState,
             'environment' => app()->environment(),
             'metrics' => $metrics,
-            'sections' => $sections,
+            'inspectors' => $inspectors,
         ];
     }
 

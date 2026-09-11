@@ -11,26 +11,29 @@ test('malformed startup inputs use safe request defaults', () => {
   assert.equal(state.theme, 'dark');
   assert.equal(state.profileLimit, 20);
   assert.deepEqual(state.recentProfiles, []);
-  assert.deepEqual(state.sectionKeys, []);
-  assert.equal(state.selectedSection.key, 'request');
+  assert.deepEqual(state.inspectorKeys, []);
+  assert.equal(state.selectedInspector.key, 'request');
   assert.equal(state.currentRequestProfile, initial);
 
   state.currentRequestId = 'current';
-  state.recentProfiles = [{ id: 'current' }, ...Array.from({ length: 10 }, (_, index) => ({ id: `later-${index}` }))];
+  state.recentProfiles = [
+    { id: 'current' },
+    ...Array.from({ length: 10 }, (_, index) => ({ id: `later-${index}` })),
+  ];
 
   assert.equal(state.requestBadgeCount, '9+');
   assert.equal(state.requestPickerButtonLabel, 'Choose request, 10 unread requests');
 });
 
-test('a new application profile keeps a matching section and resets stale section state', async () => {
+test('a new application profile keeps a matching inspector and resets stale inspector state', async () => {
   const state = createNewDebugBar(summary, runtime());
-  let sectionsLoaded = 0;
-  state.$wire = { loadSection: async () => sectionsLoaded++ };
+  let inspectorsLoaded = 0;
+  state.$wire = { loadInspector: async () => inspectorsLoaded++ };
   state.$nextTick = (callback) => callback();
   state.selected = 'logs';
   state.inspectorOpen = true;
-  state.loadedSection = 'logs';
-  const oldViews = state.createSection('views');
+  state.loadedInspector = 'logs';
+  const oldViews = state.createInspector('views');
   oldViews.viewGroups = [{ id: 'view-1' }];
   oldViews.viewFilter = 'framework';
   oldViews.viewSearch = 'pagination';
@@ -46,15 +49,15 @@ test('a new application profile keeps a matching section and resets stale sectio
 
   assert.equal(state.summary.path, '/api/jobs');
   assert.equal(state.selected, 'logs');
-  assert.equal(state.loadedSection, 'logs');
-  const views = state.createSection('views');
+  assert.equal(state.loadedInspector, 'logs');
+  const views = state.createInspector('views');
   assert.notEqual(views, oldViews);
   assert.deepEqual(views.viewGroups, []);
   assert.equal(views.viewFilter, 'application');
   assert.equal(views.viewSearch, '');
   assert.equal(views.viewSelected, null);
   assert.equal(views.viewDetailOpen, false);
-  assert.equal(sectionsLoaded, 1);
+  assert.equal(inspectorsLoaded, 1);
 
   state.inspectorOpen = false;
   state.selected = 'missing';
@@ -177,7 +180,10 @@ test('counts requests as unread until a successful selection and keeps viewed re
   assert.equal(state.unreadRequestCount, 0);
   assert.equal(state.hasOtherRequests, true);
   assert.equal(state.requestPickerButtonLabel, 'Choose request');
-  assert.deepEqual(new Set(state.recentProfiles.map(({ id }) => id)), new Set([current.id, first.id, second.id]));
+  assert.deepEqual(
+    new Set(state.recentProfiles.map(({ id }) => id)),
+    new Set([current.id, first.id, second.id]),
+  );
   state.receiveProfile({ ...first, path: '/updated' });
   assert.equal(state.unreadRequestCount, 0);
 
@@ -250,7 +256,7 @@ test('background refresh is useful-only, bounded, and preserves related navigati
     ...summary,
     id: '550e8400-e29b-41d4-a716-446655440000',
     request_type: 'queue',
-    sections: [...summary.sections, { key: 'mail', label: 'Mail' }],
+    inspectors: [...summary.inspectors, { key: 'mail', label: 'Mail' }],
   };
   const browser = runtime();
   const islandCalls = [];
@@ -259,15 +265,15 @@ test('background refresh is useful-only, bounded, and preserves related navigati
   const state = createNewDebugBar(origin, browser);
   state.$nextTick = (callback) => callback();
   state.$root = { querySelector: () => null, querySelectorAll: () => [] };
-  const sectionWire = {
-    loadSection: async () => {},
+  const inspectorWire = {
+    loadInspector: async () => {},
     refreshRelatedActivity: async () => refreshes++,
   };
   state.$wire = {
     $island(name) {
       islandCalls.push(name);
 
-      return sectionWire;
+      return inspectorWire;
     },
     switchProfile: async (id) => {
       switched = id;
@@ -279,7 +285,7 @@ test('background refresh is useful-only, bounded, and preserves related navigati
   browser.runTimers();
   await Promise.resolve();
   assert.equal(refreshes, 1);
-  assert.deepEqual(islandCalls, ['section-details', 'section-details']);
+  assert.deepEqual(islandCalls, ['inspector-details', 'inspector-details']);
 
   for (let attempt = 0; attempt < 35; attempt++) {
     browser.runTimers();
@@ -288,7 +294,7 @@ test('background refresh is useful-only, bounded, and preserves related navigati
 
   assert.equal(refreshes, 30);
   assert.equal(
-    islandCalls.every((name) => name === 'section-details'),
+    islandCalls.every((name) => name === 'inspector-details'),
     true,
   );
   assert.equal(state.activityPollTimer, null);
@@ -375,14 +381,14 @@ test('a stale background request failure does not affect a different profile', a
   assert.equal(state.activityPollTimer, null);
 });
 
-test('background refresh reloads only sections affected by related activity', async () => {
+test('background refresh reloads only inspectors affected by related activity', async () => {
   const origin = {
     ...summary,
     id: '6ba7b810-9dad-41d1-80b4-00c04fd430c8',
     background_pending: true,
     background_activity_count: 0,
-    sections: [
-      ...summary.sections,
+    inspectors: [
+      ...summary.inspectors,
       { key: 'timeline', label: 'Timeline' },
       { key: 'views', label: 'Views' },
       { key: 'mail', label: 'Mail' },
@@ -392,9 +398,9 @@ test('background refresh reloads only sections affected by related activity', as
   const state = createNewDebugBar(origin, runtime());
   state.inspectorOpen = true;
   state.selected = 'timeline';
-  state.loadedSection = 'timeline';
+  state.loadedInspector = 'timeline';
   state.$wire = {
-    loadSection: async () => loads++,
+    loadInspector: async () => loads++,
   };
 
   state.receiveActivityRefresh(origin);
@@ -404,16 +410,16 @@ test('background refresh reloads only sections affected by related activity', as
   state.receiveActivityRefresh({ ...origin, background_activity_count: 1 });
   await Promise.resolve();
   assert.equal(loads, 1);
-  assert.equal(state.loadedSection, 'timeline');
-  state.sectionLoading = false;
-  state.requestedSection = null;
+  assert.equal(state.loadedInspector, 'timeline');
+  state.inspectorLoading = false;
+  state.requestedInspector = null;
 
   state.receiveActivityRefresh({ ...origin, background_activity_count: 1 });
   await Promise.resolve();
   assert.equal(loads, 1);
 
   state.selected = 'views';
-  state.loadedSection = 'views';
+  state.loadedInspector = 'views';
   state.receiveActivityRefresh({
     ...origin,
     completion_state: 'complete',
@@ -423,7 +429,7 @@ test('background refresh reloads only sections affected by related activity', as
   assert.equal(loads, 1);
 
   state.selected = 'mail';
-  state.loadedSection = 'mail';
+  state.loadedInspector = 'mail';
   state.receiveActivityRefresh({
     ...origin,
     completion_state: 'complete',
@@ -476,7 +482,7 @@ test('the request picker manages focus, keyboard movement, and profile selection
   state.$nextTick = (callback) => callback();
   state.$root = { querySelector: () => switcher };
   state.$wire = {
-    loadSection: async () => {},
+    loadInspector: async () => {},
     switchProfile: async (id) => switches.push(id),
   };
 
@@ -579,13 +585,13 @@ test('request discovery and selection failures clear their pending state', async
   assert.equal(state.requestSelectionPending, otherId);
 });
 
-test('stale section responses cannot resync panels for a newer profile', async () => {
+test('stale inspector responses cannot resync panels for a newer profile', async () => {
   const pending = [];
   const state = createNewDebugBar({ ...summary, id: '6ba7b810-9dad-41d1-80b4-00c04fd430c8' }, runtime());
   let synced = 0;
-  state.syncSectionPanels = () => synced++;
+  state.syncInspectorPanels = () => synced++;
   state.$wire = {
-    loadSection: () => new Promise((resolve) => pending.push(resolve)),
+    loadInspector: () => new Promise((resolve) => pending.push(resolve)),
   };
   state.$nextTick = (callback) => callback();
   state.inspectorOpen = true;
@@ -604,100 +610,100 @@ test('stale section responses cannot resync panels for a newer profile', async (
   assert.equal(state.selected, 'request');
 });
 
-test('section changes fade the current panel and delay loading feedback for slow responses', async () => {
+test('inspector changes fade the current panel and delay loading feedback for slow responses', async () => {
   const browser = runtime();
   const state = createNewDebugBar(summary, browser);
   const panels = [
-    { dataset: { ndbSectionPanel: 'request' }, hidden: false },
-    { dataset: { ndbSectionPanel: 'queries' }, hidden: true },
+    { dataset: { ndbInspectorPanel: 'request' }, hidden: false },
+    { dataset: { ndbInspectorPanel: 'queries' }, hidden: true },
   ];
-  let resolveSection;
+  let resolveInspector;
 
   state.$root = {
-    querySelectorAll: (selector) => (selector === '[data-ndb-section-panel]' ? panels : []),
+    querySelectorAll: (selector) => (selector === '[data-ndb-inspector-panel]' ? panels : []),
   };
   state.$nextTick = (callback) => callback();
   state.$wire = {
-    loadSection: () =>
+    loadInspector: () =>
       new Promise((resolve) => {
-        resolveSection = resolve;
+        resolveInspector = resolve;
       }),
   };
   state.inspectorOpen = true;
-  state.loadedSection = 'request';
+  state.loadedInspector = 'request';
 
-  state.selectSection('queries');
+  state.selectInspector('queries');
 
-  assert.equal(state.sectionLoading, true);
-  assert.equal(state.sectionLoadingIndicator, false);
-  assert.equal(state.sectionTransitioning, true);
+  assert.equal(state.inspectorLoading, true);
+  assert.equal(state.inspectorLoadingIndicator, false);
+  assert.equal(state.inspectorTransitioning, true);
   assert.equal(panels[0].hidden, false);
   assert.equal(panels[1].hidden, true);
 
   browser.runTimers();
 
-  assert.equal(state.sectionLoadingIndicator, true);
+  assert.equal(state.inspectorLoadingIndicator, true);
 
-  resolveSection();
+  resolveInspector();
   await Promise.resolve();
   await Promise.resolve();
 
-  assert.equal(state.loadedSection, 'queries');
-  assert.equal(state.sectionLoading, false);
-  assert.equal(state.sectionLoadingIndicator, false);
-  assert.equal(state.sectionLoadingTimer, null);
-  assert.equal(state.sectionTransitioning, false);
+  assert.equal(state.loadedInspector, 'queries');
+  assert.equal(state.inspectorLoading, false);
+  assert.equal(state.inspectorLoadingIndicator, false);
+  assert.equal(state.inspectorLoadingTimer, null);
+  assert.equal(state.inspectorTransitioning, false);
   assert.equal(panels[0].hidden, true);
   assert.equal(panels[1].hidden, false);
 
-  state.$wire = { loadSection: async () => {} };
-  state.selectSection('logs');
+  state.$wire = { loadInspector: async () => {} };
+  state.selectInspector('logs');
   await Promise.resolve();
   await Promise.resolve();
 
-  assert.equal(state.loadedSection, 'logs');
-  assert.equal(state.sectionLoadingIndicator, false);
-  assert.equal(state.sectionTransitioning, false);
+  assert.equal(state.loadedInspector, 'logs');
+  assert.equal(state.inspectorLoadingIndicator, false);
+  assert.equal(state.inspectorTransitioning, false);
   assert.equal(browser.timers.size, 0);
 });
 
-test('section selection falls back safely and a failed section can retry', async () => {
+test('inspector selection falls back safely and a failed inspector can retry', async () => {
   const state = createNewDebugBar(summary, runtime());
   let attempts = 0;
   state.$wire = {
-    loadSection: () => {
+    loadInspector: () => {
       attempts++;
       return attempts === 1 ? Promise.reject(new Error('expired')) : Promise.resolve();
     },
   };
   state.$nextTick = (callback) => callback();
 
-  state.selectSection('missing');
+  state.selectInspector('missing');
   assert.equal(state.selected, 'request');
 
   state.openInspector('queries');
   await new Promise((resolve) => setImmediate(resolve));
-  assert.equal(state.sectionLoading, false);
-  assert.equal(state.sectionError, true);
+  assert.equal(state.inspectorLoading, false);
+  assert.equal(state.inspectorError, true);
 
   state.openInspector('queries');
   await new Promise((resolve) => setImmediate(resolve));
 
   assert.equal(attempts, 2);
-  assert.equal(state.sectionError, false);
-  assert.equal(state.loadedSection, 'queries');
+  assert.equal(state.inspectorError, false);
+  assert.equal(state.loadedInspector, 'queries');
   assert.equal(state.selected, 'queries');
 });
 
-test('section-loaded events ignore another profile even when the section matches', () => {
+test('inspector-loaded events ignore another profile even when the inspector matches', () => {
   const state = createNewDebugBar({ ...summary, id: 'selected-profile' }, runtime());
   state.selected = 'queries';
-  state.requestedSection = 'queries';
-  state.sectionLoading = true;
-  state.receiveSection('queries', 'previous-profile');
-  assert.equal(state.loadedSection, null);
-  assert.equal(state.sectionLoading, true);
-  state.receiveSection('queries', 'selected-profile');
-  assert.equal(state.loadedSection, 'queries');
-  assert.equal(state.sectionLoading, false);
+  state.requestedInspector = 'queries';
+  state.inspectorLoading = true;
+  state.receiveInspector('queries', 'previous-profile');
+  assert.equal(state.loadedInspector, null);
+  assert.equal(state.inspectorLoading, true);
+  state.receiveInspector('queries', 'selected-profile');
+  assert.equal(state.loadedInspector, 'queries');
+  assert.equal(state.inspectorLoading, false);
 });

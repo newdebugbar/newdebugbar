@@ -16,10 +16,10 @@ it('keeps background read errors usable under host styles and clears them after 
         $page->click('[data-ndb-mobile-toolbar-trigger="actions"]')
             ->click('[data-ndb-mobile-toolbar-action="inspector"]')
             ->click('[data-ndb-header-mobile-trigger="actions"]')
-            ->click('[data-ndb-select-section="queue"]');
+            ->click('[data-ndb-select-inspector="queue"]');
     } else {
         $page->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]')
-            ->click('[data-ndb-select-section="queue"]');
+            ->click('[data-ndb-select-inspector="queue"]');
     }
     $page->assertVisible('[data-ndb-background-activity-error]')
         ->assertSeeIn('[data-ndb-background-activity-error]', 'Showing the last captured details.')
@@ -52,12 +52,12 @@ it('keeps background read errors usable under host styles and clears them after 
     'mobile dark' => [390, 844, 'dark'],
 ]);
 
-it('isolates the shared section list and drag classes from host styles', function () {
+it('isolates the shared inspector list and drag classes from host styles', function () {
     $page = visit('/hostile-styles')->resize(390, 844);
     $page->script(<<<'JS'
         const style = document.createElement('style');
         style.textContent = `
-            [data-section-list], [data-sort-group], .section-dragging, .section-chosen, .section-drag,
+            [data-inspector-list], [data-sort-group], .inspector-dragging, .inspector-chosen, .inspector-drag,
             .sortable-ghost, .sortable-chosen, .sortable-drag, .sortable-fallback {
                 background: red; color: green; width: 1200px; padding: 50px;
             }
@@ -69,11 +69,11 @@ it('isolates the shared section list and drag classes from host styles', functio
         ->click('[data-ndb-toggle-favorite="request"]')
         ->click('[data-ndb-toggle-favorite="queries"]');
 
-    DebugBarBrowser::dragSection($page, 'queries', 'request');
+    DebugBarBrowser::dragInspector($page, 'queries', 'request');
 
     $page->assertScript(<<<'JS'
             (() => {
-                const list = document.querySelector('[data-ndb-mobile-toolbar-menu="actions"] [data-ndb-section-list]');
+                const list = document.querySelector('[data-ndb-mobile-toolbar-menu="actions"] [data-ndb-inspector-list]');
                 const buttons = [...list.querySelectorAll('button')].filter((button) => button.getClientRects().length > 0);
                 return list.scrollWidth <= list.clientWidth && buttons.length > 2
                     && buttons.every((button) => {
@@ -139,7 +139,7 @@ it('isolates Livewire timeline steps and their help from host styles', function 
         })()
         JS);
 
-    DebugBarBrowser::selectSectionViaPalette($page, 'livewire');
+    DebugBarBrowser::selectInspectorViaPalette($page, 'livewire');
 
     $page
         ->click('[data-ndb-livewire-phase="Queued"] [data-ndb-livewire-phase-trigger]')
@@ -178,7 +178,7 @@ it('keeps selected segmented text readable on dark hover', function (string $sel
         ->resize(1280, 900)
         ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
 
-    DebugBarBrowser::selectSectionViaPalette($page, 'livewire');
+    DebugBarBrowser::selectInspectorViaPalette($page, 'livewire');
 
     $tab = $selection === 'aria-pressed' ? 'activity' : 'components';
     $selector = '[data-ndb-livewire-tab="'.$tab.'"]';
@@ -285,7 +285,7 @@ it('keeps host styles and package styles isolated', function () {
             JS)
         ->click('[data-ndb-toolbar="request"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
-        ->assertVisible('[data-ndb-section-panel="request"]')
+        ->assertVisible('[data-ndb-inspector-panel="request"]')
         ->assertScript(<<<'JS'
             (() => {
                 const trace = document.querySelector('[data-ndb-request-trace]');
@@ -367,7 +367,7 @@ it('keeps host styles and package styles isolated', function () {
             JS)
         ->assertScript(<<<'JS'
             (() => {
-                const code = Array.from(document.querySelectorAll('[data-ndb-section-panel="request"] code'));
+                const code = Array.from(document.querySelectorAll('[data-ndb-inspector-panel="request"] code'));
 
                 return code.length >= 1 && code.every((element) => {
                     const style = getComputedStyle(element);
@@ -395,10 +395,10 @@ it('keeps host styles and package styles isolated', function () {
                     && popover.querySelectorAll('li').length > 0;
             })()
             JS)
-        ->click('[data-ndb-section="queries"]')
+        ->click('[data-ndb-inspector="queries"]')
         ->assertMissing('[data-ndb-request-middleware-popover]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
-        ->assertVisible('[data-ndb-section-panel="queries"]')
+        ->assertVisible('[data-ndb-inspector-panel="queries"]')
         ->click('[data-ndb-query-sort-heading="duration"]')
         ->assertScript(<<<'JS'
             (() => {
@@ -464,9 +464,9 @@ it('keeps host styles and package styles isolated', function () {
                     && getComputedStyle(keyword).color === 'rgb(196, 181, 253)';
             })()
             JS)
-        ->click('[data-ndb-section="cache"]')
+        ->click('[data-ndb-inspector="cache"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
-        ->assertVisible('[data-ndb-section-panel="cache"]')
+        ->assertVisible('[data-ndb-inspector-panel="cache"]')
         ->assertScript(<<<'JS'
             (() => {
                 const root = document.querySelector('[data-ndb-cache]');
@@ -500,9 +500,9 @@ it('keeps host styles and package styles isolated', function () {
                 ];
             })()
             JS, [null, null, null, null, null, null, true, true, true, true, true, true, true, true, true, true, true, true])
-        ->click('[data-ndb-section="http_client"]')
+        ->click('[data-ndb-inspector="http_client"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
-        ->assertVisible('[data-ndb-section-panel="http_client"]')
+        ->assertVisible('[data-ndb-inspector-panel="http_client"]')
         ->click('[data-ndb-http-client-sort-heading="duration"]')
         ->assertScript(<<<'JS'
             (() => {
@@ -636,9 +636,9 @@ it('keeps host styles and package styles isolated', function () {
                     && Number.parseFloat(getComputedStyle(stack).paddingLeft) === 0;
             })()
             JS)
-        ->click('[data-ndb-section="mail"]')
+        ->click('[data-ndb-inspector="mail"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
-        ->assertVisible('[data-ndb-section-panel="mail"]')
+        ->assertVisible('[data-ndb-inspector-panel="mail"]')
         ->assertScript(<<<'JS'
             (() => {
                 const row = document.querySelector('[data-ndb-mail-item]');
@@ -714,9 +714,9 @@ it('keeps host styles and package styles isolated', function () {
         ->assertVisible('[data-ndb-mail-open-related]')
         ->assertScript("document.querySelector('[data-ndb-mail-open-related]').getBoundingClientRect().height < 91")
         ->keys('[data-ndb-mail-actions-trigger]', 'Escape')
-        ->click('[data-ndb-section="queue"]')
+        ->click('[data-ndb-inspector="queue"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
-        ->assertVisible('[data-ndb-section-panel="queue"]')
+        ->assertVisible('[data-ndb-inspector-panel="queue"]')
         ->assertVisible('[data-ndb-background-refresh]')
         ->assertScript(<<<'JS'
             (() => {
@@ -747,9 +747,9 @@ it('keeps host styles and package styles isolated', function () {
                     && communicationsAreStructured;
             })()
             JS)
-        ->click('[data-ndb-section="redis"]')
+        ->click('[data-ndb-inspector="redis"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
-        ->assertVisible('[data-ndb-section-panel="redis"]')
+        ->assertVisible('[data-ndb-inspector-panel="redis"]')
         ->assertScript(<<<'JS'
             (() => {
                 const root = document.querySelector('[data-ndb-redis]');
@@ -800,9 +800,9 @@ it('keeps host styles and package styles isolated', function () {
                     && getComputedStyle(key).backgroundColor === 'rgba(0, 0, 0, 0)';
             })()
             JS)
-        ->click('[data-ndb-section="notifications"]')
+        ->click('[data-ndb-inspector="notifications"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
-        ->assertVisible('[data-ndb-section-panel="notifications"]')
+        ->assertVisible('[data-ndb-inspector-panel="notifications"]')
         ->assertVisible('[data-ndb-notification-profile-link]')
         ->assertScript(<<<'JS'
             (() => {
@@ -851,9 +851,9 @@ it('keeps host styles and package styles isolated', function () {
                     && tabIcons.every((icon) => Number.parseFloat(getComputedStyle(icon).width) === 14);
             })()
             JS)
-        ->click('[data-ndb-section="authorization"]')
+        ->click('[data-ndb-inspector="authorization"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
-        ->assertVisible('[data-ndb-section-panel="authorization"]')
+        ->assertVisible('[data-ndb-inspector-panel="authorization"]')
         ->assertScript(<<<'JS'
             (() => {
                 const root = document.querySelector('[data-ndb-authorization]');
@@ -930,9 +930,9 @@ it('keeps host styles and package styles isolated', function () {
                     && source.querySelector('[data-ndb-authorization-copy-callsite]') === null;
             })()
             JS)
-        ->click('[data-ndb-section="logs"]')
+        ->click('[data-ndb-inspector="logs"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
-        ->assertVisible('[data-ndb-section-panel="logs"]')
+        ->assertVisible('[data-ndb-inspector-panel="logs"]')
         ->assertScript(<<<'JS'
             (() => {
                 const entry = document.querySelector('[data-ndb-log-entry]');
@@ -1004,9 +1004,9 @@ it('keeps host styles and package styles isolated', function () {
                 return true;
             })()
             JS)
-        ->click('[data-ndb-section="exceptions"]')
+        ->click('[data-ndb-inspector="exceptions"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
-        ->assertVisible('[data-ndb-section-panel="exceptions"]')
+        ->assertVisible('[data-ndb-inspector-panel="exceptions"]')
         ->assertVisible('[data-ndb-exception-context-action]')
         ->click('[data-ndb-exception-detail-tab="causes"]')
         ->assertVisible('[data-ndb-exception-cause="0"]')
@@ -1060,9 +1060,9 @@ it('keeps host styles and package styles isolated', function () {
                 return true;
             })()
             JS)
-        ->click('[data-ndb-section="events"]')
+        ->click('[data-ndb-inspector="events"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
-        ->assertVisible('[data-ndb-section-panel="events"]')
+        ->assertVisible('[data-ndb-inspector-panel="events"]')
         ->assertScript(<<<'JS'
             (() => {
                 const root = document.querySelector('[data-ndb-events]');
@@ -1150,9 +1150,9 @@ it('keeps host styles and package styles isolated', function () {
                     && Number.parseFloat(getComputedStyle(timeline).paddingTop) === 0;
             })()
             JS)
-        ->click('[data-ndb-section="models"]')
+        ->click('[data-ndb-inspector="models"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
-        ->assertVisible('[data-ndb-section-panel="models"]')
+        ->assertVisible('[data-ndb-inspector-panel="models"]')
         ->assertVisible('[data-ndb-model-workspace]')
         ->assertVisible('[data-ndb-model-detail-empty]')
         ->assertMissing('[data-ndb-model-detail]')
@@ -1283,9 +1283,9 @@ it('keeps host styles and package styles isolated', function () {
                     && getComputedStyle(back).color !== 'rgb(0, 128, 0)';
             })()
             JS)
-        ->click('[data-ndb-section="views"]')
+        ->click('[data-ndb-inspector="views"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
-        ->assertVisible('[data-ndb-section-panel="views"]')
+        ->assertVisible('[data-ndb-inspector-panel="views"]')
         ->assertVisible('[data-ndb-view-workspace]')
         ->assertVisible('[data-ndb-view-detail-empty]')
         ->assertScript(<<<'JS'
@@ -1356,9 +1356,9 @@ it('keeps host styles and package styles isolated', function () {
     $page = visit('/hostile-styles?exceptions=split')
         ->resize(1440, 900)
         ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]')
-        ->click('[data-ndb-section="exceptions"]')
+        ->click('[data-ndb-inspector="exceptions"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
-        ->assertVisible('[data-ndb-section-panel="exceptions"]')
+        ->assertVisible('[data-ndb-inspector-panel="exceptions"]')
         ->assertAttribute('[data-ndb-exceptions]', 'data-ndb-exception-layout', 'split')
         ->assertScript(<<<'JS'
             (() => {
@@ -1401,7 +1401,7 @@ it('keeps host styles and package styles isolated', function () {
         ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
         ->click('[data-ndb-mobile-toolbar-action="inspector"]')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
-        ->click('[data-ndb-select-section="exceptions"]')
+        ->click('[data-ndb-select-inspector="exceptions"]')
         ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->click('[data-ndb-exception-item="1"]')
         ->assertVisible('[data-ndb-exception-detail-back]')
@@ -1412,14 +1412,14 @@ it('keeps host styles and package styles isolated', function () {
                 const list = document.querySelector('[data-ndb-exception-list-panel]');
                 const detail = document.querySelector('[data-ndb-exception-split-detail]');
                 const back = document.querySelector('[data-ndb-exception-detail-back]');
-                const loadedSection = document.querySelector('[data-ndb-loaded-section="exceptions"]');
-                const stage = document.querySelector('[data-ndb-section-stage]');
+                const loadedInspector = document.querySelector('[data-ndb-loaded-inspector="exceptions"]');
+                const stage = document.querySelector('[data-ndb-inspector-stage]');
 
-                if (! layout || ! workspace || ! list || ! detail || ! back || ! loadedSection || ! stage) return false;
+                if (! layout || ! workspace || ! list || ! detail || ! back || ! loadedInspector || ! stage) return false;
 
                 const backBox = back.getBoundingClientRect();
                 const workspaceBox = workspace.getBoundingClientRect();
-                const loadedSectionBox = loadedSection.getBoundingClientRect();
+                const loadedInspectorBox = loadedInspector.getBoundingClientRect();
                 const stageBox = stage.getBoundingClientRect();
 
                 const checks = {
@@ -1439,8 +1439,8 @@ it('keeps host styles and package styles isolated', function () {
                         && getComputedStyle(back).color !== 'rgb(0, 128, 0)',
                     workspaceMargins: getComputedStyle(workspace).marginLeft === '-12px'
                         && getComputedStyle(workspace).marginRight === '-12px',
-                    loadedSectionAlignment: Math.abs(workspaceBox.left - loadedSectionBox.left) <= 1
-                        && Math.abs(workspaceBox.right - loadedSectionBox.right) <= 1,
+                    loadedInspectorAlignment: Math.abs(workspaceBox.left - loadedInspectorBox.left) <= 1
+                        && Math.abs(workspaceBox.right - loadedInspectorBox.right) <= 1,
                     stageAlignment: Math.abs(workspaceBox.left - stageBox.left) <= 1
                         && Math.abs(workspaceBox.right - stageBox.right) <= 1,
                     noOverflow: detail.scrollWidth <= detail.clientWidth + 1,

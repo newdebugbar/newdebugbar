@@ -84,7 +84,7 @@ final class MailPreviewController
         }
 
         $stored = $store->get($profile);
-        $preview = $stored['sections']['mail']['payload']['items'][$index]['preview'] ?? null;
+        $preview = $stored['inspectors']['mail']['payload']['items'][$index]['preview'] ?? null;
 
         if (! is_array($preview)) {
             abort(404);

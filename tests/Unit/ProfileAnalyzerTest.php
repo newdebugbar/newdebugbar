@@ -14,7 +14,7 @@ it('produces stable bounded findings with supporting evidence', function () {
 
     $profile = [
         'metrics' => ['duration_ms' => 150],
-        'sections' => [
+        'inspectors' => [
             'request' => ['summary' => ['status' => 500]],
             'queries' => [
                 'label' => 'Queries',
@@ -43,14 +43,14 @@ it('produces stable bounded findings with supporting evidence', function () {
         'cache.high_miss_rate',
         'collector.truncated',
     ])->and($findings[1])->toMatchArray([
-        'section' => 'timeline',
+        'inspector' => 'timeline',
         'action' => [
             'label' => 'Review request timing',
-            'section' => 'timeline',
+            'inspector' => 'timeline',
         ],
     ])->and($findings[3])->toMatchArray([
         'severity' => 'warning',
-        'section' => 'queries',
+        'inspector' => 'queries',
     ])->and($findings[3]['evidence']['count'])->toBe(3)
         ->and($findings[3]['evidence']['shared_callsite'])->toBe([
             'file' => 'app/A.php',
@@ -67,7 +67,7 @@ it('limits the number of findings', function () {
 
     $findings = $analyzer->analyze([
         'metrics' => ['duration_ms' => 2_000],
-        'sections' => [
+        'inspectors' => [
             'request' => ['summary' => ['status' => 500]],
             'exceptions' => ['summary' => ['count' => 1]],
         ],
@@ -82,7 +82,7 @@ it('keeps diagnostic query findings ahead of collector-limit notes', function ()
 
     $findings = $analyzer->analyze([
         'metrics' => ['duration_ms' => 10],
-        'sections' => [
+        'inspectors' => [
             'request' => ['summary' => ['status' => 200]],
             'queries' => [
                 'label' => 'Queries',
@@ -107,7 +107,7 @@ it('keeps diagnostic query findings ahead of collector-limit notes', function ()
 it('suppresses expected infrastructure and tiny repeated queries while keeping useful groups', function () {
     $findings = (new ProfileAnalyzer(new QueryAnalyzer))->analyze([
         'metrics' => ['duration_ms' => 20],
-        'sections' => [
+        'inspectors' => [
             'request' => ['summary' => ['status' => 200]],
             'queries' => ['payload' => ['items' => [
                 ['sql' => 'select * from "sessions" where "id" = ?', 'bindings' => [1]],
@@ -127,14 +127,14 @@ it('suppresses expected infrastructure and tiny repeated queries while keeping u
         ->and($findings[0])->toMatchArray([
             'rule_id' => 'query.repeated',
             'summary' => '3 identical query executions added 6 ms.',
-            'action' => ['label' => 'Review grouped queries', 'section' => 'queries', 'filter' => 'repeated'],
+            'action' => ['label' => 'Review grouped queries', 'inspector' => 'queries', 'filter' => 'repeated'],
         ]);
 });
 
 it('promotes explicit HTTP authorization and validation failures before heuristics', function () {
     $findings = (new ProfileAnalyzer(new QueryAnalyzer))->analyze([
         'metrics' => ['duration_ms' => 20],
-        'sections' => [
+        'inspectors' => [
             'request' => ['summary' => ['status' => 200]],
             'http_client' => ['payload' => ['items' => [[
                 'method' => 'GET',
@@ -174,7 +174,7 @@ it('promotes explicit HTTP authorization and validation failures before heuristi
 it('explains validation messages carried from a previous request', function () {
     $findings = (new ProfileAnalyzer(new QueryAnalyzer))->analyze([
         'metrics' => ['duration_ms' => 20],
-        'sections' => [
+        'inspectors' => [
             'request' => ['summary' => ['status' => 200]],
             'validation' => ['payload' => ['items' => [[
                 'fields' => ['email'],
@@ -194,7 +194,7 @@ it('explains validation messages carried from a previous request', function () {
 it('reports omitted query transaction events as collector evidence', function () {
     $findings = (new ProfileAnalyzer(new QueryAnalyzer))->analyze([
         'metrics' => ['duration_ms' => 10],
-        'sections' => [
+        'inspectors' => [
             'request' => ['summary' => ['status' => 200]],
             'queries' => [
                 'label' => 'Queries',
@@ -217,7 +217,7 @@ it('reports omitted query transaction events as collector evidence', function ()
     expect($findings)->toHaveCount(1)
         ->and($findings[0])->toMatchArray([
             'rule_id' => 'collector.truncated',
-            'section' => 'queries',
+            'inspector' => 'queries',
             'summary' => 'Showing 1 of 3 query transaction events.',
             'evidence' => [
                 'collector' => 'query_transactions',

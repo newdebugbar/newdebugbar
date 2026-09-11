@@ -1,60 +1,60 @@
-import { DEFAULT_SECTION } from './navigation.js';
+import { DEFAULT_INSPECTOR } from './navigation.js';
 import { formatDuration } from '../duration.js';
 import { createCopyControl } from './copy.js';
 
 /** Owns inspector shell behavior. */
-export function createInspector(context) {
+export function createInspectorShell(context) {
   const { browser, summary } = context;
   return {
-    pendingSectionIntent: null,
+    pendingInspectorIntent: null,
     get inspector() {
       return context.shell ?? this;
     },
-    mountSection(section, profileId, controller, instance) {
-      this.unmountActiveSection();
-      context.section = { section, profileId, controller, instance, active: false };
-      this.syncSectionLifecycle();
-      this.$nextTick?.(() => this.refreshSection());
+    mountInspector(inspector, profileId, controller, instance) {
+      this.unmountActiveInspector();
+      context.inspector = { inspector, profileId, controller, instance, active: false };
+      this.syncInspectorLifecycle();
+      this.$nextTick?.(() => this.refreshInspector());
     },
-    unmountSection(instance) {
-      if (context.section?.instance === instance) this.unmountActiveSection();
+    unmountInspector(instance) {
+      if (context.inspector?.instance === instance) this.unmountActiveInspector();
     },
-    unmountActiveSection() {
-      context.section?.controller.deactivate?.();
-      context.section = null;
+    unmountActiveInspector() {
+      context.inspector?.controller.deactivate?.();
+      context.inspector = null;
     },
-    syncSectionLifecycle() {
-      const current = context.section;
+    syncInspectorLifecycle() {
+      const current = context.inspector;
       if (!current) return;
       const active =
         this.barVisible &&
         this.inspectorOpen &&
-        current.section === this.selected &&
+        current.inspector === this.selected &&
         current.profileId === this.summary.id;
       if (active === current.active) return;
       current.active = active;
       if (active) current.controller.activate?.();
       else current.controller.deactivate?.();
     },
-    refreshSection() {
-      const current = context.section;
+    refreshInspector() {
+      const current = context.inspector;
       if (!current || current.profileId !== this.summary.id) return;
       current.controller.refresh?.();
-      this.syncSectionLifecycle();
-      this.deliverSectionIntent();
+      this.syncInspectorLifecycle();
+      this.deliverInspectorIntent();
     },
-    deliverSectionIntent() {
-      const intent = this.pendingSectionIntent;
-      const current = context.section;
+    deliverInspectorIntent() {
+      const intent = this.pendingInspectorIntent;
+      const current = context.inspector;
       if (
         !intent ||
         !current ||
         !current.controller.initialized ||
         intent.profileId !== current.profileId ||
-        intent.section !== current.section
+        intent.inspector !== current.inspector
       )
         return;
-      this.pendingSectionIntent = null;
+      this.pendingInspectorIntent = null;
       current.controller.receiveIntent?.(intent.filter);
     },
 
@@ -63,15 +63,15 @@ export function createInspector(context) {
     barVisible: true,
     inspectorOpen: false,
     inspectorReturnFocus: null,
-    loadedSection: null,
-    requestedSection: null,
-    sectionLoading: false,
-    sectionLoadingIndicator: false,
-    sectionLoadingTimer: null,
-    sectionTransitioning: false,
-    sectionError: false,
-    sectionRequestVersion: 0,
-    selected: DEFAULT_SECTION,
+    loadedInspector: null,
+    requestedInspector: null,
+    inspectorLoading: false,
+    inspectorLoadingIndicator: false,
+    inspectorLoadingTimer: null,
+    inspectorTransitioning: false,
+    inspectorError: false,
+    inspectorRequestVersion: 0,
+    selected: DEFAULT_INSPECTOR,
 
     summary,
 
@@ -84,7 +84,7 @@ export function createInspector(context) {
       };
       this.applyTheme();
       this.$nextTick?.(() => {
-        this.syncSectionPanels();
+        this.syncInspectorPanels();
         this.syncHostLock();
         this.syncToolbarPlacement();
         this.stopToolbarPlacementWatch =
@@ -94,7 +94,7 @@ export function createInspector(context) {
     },
 
     destroy() {
-      this.unmountActiveSection();
+      this.unmountActiveInspector();
       this.colorScheme?.removeEventListener?.('change', this.colorSchemeListener);
       this.colorScheme = null;
       this.colorSchemeListener = null;
@@ -106,36 +106,36 @@ export function createInspector(context) {
       browser.cancelSchedule?.(this.toolbarSnapTimer);
       browser.cancelSchedule?.(this.toolbarClickTimer);
       browser.cancelSchedule?.(this.activityPollTimer);
-      browser.cancelSchedule?.(this.sectionLoadingTimer);
+      browser.cancelSchedule?.(this.inspectorLoadingTimer);
       this.toolbarSnapTimer = null;
       this.toolbarClickTimer = null;
       this.activityPollTimer = null;
-      this.sectionLoadingTimer = null;
+      this.inspectorLoadingTimer = null;
       this.activityRefreshPending = false;
       browser.unlockHost?.(this.$root);
     },
 
-    syncSectionPanels() {
-      const panels = this.$root?.querySelectorAll?.('[data-ndb-section-panel]') ?? [];
-      const visibleSection = this.sectionLoading ? this.loadedSection : this.selected;
+    syncInspectorPanels() {
+      const panels = this.$root?.querySelectorAll?.('[data-ndb-inspector-panel]') ?? [];
+      const visibleInspector = this.inspectorLoading ? this.loadedInspector : this.selected;
 
       panels.forEach((panel) => {
-        panel.hidden = panel.dataset.ndbSectionPanel !== visibleSection;
+        panel.hidden = panel.dataset.ndbInspectorPanel !== visibleInspector;
       });
     },
 
-    clearSectionLoadingIndicator() {
-      browser.cancelSchedule?.(this.sectionLoadingTimer);
-      this.sectionLoadingTimer = null;
-      this.sectionLoadingIndicator = false;
+    clearInspectorLoadingIndicator() {
+      browser.cancelSchedule?.(this.inspectorLoadingTimer);
+      this.inspectorLoadingTimer = null;
+      this.inspectorLoadingIndicator = false;
     },
 
-    syncSectionHeading() {
-      if (this.$refs?.sectionHeading) {
-        this.$refs.sectionHeading.textContent = this.selectedSection.label;
+    syncInspectorHeading() {
+      if (this.$refs?.inspectorHeading) {
+        this.$refs.inspectorHeading.textContent = this.selectedInspector.label;
       }
-      if (this.$refs?.sectionDescription) {
-        this.$refs.sectionDescription.textContent = this.selectedSection.description ?? '';
+      if (this.$refs?.inspectorDescription) {
+        this.$refs.inspectorDescription.textContent = this.selectedInspector.description ?? '';
       }
     },
 
@@ -144,12 +144,14 @@ export function createInspector(context) {
       else browser.unlockHost?.(this.$root);
     },
 
-    openInspector(section = this.selected, returnFocus = null) {
+    openInspector(inspector = this.selected, returnFocus = null) {
       if (!this.barVisible) return;
 
       if (!this.inspectorOpen) {
         this.inspectorReturnFocus =
-          returnFocus ?? (this.mobileToolbarMenu ? this.mobileToolbarReturnFocus : null) ?? browser.activeElement?.();
+          returnFocus ??
+          (this.mobileToolbarMenu ? this.mobileToolbarReturnFocus : null) ??
+          browser.activeElement?.();
       }
 
       this.mobileToolbarMenu = null;
@@ -157,14 +159,14 @@ export function createInspector(context) {
       this.closeThemeMenu(false);
       this.closeRequestPicker(false);
       this.inspectorOpen = true;
-      this.selectSection(section);
+      this.selectInspector(inspector);
       this.scheduleActivityRefresh(true);
       this.syncHostLock();
       this.$nextTick?.(() => {
         const focus = () => {
           const selector =
             browser.viewportWidth?.() < 640
-              ? '[data-ndb-section-heading]'
+              ? '[data-ndb-inspector-heading]'
               : '[data-ndb-window-controls="expanded"] [data-ndb-window-action="shrink"]';
           this.$root?.querySelector?.(selector)?.focus?.();
         };
@@ -172,75 +174,81 @@ export function createInspector(context) {
       });
     },
 
-    requestSection(section = this.selected, force = false) {
-      const target = this.sectionKeys.includes(section) ? section : DEFAULT_SECTION;
-      if (!force && this.loadedSection === target) return;
-      if (!force && this.sectionLoading && this.requestedSection === target) return;
+    requestInspector(inspector = this.selected, force = false) {
+      const target = this.inspectorKeys.includes(inspector) ? inspector : DEFAULT_INSPECTOR;
+      if (!force && this.loadedInspector === target) return;
+      if (!force && this.inspectorLoading && this.requestedInspector === target) return;
 
       const island = this.$wire?.$island;
-      const scopedWire = typeof island === 'function' ? island.call(this.$wire, 'section-details') : this.$wire;
-      const action = scopedWire?.loadSection;
+      const scopedWire =
+        typeof island === 'function' ? island.call(this.$wire, 'inspector-details') : this.$wire;
+      const action = scopedWire?.loadInspector;
       const profileId = this.summary.id;
-      const requestVersion = ++this.sectionRequestVersion;
-      this.requestedSection = target;
-      this.sectionLoading = true;
-      this.sectionTransitioning = true;
-      this.sectionError = false;
-      this.clearSectionLoadingIndicator();
-      this.sectionLoadingTimer =
+      const requestVersion = ++this.inspectorRequestVersion;
+      this.requestedInspector = target;
+      this.inspectorLoading = true;
+      this.inspectorTransitioning = true;
+      this.inspectorError = false;
+      this.clearInspectorLoadingIndicator();
+      this.inspectorLoadingTimer =
         browser.schedule?.(() => {
-          this.sectionLoadingTimer = null;
+          this.inspectorLoadingTimer = null;
 
           if (
-            requestVersion === this.sectionRequestVersion &&
+            requestVersion === this.inspectorRequestVersion &&
             profileId === this.summary.id &&
-            this.requestedSection === target &&
-            this.sectionLoading
+            this.requestedInspector === target &&
+            this.inspectorLoading
           ) {
-            this.sectionLoadingIndicator = true;
+            this.inspectorLoadingIndicator = true;
           }
         }, 200) ?? null;
-      this.syncSectionPanels();
+      this.syncInspectorPanels();
 
       if (typeof action !== 'function') {
-        this.sectionLoading = false;
-        this.sectionTransitioning = false;
-        this.sectionError = true;
-        this.clearSectionLoadingIndicator();
-        this.syncSectionPanels();
+        this.inspectorLoading = false;
+        this.inspectorTransitioning = false;
+        this.inspectorError = true;
+        this.clearInspectorLoadingIndicator();
+        this.syncInspectorPanels();
 
         return;
       }
 
       Promise.resolve(action.call(scopedWire, target))
         .then(() => {
-          if (requestVersion !== this.sectionRequestVersion || profileId !== this.summary.id) return;
-          if (this.loadedSection !== target) this.receiveSection(target, profileId);
+          if (requestVersion !== this.inspectorRequestVersion || profileId !== this.summary.id) return;
+          if (this.loadedInspector !== target) this.receiveInspector(target, profileId);
         })
         .catch(() => {
-          if (requestVersion !== this.sectionRequestVersion || profileId !== this.summary.id) return;
+          if (requestVersion !== this.inspectorRequestVersion || profileId !== this.summary.id) return;
 
-          this.requestedSection = null;
-          this.sectionLoading = false;
-          this.sectionTransitioning = false;
-          this.sectionError = true;
-          this.clearSectionLoadingIndicator();
-          this.syncSectionPanels();
+          this.requestedInspector = null;
+          this.inspectorLoading = false;
+          this.inspectorTransitioning = false;
+          this.inspectorError = true;
+          this.clearInspectorLoadingIndicator();
+          this.syncInspectorPanels();
         });
     },
 
-    receiveSection(section, profileId) {
-      if (profileId !== this.summary.id || !this.sectionKeys.includes(section) || section !== this.selected) return;
+    receiveInspector(inspector, profileId) {
+      if (
+        profileId !== this.summary.id ||
+        !this.inspectorKeys.includes(inspector) ||
+        inspector !== this.selected
+      )
+        return;
 
-      this.loadedSection = section;
-      this.requestedSection = null;
-      this.sectionLoading = false;
-      this.sectionError = false;
-      this.clearSectionLoadingIndicator();
+      this.loadedInspector = inspector;
+      this.requestedInspector = null;
+      this.inspectorLoading = false;
+      this.inspectorError = false;
+      this.clearInspectorLoadingIndicator();
       this.$nextTick?.(() => {
-        this.sectionTransitioning = false;
-        this.syncSectionPanels();
-        this.refreshSection();
+        this.inspectorTransitioning = false;
+        this.syncInspectorPanels();
+        this.refreshInspector();
         this.syncHostLock();
         browser.highlight?.();
       });
@@ -251,7 +259,7 @@ export function createInspector(context) {
 
       const returnFocus = this.inspectorReturnFocus;
       this.inspectorOpen = false;
-      this.syncSectionLifecycle();
+      this.syncInspectorLifecycle();
       this.cancelActivityRefresh();
       this.inspectorReturnFocus = null;
       this.mobileToolbarMenu = null;
@@ -271,7 +279,7 @@ export function createInspector(context) {
       const activeElement = browser.activeElement?.();
       this.barVisible = false;
       this.inspectorOpen = false;
-      this.syncSectionLifecycle();
+      this.syncInspectorLifecycle();
       this.cancelActivityRefresh();
       this.inspectorReturnFocus = null;
       this.mobileToolbarMenu = null;

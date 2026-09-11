@@ -24,7 +24,7 @@ it('preserves class-string authorization targets', function () {
     $stored = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
     $profile = app(ProfilePresenter::class)->present($stored);
 
-    expect($profile['sections']['authorization']['payload']['items'][0])
+    expect($profile['inspectors']['authorization']['payload']['items'][0])
         ->ability->toBe('create-profile')
         ->result->toBe('allowed')
         ->argument_types->toBe([ProfiledModel::class])
@@ -55,7 +55,7 @@ it('captures user identity and bounded model and value arguments', function () {
     $response = $this->get('/profiled-argument-authorization')->assertOk();
     $stored = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
     $profile = app(ProfilePresenter::class)->present($stored);
-    $decision = $profile['sections']['authorization']['payload']['items'][0];
+    $decision = $profile['inspectors']['authorization']['payload']['items'][0];
 
     expect($decision)
         ->result->toBe('allowed')
@@ -114,7 +114,7 @@ it('identifies a named gate callback when its model also has a policy', function
     $stored = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
     $profile = app(ProfilePresenter::class)->present($stored);
 
-    expect($profile['sections']['authorization']['payload']['items'][0])
+    expect($profile['inspectors']['authorization']['payload']['items'][0])
         ->handler->toBe('callback')
         ->handler_kind->toBe('callback')
         ->handler_name->toBe('Gate callback')
@@ -136,7 +136,7 @@ it('normalizes policy responses and preserves their reasons and source', functio
     $response = $this->get('/profiled-policy-authorization')->assertOk();
     $stored = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
     $profile = app(ProfilePresenter::class)->present($stored);
-    [$allowed, $denied] = $profile['sections']['authorization']['payload']['items'];
+    [$allowed, $denied] = $profile['inspectors']['authorization']['payload']['items'];
 
     expect($allowed)
         ->result->toBe('allowed')
@@ -166,7 +166,7 @@ it('traces every Blade authorization decision to its source directive', function
     $response = $this->get('/profiled-blade-authorization')->assertOk();
     $stored = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
     $profile = app(ProfilePresenter::class)->present($stored);
-    $items = $profile['sections']['authorization']['payload']['items'];
+    $items = $profile['inspectors']['authorization']['payload']['items'];
 
     expect($items)->toHaveCount(2)
         ->and($items[0]['ability'])->toBe('inspect-profile')

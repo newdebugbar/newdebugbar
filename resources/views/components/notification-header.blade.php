@@ -24,7 +24,7 @@
                     @click="
                         inspector.openRelatedProfile(
                             selectedNotification.related_profile_id,
-                            selectedNotification.related_section,
+                            selectedNotification.related_inspector,
                         )
                     "
                     class="ndb:inline-flex ndb:h-8 ndb:items-center ndb:gap-1.5 ndb:rounded-lg ndb:bg-indigo-50 ndb:px-2.5 ndb:text-xs ndb:font-bold ndb:text-indigo-700 ndb:transition ndb:hover:bg-indigo-100 ndb:focus-visible:outline-2 ndb:focus-visible:outline-indigo-500 ndb:dark:bg-indigo-950/55 ndb:dark:text-indigo-300 ndb:dark:hover:bg-indigo-950"

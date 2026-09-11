@@ -37,7 +37,7 @@ it('stops the request feedback loop when Laravel Debugbar is also active', funct
     $updateUri = app('livewire')->getUpdateUri();
     $openUri = '/'.ltrim(trim($prefix, '/').'/open', '/');
     $requests = [];
-    $call = ['method' => 'loadSection', 'params' => ['request']];
+    $call = ['method' => 'loadInspector', 'params' => ['request']];
 
     // Replay both clients' header-driven discovery, capped so a regression
     // records the repeating requests instead of hanging the test runner.
@@ -75,7 +75,7 @@ it('stops the request feedback loop when Laravel Debugbar is also active', funct
     $next = $this->getJson('/plain-json')->assertOk()->assertHeader('X-NewDebugBar-Profile');
     $profile = app(ProfileStore::class)->get($next->headers->get('X-NewDebugBar-Profile'));
 
-    expect($profile['sections']['request']['payload']['path'])->toBe('/plain-json')
+    expect($profile['inspectors']['request']['payload']['path'])->toBe('/plain-json')
         ->and(count(File::files(config('newdebugbar.storage.path'))))->toBe($storedBefore + 1);
 })->with([
     'default prefix' => ['_debugbar'],

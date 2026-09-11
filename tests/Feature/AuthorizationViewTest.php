@@ -1,12 +1,12 @@
 <?php
 
-function authorizationSectionDocument(array $items): array
+function authorizationInspectorDocument(array $items): array
 {
-    $section = [
+    $inspector = [
         'summary' => ['count' => count($items)],
         'payload' => ['items' => $items],
     ];
-    $html = view('newdebugbar::livewire.sections.authorization', compact('section'))->render();
+    $html = view('newdebugbar::livewire.inspectors.authorization', compact('inspector'))->render();
     $document = new DOMDocument;
     $previousLibxmlState = libxml_use_internal_errors(true);
 
@@ -18,7 +18,7 @@ function authorizationSectionDocument(array $items): array
 }
 
 it('renders decisions for scanning and keeps structured evidence in the inspector', function () {
-    [$html, $xpath] = authorizationSectionDocument([
+    [$html, $xpath] = authorizationInspectorDocument([
         [
             'execution' => 7,
             'result' => 'allowed',
@@ -122,7 +122,7 @@ it('renders decisions for scanning and keeps structured evidence in the inspecto
 });
 
 it('keeps named callback evidence specific without inventing optional evidence', function () {
-    [, $xpath] = authorizationSectionDocument([[
+    [, $xpath] = authorizationInspectorDocument([[
         'execution' => 9,
         'result' => 'allowed',
         'ability' => 'view-public-trip-outline',
@@ -147,7 +147,7 @@ it('keeps named callback evidence specific without inventing optional evidence',
 });
 
 it('renders a clear empty authorization state', function () {
-    [$html, $xpath] = authorizationSectionDocument([]);
+    [$html, $xpath] = authorizationInspectorDocument([]);
 
     expect($xpath->query('//*[@data-ndb-authorization-workspace]')->length)->toBe(0)
         ->and($xpath->query('//*[@data-ndb-authorization-item]')->length)->toBe(0)

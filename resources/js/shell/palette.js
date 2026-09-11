@@ -9,15 +9,22 @@ export function createPalette(context) {
     paletteReturnFocus: null,
 
     get allCommands() {
-      const sections = (this.summary.sections ?? []).map((section) => ({
-        id: `section:${section.key}`,
-        label: `Go to ${section.label}`,
-        hint: section.active === false ? 'Other collector' : section.attention ? 'Needs attention' : 'Active section',
-        priority: section.attention ? 0 : section.active === false ? 2 : 1,
+      const inspectors = (this.summary.inspectors ?? []).map((inspector) => ({
+        id: `inspector:${inspector.key}`,
+        label: `Go to ${inspector.label}`,
+        hint:
+          inspector.active === false
+            ? 'Other collector'
+            : inspector.attention
+              ? 'Needs attention'
+              : 'Active inspector',
+        priority: inspector.attention ? 0 : inspector.active === false ? 2 : 1,
       }));
 
       return [
-        ...sections.sort((left, right) => left.priority - right.priority || left.label.localeCompare(right.label)),
+        ...inspectors.sort(
+          (left, right) => left.priority - right.priority || left.label.localeCompare(right.label),
+        ),
         { id: 'theme:system', label: 'Use system theme', hint: 'Theme' },
         { id: 'theme:light', label: 'Use light theme', hint: 'Theme' },
         { id: 'theme:dark', label: 'Use dark theme', hint: 'Theme' },
@@ -134,7 +141,7 @@ export function createPalette(context) {
     runCommand(id) {
       const [kind, value] = id.split(':');
 
-      if (kind === 'section') {
+      if (kind === 'inspector') {
         const returnFocus = this.paletteReturnFocus;
         this.closePalette(false);
         this.openInspector(value, returnFocus);

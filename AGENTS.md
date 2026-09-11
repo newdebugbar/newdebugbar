@@ -48,7 +48,7 @@
 - Show the request, errors, query count, and duration first.
 - Preserve useful diagnostics, but simplify dense views through hierarchy and progressive disclosure instead of removing information.
 - Keep primary views focused. Move framework internals, raw data, hashes, and supporting evidence into deeper detail views.
-- Reuse established components, helpers, and inherited behavior before adding parallel implementations or forwarding wrappers. Share rules that must stay consistent, while letting each section's data model determine its content and controls.
+- Reuse established components, helpers, and inherited behavior before adding parallel implementations or forwarding wrappers. Share rules that must stay consistent, while letting each inspector's data model determine its content and controls.
 - Use Laravel's documented terms for Laravel concepts. Before adding or changing a framework-facing label, verify it against the official documentation for the supported Laravel versions; do not replace framework terms with invented synonyms.
 - Use the shared inspector explanation component only when developers need help interpreting or acting on a table or evidence group. Its title must state the concrete question the content answers. Its description must explain only domain-specific or ambiguous information and give a conditional next check without assuming the condition is a problem. Do not explain self-evident labels or fields such as Source, or repeat the tab name or table heading.
 - Use monospaced type only for actual code and numeric values in tables. Keep paths, sources, drivers, connections, table names, keys, labels, and prose in the interface typeface.

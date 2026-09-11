@@ -24,7 +24,7 @@ Use realistic populated profiles and cover the states touched by the change:
 - One and multiple records.
 - Long paths, keys, URLs, class names, subjects, and messages.
 - Empty filtered results.
-- Failure, slow, warning, and successful states when the section supports them.
+- Failure, slow, warning, and successful states when the inspector supports them.
 - Missing optional data.
 - Retained raw or code evidence, including multiline strings, meaningful whitespace, accented text, and non-Latin characters.
 - Refresh, close and reopen, and profile replacement.
@@ -33,7 +33,7 @@ Do not use only a purpose-built tiny fixture when the real profile reveals heigh
 
 ## Visual checks
 
-- The requested section uses the intended full height.
+- The requested inspector uses the intended full height.
 - Each visible pane has one clear vertical scroll owner. In a desktop split workspace the list and detail may each scroll; avoid nested competing scroll areas within either pane.
 - No page-level or workspace-level horizontal overflow appears.
 - Desktop list/detail columns do not squeeze onto mobile.

@@ -6,9 +6,9 @@
     @keydown.window="handleShortcut($event)"
     @newdebugbar-content-updated.window="
         $nextTick(() => {
-            syncSectionHeading();
-            syncSectionPanels();
-            refreshSection();
+            syncInspectorHeading();
+            syncInspectorPanels();
+            refreshInspector();
             syncHostLock();
             window.newDebugBarHighlight?.($root);
         })
@@ -16,7 +16,7 @@
     @newdebugbar-profile-switched.window="switchProfile($event.detail.summary)"
     @newdebugbar-profile-noticed.window="receiveProfile($event.detail.summary)"
     @newdebugbar-profile-refreshed.window="receiveActivityRefresh($event.detail.summary, $event.detail.relatedProfiles)"
-    @newdebugbar-section-loaded.window="receiveSection($event.detail.section, $event.detail.profileId)"
+    @newdebugbar-inspector-loaded.window="receiveInspector($event.detail.inspector, $event.detail.profileId)"
     class="ndb:pointer-events-none ndb:fixed ndb:inset-0 ndb:z-[2147483000] ndb:text-zinc-900 ndb:dark:text-zinc-100"
 >
     <span id="newdebugbar-toolbar-drag-hint" class="ndb:sr-only"
@@ -59,7 +59,7 @@
                     @keydown.up.prevent="movePalette(-1)"
                     @keydown.enter.prevent="runActiveCommand()"
                     type="search"
-                    placeholder="Jump to a section or change a setting…"
+                    placeholder="Jump to an inspector or change a setting…"
                     class="ndb:h-14 ndb:min-w-0 ndb:flex-1 ndb:border-0 ndb:bg-transparent ndb:text-sm ndb:font-medium ndb:outline-none ndb:placeholder:text-zinc-400"
                 /><kbd
                     class="ndb:rounded-md ndb:border ndb:border-zinc-200 ndb:bg-zinc-50 ndb:px-1.5 ndb:py-1 ndb:text-xs ndb:font-bold ndb:text-zinc-400 ndb:dark:border-zinc-700 ndb:dark:bg-zinc-800"

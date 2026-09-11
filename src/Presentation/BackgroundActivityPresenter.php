@@ -15,7 +15,7 @@ final class BackgroundActivityPresenter
 
     /**
      * Adds background_activity with nullable pending and error fields. A read failure
-     * leaves captured section items intact and pending unknown until a later refresh.
+     * leaves captured inspector items intact and pending unknown until a later refresh.
      *
      * @param  array<string, mixed>  $profile
      * @return array<string, mixed>
@@ -25,8 +25,8 @@ final class BackgroundActivityPresenter
         $profileId = (string) ($profile['id'] ?? '');
         $keys = [];
 
-        foreach (['queue', 'mail', 'notifications'] as $section) {
-            $items = $profile['sections'][$section]['payload']['items'] ?? [];
+        foreach (['queue', 'mail', 'notifications'] as $inspector) {
+            $items = $profile['inspectors'][$inspector]['payload']['items'] ?? [];
 
             foreach ($items as $item) {
                 if (is_array($item) && is_string($item['correlation_key'] ?? null)) {
@@ -35,7 +35,7 @@ final class BackgroundActivityPresenter
             }
         }
 
-        $runtimeKey = $profile['sections']['request']['payload']['context']['correlation_key'] ?? null;
+        $runtimeKey = $profile['inspectors']['request']['payload']['context']['correlation_key'] ?? null;
 
         if (is_string($runtimeKey)) {
             $keys[] = $runtimeKey;
@@ -50,18 +50,18 @@ final class BackgroundActivityPresenter
             $error = self::READ_ERROR;
         }
 
-        foreach (['queue', 'mail', 'notifications'] as $section) {
-            if (! isset($profile['sections'][$section]) || ! is_array($profile['sections'][$section])) {
+        foreach (['queue', 'mail', 'notifications'] as $inspector) {
+            if (! isset($profile['inspectors'][$inspector]) || ! is_array($profile['inspectors'][$inspector])) {
                 continue;
             }
 
-            $items = $profile['sections'][$section]['payload']['items'] ?? [];
+            $items = $profile['inspectors'][$inspector]['payload']['items'] ?? [];
 
             if (! is_array($items)) {
                 continue;
             }
 
-            $profile['sections'][$section]['payload']['items'] = array_map(
+            $profile['inspectors'][$inspector]['payload']['items'] = array_map(
                 function (mixed $item) use ($activities, $profileId): mixed {
                     if (! is_array($item) || ! is_string($item['correlation_key'] ?? null)) {
                         return $item;

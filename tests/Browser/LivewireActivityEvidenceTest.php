@@ -11,11 +11,11 @@ it('keeps related request actions in the activity header and source details comp
             ->click('[data-ndb-mobile-toolbar-action="inspector"]')
             ->click('[data-ndb-header-mobile-trigger="actions"]')
             ->click('[data-ndb-header-mobile-action="palette"]')
-            ->click('[data-ndb-command="section:livewire"]');
+            ->click('[data-ndb-command="inspector:livewire"]');
     } else {
         $page->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
 
-        DebugBarBrowser::selectSectionViaPalette($page, 'livewire');
+        DebugBarBrowser::selectInspectorViaPalette($page, 'livewire');
     }
 
     DebugBarBrowser::waitForDetails($page);
@@ -28,12 +28,12 @@ it('keeps related request actions in the activity header and source details comp
 
     $page->script(<<<'JS'
         (() => {
-            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-section="livewire"]'));
+            const state = Alpine.$data(document.querySelector('[data-ndb-loaded-inspector="livewire"]'));
 
             window.newdebugbarActivityEvidenceCalls = { copies: [], requests: [] };
             state.inspector.copyText = (value) => window.newdebugbarActivityEvidenceCalls.copies.push(value);
-            state.inspector.openRelatedProfile = (profileId, section) =>
-                window.newdebugbarActivityEvidenceCalls.requests.push([profileId, section]);
+            state.inspector.openRelatedProfile = (profileId, inspector) =>
+                window.newdebugbarActivityEvidenceCalls.requests.push([profileId, inspector]);
             state.livewireServerActivity = [];
         })()
         JS);
@@ -43,7 +43,7 @@ it('keeps related request actions in the activity header and source details comp
 
         $page->script(<<<JS
             (() => {
-                const state = Alpine.\$data(document.querySelector('[data-ndb-loaded-section="livewire"]'));
+                const state = Alpine.\$data(document.querySelector('[data-ndb-loaded-inspector="livewire"]'));
                 const selected = state.livewireSelectedActivityId;
                 state.livewireTrace = {
                     ...state.livewireTrace,

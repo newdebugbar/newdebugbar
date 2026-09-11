@@ -149,14 +149,14 @@ final class DebugBarBrowser
 
                 const check = () => {
                     const root = document.getElementById('newdebugbar');
-                    const selected = root?.querySelector('[data-ndb-select-section][aria-current="page"]')
-                        ?.dataset.ndbSelectSection;
+                    const selected = root?.querySelector('[data-ndb-select-inspector][aria-current="page"]')
+                        ?.dataset.ndbSelectInspector;
                     const details = selected === undefined
                         ? null
-                        : root.querySelector(`[data-ndb-loaded-section="${CSS.escape(selected)}"]`);
-                    const stage = root?.querySelector('[data-ndb-section-stage]');
-                    const content = root?.querySelector('[data-ndb-section-content]');
-                    const loading = root?.querySelector('[data-ndb-section-loading]');
+                        : root.querySelector(`[data-ndb-loaded-inspector="${CSS.escape(selected)}"]`);
+                    const stage = root?.querySelector('[data-ndb-inspector-stage]');
+                    const content = root?.querySelector('[data-ndb-inspector-body]');
+                    const loading = root?.querySelector('[data-ndb-inspector-loading]');
                     const loadingFinished = loading === null || getComputedStyle(loading).display === 'none';
                     const requestFinished = stage?.getAttribute('aria-busy') === 'false';
                     const transitionFinished = content !== null && Number(getComputedStyle(content).opacity) === 1;
@@ -195,38 +195,38 @@ final class DebugBarBrowser
             JS;
     }
 
-    public static function assertSectionSelected(mixed $page, string $section): void
+    public static function assertInspectorSelected(mixed $page, string $inspector): void
     {
         $page
-            ->assertCount('#newdebugbar [data-ndb-select-section][aria-current="page"]', 1)
-            ->assertAttribute("#newdebugbar [data-ndb-select-section=\"{$section}\"]", 'aria-current', 'page')
-            ->assertCount('#newdebugbar [data-ndb-section-panel]:not([hidden])', 1)
-            ->assertVisible("#newdebugbar [data-ndb-section-panel=\"{$section}\"]");
+            ->assertCount('#newdebugbar [data-ndb-select-inspector][aria-current="page"]', 1)
+            ->assertAttribute("#newdebugbar [data-ndb-select-inspector=\"{$inspector}\"]", 'aria-current', 'page')
+            ->assertCount('#newdebugbar [data-ndb-inspector-panel]:not([hidden])', 1)
+            ->assertVisible("#newdebugbar [data-ndb-inspector-panel=\"{$inspector}\"]");
     }
 
     public static function assertFavoriteOrder(mixed $page, string $order): void
     {
         $page->assertScript(<<<'JS'
-            Array.from(document.querySelectorAll('#newdebugbar [data-ndb-section][data-ndb-favorite="true"]'))
-                .map((section) => section.dataset.ndbSection)
+            Array.from(document.querySelectorAll('#newdebugbar [data-ndb-inspector][data-ndb-favorite="true"]'))
+                .map((inspector) => inspector.dataset.ndbInspector)
                 .join(',')
             JS, $order);
     }
 
-    public static function dragSection(mixed $page, string $source, string $target): void
+    public static function dragInspector(mixed $page, string $source, string $target): void
     {
-        $sourceSelector = '[data-ndb-section="'.$source.'"]';
+        $sourceSelector = '[data-ndb-inspector="'.$source.'"]';
         $encodedSelector = json_encode($sourceSelector, JSON_THROW_ON_ERROR);
         $page->script("document.querySelector({$encodedSelector}).scrollIntoView({block: 'center'})");
-        $page->drag($sourceSelector, '[data-ndb-section="'.$target.'"]');
+        $page->drag($sourceSelector, '[data-ndb-inspector="'.$target.'"]');
     }
 
-    public static function selectSectionViaPalette(mixed $page, string $section): void
+    public static function selectInspectorViaPalette(mixed $page, string $inspector): void
     {
         $page
             ->click('[data-ndb-inspector-action="palette"]')
             ->assertVisible('[role="dialog"][aria-label="Command palette"]')
             ->click('[data-ndb-command="collectors:show"]')
-            ->click("[data-ndb-command=\"section:{$section}\"]");
+            ->click("[data-ndb-command=\"inspector:{$inspector}\"]");
     }
 }

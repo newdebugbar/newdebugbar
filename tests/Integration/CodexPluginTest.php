@@ -98,6 +98,6 @@ test('the plugin teaches agents how to reach complete profile data', function ()
     $skill = file_get_contents($pluginPath('skills/use-newdebugbar/SKILL.md'));
 
     expect($skill)
-        ->toContain('get-debug-profile-data', '/sections', 'JSON Pointer', 'exact value')
+        ->toContain('get-debug-profile-data', '/inspectors', 'JSON Pointer', 'exact value')
         ->toContain('same exact profile ID', 'returned cursor');
 });

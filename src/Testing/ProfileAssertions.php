@@ -31,7 +31,7 @@ final class ProfileAssertions
     {
         Assert::assertSame(
             0,
-            (int) ($this->profile['sections']['queries']['summary']['repeated_pattern_count'] ?? 0),
+            (int) ($this->profile['inspectors']['queries']['summary']['repeated_pattern_count'] ?? 0),
             'The profile contains repeated query patterns.',
         );
 
@@ -53,7 +53,7 @@ final class ProfileAssertions
     {
         Assert::assertLessThanOrEqual(
             $maximum,
-            (int) ($this->profile['sections']['queries']['summary']['total_count'] ?? 0),
+            (int) ($this->profile['inspectors']['queries']['summary']['total_count'] ?? 0),
             "The query count exceeded {$maximum}.",
         );
 
@@ -64,7 +64,7 @@ final class ProfileAssertions
     {
         Assert::assertLessThanOrEqual(
             $maximumMs,
-            (float) ($this->profile['sections']['queries']['summary']['total_time_ms'] ?? 0),
+            (float) ($this->profile['inspectors']['queries']['summary']['total_time_ms'] ?? 0),
             'The total query time exceeded '.DurationFormatter::format($maximumMs).'.',
         );
 

@@ -36,12 +36,12 @@ it('profiles host Livewire requests without storing framework snapshots', functi
     $response->assertOk()->assertHeader('X-NewDebugBar-Profile');
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
 
-    $livewire = $profile['sections']['livewire'];
+    $livewire = $profile['inspectors']['livewire'];
 
-    expect($profile['sections']['request']['payload']['input'])->toBe([
+    expect($profile['inspectors']['request']['payload']['input'])->toBe([
         'component_message_count' => 1,
         'snapshot_data_stored' => false,
-    ])->and($profile['sections']['request']['payload']['request_type'])->toBe('livewire')
+    ])->and($profile['inspectors']['request']['payload']['request_type'])->toBe('livewire')
         ->and($livewire['summary'])
         ->component_count->toBe(1)
         ->activity_count->toBeGreaterThanOrEqual(2)
@@ -85,7 +85,7 @@ it('captures components mounted during a profiled page render', function () {
 
     $response->assertOk()->assertHeader('X-NewDebugBar-Profile');
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $livewire = $profile['sections']['livewire'];
+    $livewire = $profile['inspectors']['livewire'];
 
     expect($livewire['summary'])
         ->component_count->toBe(1)
@@ -104,7 +104,7 @@ it('reports the original source for single-file components', function () {
 
     $response->assertOk()->assertHeader('X-NewDebugBar-Profile');
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $component = $profile['sections']['livewire']['payload']['components'][0];
+    $component = $profile['inspectors']['livewire']['payload']['components'][0];
 
     expect($component)
         ->name->toBe('host-functional-status')
@@ -119,7 +119,7 @@ it('preserves nested component instance identity and parentage', function () {
 
     $response->assertOk()->assertHeader('X-NewDebugBar-Profile');
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $components = collect($profile['sections']['livewire']['payload']['components'])->keyBy('name');
+    $components = collect($profile['inspectors']['livewire']['payload']['components'])->keyBy('name');
 
     expect($components)
         ->toHaveCount(2)
@@ -142,7 +142,7 @@ it('captures validation failures handled inside host Livewire components', funct
 
     $response->assertOk()->assertHeader('X-NewDebugBar-Profile');
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $validation = $profile['sections']['validation'];
+    $validation = $profile['inspectors']['validation'];
 
     expect($validation['summary']['count'])->toBe(1)
         ->and($validation['payload']['items'][0])
@@ -153,7 +153,7 @@ it('captures validation failures handled inside host Livewire components', funct
         ->exception_status->toBe(422)
         ->response_status->toBe(200)
         ->callsite->file->toBe('tests/Fixtures/HostValidationForm.php')
-        ->and($profile['sections']['exceptions']['summary']['count'])->toBe(0);
+        ->and($profile['inspectors']['exceptions']['summary']['count'])->toBe(0);
 });
 
 it('captures a changed Livewire error bag when framework propagation has stopped', function () {
@@ -169,10 +169,10 @@ it('captures a changed Livewire error bag when framework propagation has stopped
 
     $response->assertOk()->assertHeader('X-NewDebugBar-Profile');
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
-    $failures = collect($profile['sections']['livewire']['payload']['activity'])
+    $failures = collect($profile['inspectors']['livewire']['payload']['activity'])
         ->where('status', 'failed_validation');
 
-    expect($profile['sections']['validation']['payload']['items'])
+    expect($profile['inspectors']['validation']['payload']['items'])
         ->toHaveCount(1)
         ->{0}->toMatchArray([
             'source' => 'livewire',
@@ -215,7 +215,7 @@ it('excludes debug toolbar updates from profiling and storage', function () {
         'components' => [[
             'snapshot' => json_encode($snapshot, JSON_THROW_ON_ERROR),
             'updates' => [],
-            'calls' => [['method' => 'loadSection', 'params' => ['request']]],
+            'calls' => [['method' => 'loadInspector', 'params' => ['request']]],
         ]],
     ], ['X-Livewire' => '1']);
 
@@ -237,7 +237,7 @@ it('keeps host work profiled when its update shares a request with the toolbar',
             [
                 'snapshot' => json_encode($snapshot, JSON_THROW_ON_ERROR),
                 'updates' => [],
-                'calls' => [['method' => 'loadSection', 'params' => ['request']]],
+                'calls' => [['method' => 'loadInspector', 'params' => ['request']]],
             ],
         ],
     ], ['X-Livewire' => '1'])->assertOk()->assertHeader('X-NewDebugBar-Profile');
@@ -246,6 +246,6 @@ it('keeps host work profiled when its update shares a request with the toolbar',
 
     expect($hostSnapshot['data']['count'])->toBe(1)
         ->and($response->json('components'))->toHaveCount(2)
-        ->and(array_column($profile['sections']['livewire']['payload']['components'], 'name'))->toBe(['host-counter'])
-        ->and($profile['sections']['request']['payload']['request_type'])->toBe('livewire');
+        ->and(array_column($profile['inspectors']['livewire']['payload']['components'], 'name'))->toBe(['host-counter'])
+        ->and($profile['inspectors']['request']['payload']['request_type'])->toBe('livewire');
 });

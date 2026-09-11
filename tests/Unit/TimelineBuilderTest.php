@@ -5,7 +5,7 @@ use NewDebugBar\Analysis\TimelineBuilder;
 it('keeps point events distinct and visualizes recorded durations', function () {
     $timeline = (new TimelineBuilder)->build([
         'metrics' => ['duration_ms' => 50],
-        'sections' => [
+        'inspectors' => [
             'request' => ['payload' => []],
             'queries' => ['payload' => ['items' => [[
                 'normalized_sql' => 'select * from users',
@@ -44,7 +44,7 @@ it('keeps point events distinct and visualizes recorded durations', function () 
         ->start_ms->toBeNull()
         ->duration_ms->toBeNull()
         ->at_percent->toBe(10.0)
-        ->section_label->toBe('Cache')
+        ->inspector_label->toBe('Cache')
         ->source->toBe(['file' => 'app/Support/TripCache.php', 'line' => 18])
         ->and($timeline[2])
         ->kind->toBe('span')
@@ -68,7 +68,7 @@ it('keeps point events distinct and visualizes recorded durations', function () 
 it('names authorization and validation activity with useful evidence', function () {
     $timeline = collect((new TimelineBuilder)->build([
         'metrics' => ['duration_ms' => 25],
-        'sections' => [
+        'inspectors' => [
             'request' => ['payload' => []],
             'authorization' => ['payload' => ['items' => [[
                 'ability' => 'publish-itinerary',
@@ -82,14 +82,14 @@ it('names authorization and validation activity with useful evidence', function 
         ],
     ]));
 
-    expect($timeline->firstWhere('section', 'authorization')['label'])->toBe('Denied publish-itinerary')
-        ->and($timeline->firstWhere('section', 'validation')['label'])->toBe('Validation failed: email, name, dates and 1 more');
+    expect($timeline->firstWhere('inspector', 'authorization')['label'])->toBe('Denied publish-itinerary')
+        ->and($timeline->firstWhere('inspector', 'validation')['label'])->toBe('Validation failed: email, name, dates and 1 more');
 });
 
 it('keeps timeline geometry bounded when events exceed the reported duration', function () {
     $timeline = (new TimelineBuilder)->build([
         'metrics' => ['duration_ms' => 0],
-        'sections' => [
+        'inspectors' => [
             'request' => ['payload' => []],
             'queries' => ['payload' => ['items' => [[
                 'normalized_sql' => 'select 1',
@@ -115,7 +115,7 @@ it('keeps timeline geometry bounded when events exceed the reported duration', f
 
 it('reports every collector source omitted from the timeline', function () {
     $omitted = (new TimelineBuilder)->omittedSources([
-        'sections' => [
+        'inspectors' => [
             'queries' => ['summary' => ['dropped_count' => 2]],
             'views' => ['summary' => ['dropped_count' => 17]],
             'logs' => ['summary' => ['dropped_count' => 0]],

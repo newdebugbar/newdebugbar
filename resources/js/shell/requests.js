@@ -1,4 +1,4 @@
-import { DEFAULT_SECTION } from './navigation.js';
+import { DEFAULT_INSPECTOR } from './navigation.js';
 
 export const PROFILE_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -9,7 +9,8 @@ export function createRequests(context) {
   const requestLimit = Number.isInteger(profileLimit) && profileLimit > 0 ? profileLimit : 20;
   const requests = [];
   [summary, ...(Array.isArray(context.recentProfiles) ? context.recentProfiles : [])].forEach((profile) => {
-    if (!PROFILE_PATTERN.test(profile?.id ?? '') || requests.some((request) => request.id === profile.id)) return;
+    if (!PROFILE_PATTERN.test(profile?.id ?? '') || requests.some((request) => request.id === profile.id))
+      return;
     requests.push(profile);
   });
   return {
@@ -67,10 +68,10 @@ export function createRequests(context) {
 
       if (existing === -1) {
         const current = this.recentProfiles.find((profile) => profile.id === this.currentRequestId);
-        const later = [summary, ...this.recentProfiles.filter((profile) => profile.id !== this.currentRequestId)].slice(
-          0,
-          Math.max(0, this.profileLimit - (current ? 1 : 0)),
-        );
+        const later = [
+          summary,
+          ...this.recentProfiles.filter((profile) => profile.id !== this.currentRequestId),
+        ].slice(0, Math.max(0, this.profileLimit - (current ? 1 : 0)));
         this.recentProfiles = current ? [...later, current] : later;
         this.viewedProfileIds = this.viewedProfileIds.filter((id) =>
           this.recentProfiles.some((profile) => profile.id === id),
@@ -91,11 +92,11 @@ export function createRequests(context) {
       this.rememberProfile(summary);
     },
 
-    openRelatedProfile(profileId, section = DEFAULT_SECTION) {
+    openRelatedProfile(profileId, inspector = DEFAULT_INSPECTOR) {
       if (!PROFILE_PATTERN.test(profileId ?? '')) return;
 
       if (profileId === this.summary.id) {
-        this.selectSection(section);
+        this.selectInspector(inspector);
 
         return;
       }
@@ -103,7 +104,7 @@ export function createRequests(context) {
       const action = this.$wire?.switchProfile;
       if (typeof action !== 'function') return;
 
-      this.relatedProfileSelection = { id: profileId, section };
+      this.relatedProfileSelection = { id: profileId, inspector };
       Promise.resolve(action.call(this.$wire, profileId)).catch(() => {
         if (this.relatedProfileSelection?.id === profileId) this.relatedProfileSelection = null;
       });
@@ -137,21 +138,21 @@ export function createRequests(context) {
     switchProfile(summary) {
       if (!PROFILE_PATTERN.test(summary?.id ?? '')) return;
 
-      this.unmountActiveSection();
-      this.pendingSectionIntent = null;
+      this.unmountActiveInspector();
+      this.pendingInspectorIntent = null;
       const selectedFromPicker = this.requestSelectionPending === summary.id;
       const selectedFromRelation = this.relatedProfileSelection?.id === summary.id;
-      const requestedSection = selectedFromPicker
+      const requestedInspector = selectedFromPicker
         ? 'request'
         : selectedFromRelation
-          ? this.relatedProfileSelection.section
+          ? this.relatedProfileSelection.inspector
           : this.selected;
-      const selected = (summary.sections ?? []).some((section) => section.key === requestedSection)
-        ? requestedSection
-        : DEFAULT_SECTION;
+      const selected = (summary.inspectors ?? []).some((inspector) => inspector.key === requestedInspector)
+        ? requestedInspector
+        : DEFAULT_INSPECTOR;
       this.cancelActivityRefresh(true);
       this.activityRefreshPending = false;
-      this.sectionRequestVersion++;
+      this.inspectorRequestVersion++;
       this.summary = summary ?? {};
       this.requestSelectionPending = null;
       this.relatedProfileSelection = null;
@@ -164,17 +165,17 @@ export function createRequests(context) {
         this.recentProfiles = [summary];
         this.viewedProfileIds = [summary.id];
       }
-      this.loadedSection = null;
-      this.requestedSection = null;
-      this.sectionLoading = false;
-      this.clearSectionLoadingIndicator();
-      this.sectionTransitioning = false;
-      this.sectionError = false;
+      this.loadedInspector = null;
+      this.requestedInspector = null;
+      this.inspectorLoading = false;
+      this.clearInspectorLoadingIndicator();
+      this.inspectorTransitioning = false;
+      this.inspectorError = false;
       this.selected = selected;
       if (this.inspectorOpen || selectedFromPicker || selectedFromRelation) {
         this.openInspector(selected);
       } else {
-        this.$nextTick?.(() => this.syncSectionPanels());
+        this.$nextTick?.(() => this.syncInspectorPanels());
       }
     },
 
@@ -250,7 +251,8 @@ export function createRequests(context) {
       const switcher =
         trigger?.closest?.('[data-ndb-request-switcher]') ??
         this.$root?.querySelector?.(`[data-ndb-request-switcher="${scope}"]`);
-      const pickerTrigger = switcher?.querySelector?.(`[data-ndb-request-picker-trigger="${scope}"]`) ?? trigger;
+      const pickerTrigger =
+        switcher?.querySelector?.(`[data-ndb-request-picker-trigger="${scope}"]`) ?? trigger;
       const popover = switcher?.querySelector?.(`[data-ndb-request-popover="${scope}"]`);
       const switcherBox = switcher?.getBoundingClientRect?.();
       const triggerBox = pickerTrigger?.getBoundingClientRect?.();
@@ -305,7 +307,7 @@ export function createRequests(context) {
       const returnFocus = this.requestPickerReturnFocus;
       this.closeRequestPicker();
       if (profileId === this.summary.id) {
-        this.openRequestSection(returnFocus);
+        this.openRequestInspector(returnFocus);
 
         return;
       }

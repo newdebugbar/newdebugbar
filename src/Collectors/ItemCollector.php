@@ -4,7 +4,7 @@ namespace NewDebugBar\Collectors;
 
 use NewDebugBar\Support\Redactor;
 
-/** Collects bounded items for a named section without custom metrics. */
+/** Collects bounded items for a named inspector without custom metrics. */
 final class ItemCollector extends AbstractCollector
 {
     public function __construct(

@@ -126,7 +126,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | "max_items" limits one MCP page to 50 items so agents can inspect large
-    | sections in focused parts. "max_bytes" caps one response at 100,000 bytes
+    | inspectors in focused parts. "max_bytes" caps one response at 100,000 bytes
     | so a useful result fits in model context without returning a full profile.
     | Both stay configurable because MCP clients have different context limits.
     |
@@ -146,7 +146,7 @@ return [
     | Null uses Laravel's base path, which is correct for a normal project.
     | A custom path supports Laravel code kept below another project root.
     | "max_items_per_collector" keeps up to 500 top-level events in each
-    | section. "max_items_per_array" keeps up to 100 nested values, request
+    | inspector. "max_items_per_array" keeps up to 100 nested values, request
     | keys, or mail addresses. These defaults preserve a large local sample
     | while keeping profiles quick to encode, store, and open.
     |

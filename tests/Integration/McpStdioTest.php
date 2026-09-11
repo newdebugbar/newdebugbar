@@ -37,22 +37,22 @@ test('the real stdio server advertises complete profile access', function () {
         $tools = $client->tools();
         $missing = $client->callTool('get-debug-profile-data', [
             'profile_id' => '00000000-0000-4000-8000-000000000000',
-            'path' => '/sections',
+            'path' => '/inspectors',
         ]);
 
         expect($initialization?->serverInfo->name)->toBe('New Debug Bar')
             ->and($files->exists($cachePath.'/packages.php'))->toBeTrue()
             ->and($files->exists($cachePath.'/services.php'))->toBeTrue()
             ->and($initialization?->serverInfo->version)->toBe('1.1.0')
-            ->and($initialization?->instructions)->toContain('get-debug-profile-data', '/sections')
+            ->and($initialization?->instructions)->toContain('get-debug-profile-data', '/inspectors')
             ->and($tools->keys()->all())->toBe([
                 'list-debug-profiles',
-                'get-debug-profile-section',
+                'get-debug-profile-inspector',
                 'get-debug-profile-data',
                 'inspect-debug-queries',
                 'get-debug-findings',
             ])
-            ->and($tools['get-debug-profile-data']->inputSchema['properties']['path']['default'])->toBe('/sections')
+            ->and($tools['get-debug-profile-data']->inputSchema['properties']['path']['default'])->toBe('/inspectors')
             ->and($tools['get-debug-profile-data']->outputSchema['properties']['data']['properties'])
             ->toHaveKeys(['path', 'type', 'entries', 'value', 'chunks', 'pagination'])
             ->and($missing->isError)->toBeFalse()
@@ -60,7 +60,7 @@ test('the real stdio server advertises complete profile access', function () {
                 'status' => 'not_found',
                 'data' => [
                     'profile_id' => '00000000-0000-4000-8000-000000000000',
-                    'path' => '/sections',
+                    'path' => '/inspectors',
                 ],
             ]);
     } finally {

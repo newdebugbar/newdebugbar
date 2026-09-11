@@ -42,7 +42,7 @@
                 $el.closest('details').open = false;
                 inspector.openRelatedProfile(
                     selectedMailMessage.related_profile_id,
-                    selectedMailMessage.related_section,
+                    selectedMailMessage.related_inspector,
                 );
             "
             type="button"

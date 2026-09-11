@@ -75,7 +75,7 @@ it('leaves response types that cannot host the bar untouched', function (string 
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
 
     expect($profile)->not->toBeNull()
-        ->and($profile['sections']['request']['payload']['request_type'])->toBe(match ($path) {
+        ->and($profile['inspectors']['request']['payload']['request_type'])->toBe(match ($path) {
             '/download' => 'download',
             default => 'full_page',
         });
@@ -100,15 +100,15 @@ it('preserves a profile when the application throws', function () {
 
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
 
-    expect($profile['sections']['request']['summary']['status'])->toBe(500)
-        ->and($profile['sections']['exceptions']['summary']['count'])->toBe(1)
-        ->and($profile['sections']['exceptions']['payload']['items'][0]['class'])->toBe(RuntimeException::class)
-        ->and($profile['sections']['exceptions']['payload']['items'][0]['file'])->toBe('tests/Support/DefinesTestApplication.php')
-        ->and($profile['sections']['exceptions']['payload']['items'][0])->not->toHaveKey('trace')
-        ->and($profile['sections']['exceptions']['payload']['items'][0]['frames']['application'])->not->toBeEmpty()
-        ->and($profile['sections']['exceptions']['payload']['items'][0]['source']['lines'])->not->toBeEmpty()
-        ->and($profile['sections']['exceptions']['payload']['items'][0]['causes'])->toBe([])
-        ->and($profile['sections']['exceptions']['payload']['items'][0]['chain_truncated'])->toBeFalse()
+    expect($profile['inspectors']['request']['summary']['status'])->toBe(500)
+        ->and($profile['inspectors']['exceptions']['summary']['count'])->toBe(1)
+        ->and($profile['inspectors']['exceptions']['payload']['items'][0]['class'])->toBe(RuntimeException::class)
+        ->and($profile['inspectors']['exceptions']['payload']['items'][0]['file'])->toBe('tests/Support/DefinesTestApplication.php')
+        ->and($profile['inspectors']['exceptions']['payload']['items'][0])->not->toHaveKey('trace')
+        ->and($profile['inspectors']['exceptions']['payload']['items'][0]['frames']['application'])->not->toBeEmpty()
+        ->and($profile['inspectors']['exceptions']['payload']['items'][0]['source']['lines'])->not->toBeEmpty()
+        ->and($profile['inspectors']['exceptions']['payload']['items'][0]['causes'])->toBe([])
+        ->and($profile['inspectors']['exceptions']['payload']['items'][0]['chain_truncated'])->toBeFalse()
         ->and(app(ProfileManager::class)->isCollecting())->toBeFalse();
 });
 
@@ -130,8 +130,8 @@ it('profiles JSON without changing its body or injecting the toolbar', function 
 
     $profile = app(ProfileStore::class)->get($response->headers->get('X-NewDebugBar-Profile'));
 
-    expect($profile['sections']['request']['payload']['request_type'])->toBe('json')
-        ->and($profile['sections']['request']['payload']['response_size_bytes'])
+    expect($profile['inspectors']['request']['payload']['request_type'])->toBe('json')
+        ->and($profile['inspectors']['request']['payload']['response_size_bytes'])
         ->toBe(strlen(json_encode(['ready' => true])));
 });
 
@@ -175,7 +175,7 @@ it('profiles API AJAX redirect streamed and binary responses without body inject
         $response->headers->get('X-NewDebugBar-Profile'),
     ));
 
-    expect($profiles->map(fn (array $profile): string => $profile['sections']['request']['payload']['request_type'])->all())
+    expect($profiles->map(fn (array $profile): string => $profile['inspectors']['request']['payload']['request_type'])->all())
         ->toBe([
             'json' => 'json',
             'ajax' => 'ajax',

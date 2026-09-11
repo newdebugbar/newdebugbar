@@ -3,12 +3,12 @@
 use NewDebugBar\Support\DurationFormatter;
 use NewDebugBar\Tests\Support\DebugBarBrowser;
 
-it('navigates and saves section ordering inside either mobile menu', function (string $theme, int $width, int $height) {
+it('navigates and saves inspector ordering inside either mobile menu', function (string $theme, int $width, int $height) {
     $page = visit('/profiled')->resize($width, $height);
     $preferences = json_encode([
         'theme' => $theme,
         'favorites' => ['queries', 'request'],
-        'sectionOrder' => ['models', 'logs'],
+        'inspectorOrder' => ['models', 'logs'],
     ], JSON_THROW_ON_ERROR);
     $page->script("localStorage.setItem('newdebugbar.preferences.v1', JSON.stringify({$preferences}))");
     $page->refresh()
@@ -27,22 +27,22 @@ it('navigates and saves section ordering inside either mobile menu', function (s
             })()
             JS);
 
-    DebugBarBrowser::dragSection($page, 'request', 'queries');
+    DebugBarBrowser::dragInspector($page, 'request', 'queries');
 
     DebugBarBrowser::assertFavoriteOrder($page, 'request,queries');
 
-    DebugBarBrowser::dragSection($page, 'logs', 'models');
+    DebugBarBrowser::dragInspector($page, 'logs', 'models');
 
     $page->assertScript(<<<'JS'
-            [...document.querySelectorAll('[data-ndb-section][data-ndb-favorite="false"]')]
+            [...document.querySelectorAll('[data-ndb-inspector][data-ndb-favorite="false"]')]
                 .filter((row) => row.getClientRects().length > 0)
-                .slice(0, 2).map((row) => row.dataset.ndbSection).join(',')
+                .slice(0, 2).map((row) => row.dataset.ndbInspector).join(',')
             JS, 'logs,models')
-        ->click('[data-ndb-select-section="logs"]');
+        ->click('[data-ndb-select-inspector="logs"]');
 
-    DebugBarBrowser::assertSectionSelected($page, 'logs');
+    DebugBarBrowser::assertInspectorSelected($page, 'logs');
 
-    $page->assertScript('document.activeElement === document.querySelector("[data-ndb-section-heading]")')
+    $page->assertScript('document.activeElement === document.querySelector("[data-ndb-inspector-heading]")')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
         ->assertScript(<<<'JS'
             (() => {
@@ -57,11 +57,11 @@ it('navigates and saves section ordering inside either mobile menu', function (s
 
     DebugBarBrowser::assertFavoriteOrder($page, 'request,queries,models');
 
-    DebugBarBrowser::dragSection($page, 'models', 'queries');
+    DebugBarBrowser::dragInspector($page, 'models', 'queries');
 
     DebugBarBrowser::assertFavoriteOrder($page, 'request,models,queries');
 
-    $page->keys('[data-ndb-select-section="models"]', 'Escape')
+    $page->keys('[data-ndb-select-inspector="models"]', 'Escape')
         ->assertScript('document.activeElement.dataset.ndbHeaderMobileTrigger === "actions"')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
         ->click('[data-ndb-header-mobile-action="shrink"]')
@@ -71,15 +71,15 @@ it('navigates and saves section ordering inside either mobile menu', function (s
 
     DebugBarBrowser::assertFavoriteOrder($page, 'request,models,queries');
 
-    $page->click('[data-ndb-select-section="queries"]')
+    $page->click('[data-ndb-select-inspector="queries"]')
         ->resize(1440, 900)
-        ->assertVisible('#newdebugbar-section-navigation');
+        ->assertVisible('#newdebugbar-inspector-navigation');
 
     DebugBarBrowser::assertFavoriteOrder($page, 'request,models,queries');
 
     $page->assertScript(<<<'JS'
-        [...document.querySelectorAll('[data-ndb-section][data-ndb-favorite="false"]')]
-            .filter((row) => row.getClientRects().length > 0)[0].dataset.ndbSection
+        [...document.querySelectorAll('[data-ndb-inspector][data-ndb-favorite="false"]')]
+            .filter((row) => row.getClientRects().length > 0)[0].dataset.ndbInspector
         JS, 'logs')
         ->assertNoJavaScriptErrors();
 })->with([
@@ -159,11 +159,11 @@ it('makes mobile metrics direct actions and preserves drag pinning', function ()
             JS)
         ->click('[data-ndb-mobile-toolbar-metric-scope="toolbar"][data-ndb-mobile-toolbar-metric="queries"]')
         ->assertVisible('[role="dialog"][aria-label="Request inspector"]')
-        ->assertVisible('[data-ndb-section-panel="queries"]')
-        ->assertScript('document.querySelector("[data-ndb-section-heading]").textContent.trim() === "Queries"')
+        ->assertVisible('[data-ndb-inspector-panel="queries"]')
+        ->assertScript('document.querySelector("[data-ndb-inspector-heading]").textContent.trim() === "Queries"')
         ->click('[data-ndb-mobile-toolbar-metric-scope="header"][data-ndb-mobile-toolbar-metric="duration"]')
-        ->assertVisible('[data-ndb-section-panel="request"]')
-        ->assertScript('document.querySelector("[data-ndb-section-heading]").textContent.trim() === "Requests"')
+        ->assertVisible('[data-ndb-inspector-panel="request"]')
+        ->assertScript('document.querySelector("[data-ndb-inspector-heading]").textContent.trim() === "Requests"')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
         ->click('[data-ndb-header-mobile-action="shrink"]')
         ->click('[data-ndb-mobile-toolbar-trigger="actions"]')
@@ -370,8 +370,8 @@ it('uses the compact inspector header only below sm', function () {
             })()
             JS)
         ->click('[data-ndb-mobile-toolbar-metric-scope="header"][data-ndb-mobile-toolbar-metric="queries"]')
-        ->assertVisible('[data-ndb-section-panel="queries"]')
-        ->assertScript('document.querySelector("[data-ndb-section-heading]").textContent.trim() === "Queries"')
+        ->assertVisible('[data-ndb-inspector-panel="queries"]')
+        ->assertScript('document.querySelector("[data-ndb-inspector-heading]").textContent.trim() === "Queries"')
         ->click('[data-ndb-header-mobile-trigger="actions"]')
         ->assertVisible('[data-ndb-mobile-toolbar-menu="header-actions"]')
         ->assertVisible('[data-ndb-mobile-toolbar-popover-arrow="header-actions"]')
@@ -406,8 +406,8 @@ it('uses the compact inspector header only below sm', function () {
                     && document.activeElement === visibleItems[0];
             })()
             JS)
-        ->assertVisible('[data-ndb-mobile-toolbar-menu="header-actions"] [data-ndb-select-section="queries"]')
-        ->keys('[data-ndb-mobile-toolbar-menu="header-actions"] [data-ndb-select-section="queries"]', 'Escape')
+        ->assertVisible('[data-ndb-mobile-toolbar-menu="header-actions"] [data-ndb-select-inspector="queries"]')
+        ->keys('[data-ndb-mobile-toolbar-menu="header-actions"] [data-ndb-select-inspector="queries"]', 'Escape')
         ->assertScript('document.activeElement === document.querySelector("[data-ndb-header-mobile-trigger=\\"actions\\"]")')
         ->resize(640, 844)
         ->assertScript(<<<'JS'
@@ -521,10 +521,10 @@ it('keeps the main interactions usable on a phone viewport', function () {
             JS)
         ->click('[data-ndb-header-mobile-trigger="actions"]')
         ->assertAttribute('[data-ndb-header-mobile-trigger="actions"]', 'aria-expanded', 'true')
-        ->click('[data-ndb-select-section="queries"]')
-        ->assertScript('document.activeElement === document.querySelector("[data-ndb-section-heading]")');
+        ->click('[data-ndb-select-inspector="queries"]')
+        ->assertScript('document.activeElement === document.querySelector("[data-ndb-inspector-heading]")');
 
-    DebugBarBrowser::assertSectionSelected($page, 'queries');
+    DebugBarBrowser::assertInspectorSelected($page, 'queries');
 
     $page
         ->click('[data-ndb-header-mobile-trigger="actions"]')
@@ -538,7 +538,7 @@ it('keeps the main interactions usable on a phone viewport', function () {
         ->click('[data-ndb-mobile-toolbar-metric-scope="header"][data-ndb-mobile-toolbar-metric="memory"]')
         ->assertAttribute('[data-ndb-header-mobile-trigger="actions"]', 'aria-expanded', 'false')
         ->resize(1440, 900)
-        ->assertVisible('#newdebugbar-section-navigation')
+        ->assertVisible('#newdebugbar-inspector-navigation')
         ->assertScript('getComputedStyle(document.querySelector("[data-ndb-header-mobile-toolbar]")).display === "none"')
         ->assertNoJavaScriptErrors();
 });

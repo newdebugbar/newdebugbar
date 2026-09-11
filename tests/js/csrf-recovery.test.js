@@ -7,13 +7,14 @@ const TOOLBAR = 'newdebugbar.toolbar';
 const PROFILE_ID = '12345678-1234-4567-8abc-123456789abc';
 const snapshot = (name) => JSON.stringify({ memo: { name } });
 
-const body = (names, { calls = [], token = 'stale-token' } = {}) => JSON.stringify({
-  _token: token,
-  components: names.map((name) => ({
-    snapshot: snapshot(name),
-    calls: name === TOOLBAR ? calls : [],
-  })),
-});
+const body = (names, { calls = [], token = 'stale-token' } = {}) =>
+  JSON.stringify({
+    _token: token,
+    components: names.map((name) => ({
+      snapshot: snapshot(name),
+      calls: name === TOOLBAR ? calls : [],
+    })),
+  });
 
 function runtime({ cookie = '', token = 'fresh-token', ok = true } = {}) {
   const calls = [];
@@ -63,7 +64,12 @@ const interceptWith = (intercept, requestBody) => {
   const request = { options: { headers: { 'X-CSRF-TOKEN': 'page-token' }, body: requestBody } };
   let onError = null;
 
-  intercept({ request, onError: (callback) => { onError = callback; } });
+  intercept({
+    request,
+    onError: (callback) => {
+      onError = callback;
+    },
+  });
 
   return { request, onError };
 };
@@ -72,7 +78,12 @@ const failWith = (intercept, { status, requestBody }) => {
   const { request, onError } = interceptWith(intercept, requestBody);
   let prevented = false;
 
-  onError?.({ response: { status }, preventDefault: () => { prevented = true; } });
+  onError?.({
+    response: { status },
+    preventDefault: () => {
+      prevented = true;
+    },
+  });
 
   return { prevented, request };
 };
@@ -167,7 +178,7 @@ test('does not retry unrelated toolbar actions', async () => {
 
   failWith(host.boot()[0], {
     status: 419,
-    requestBody: body([TOOLBAR], { calls: [{ method: 'loadSection', params: ['queries'] }] }),
+    requestBody: body([TOOLBAR], { calls: [{ method: 'loadInspector', params: ['queries'] }] }),
   });
   await settle();
 

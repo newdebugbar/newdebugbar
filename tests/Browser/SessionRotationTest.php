@@ -73,7 +73,7 @@ it('uses the live token and keeps answering its own Livewire calls', function ()
             })()
             JS)
         ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]')
-        ->click('[data-ndb-select-section="queries"]');
+        ->click('[data-ndb-select-inspector="queries"]');
 
     DebugBarBrowser::waitForDetails($page);
 

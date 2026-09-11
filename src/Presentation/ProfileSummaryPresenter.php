@@ -14,11 +14,11 @@ final class ProfileSummaryPresenter
     /** @param array<string, mixed> $profile @return array<string, mixed> */
     public function present(array $profile): array
     {
-        $request = $profile['sections']['request'] ?? [];
-        $queries = $profile['sections']['queries']['summary'] ?? [];
-        $cache = $profile['sections']['cache']['summary'] ?? [];
+        $request = $profile['inspectors']['request'] ?? [];
+        $queries = $profile['inspectors']['queries']['summary'] ?? [];
+        $cache = $profile['inspectors']['cache']['summary'] ?? [];
         $status = (int) ($request['summary']['status'] ?? 0);
-        $exceptionCount = (int) ($profile['sections']['exceptions']['summary']['count'] ?? 0);
+        $exceptionCount = (int) ($profile['inspectors']['exceptions']['summary']['count'] ?? 0);
         $exitCode = $request['summary']['exit_code'] ?? null;
         $cacheReads = (int) ($cache['hits'] ?? 0) + (int) ($cache['misses'] ?? 0);
         $requestType = $this->requestType($request);

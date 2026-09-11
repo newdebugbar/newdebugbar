@@ -34,7 +34,7 @@ it('uses the command palette, theme preference, and escape layers', function () 
         ->type('[data-ndb-palette-search]', 'models')
         ->keys('[data-ndb-palette-search]', 'Enter');
 
-    DebugBarBrowser::assertSectionSelected($page, 'models');
+    DebugBarBrowser::assertInspectorSelected($page, 'models');
 
     $page
         ->click('[data-ndb-inspector-action="palette"]')
@@ -82,10 +82,10 @@ it('uses translucent command palette hover colors in :dataset mode', function (s
         ->refresh()
         ->assertAttribute('#newdebugbar', 'data-ndb-theme', $theme)
         ->click('[data-ndb-toolbar="palette"]')
-        ->hover('[data-ndb-command="section:request"]')
+        ->hover('[data-ndb-command="inspector:request"]')
         ->assertScript(<<<'JS'
             (() => {
-                const command = document.querySelector('[data-ndb-command="section:request"]');
+                const command = document.querySelector('[data-ndb-command="inspector:request"]');
                 const background = getComputedStyle(command).backgroundColor;
                 const state = Alpine.$data(document.getElementById('newdebugbar'));
                 const alpha = Number(
@@ -94,7 +94,7 @@ it('uses translucent command palette hover colors in :dataset mode', function (s
                         ?? 1
                 );
 
-                return state.filteredCommands[state.paletteIndex]?.id === 'section:request'
+                return state.filteredCommands[state.paletteIndex]?.id === 'inspector:request'
                     && alpha > 0
                     && alpha < 1;
             })()

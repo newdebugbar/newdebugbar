@@ -2,36 +2,36 @@
 
 use NewDebugBar\Tests\Support\DebugBarBrowser;
 
-it('alphabetizes active sections and keeps quiet sections in the palette', function () {
+it('alphabetizes active inspectors and keeps quiet inspectors in the palette', function () {
     $page = visit('/profiled-rich');
-    $page->script("localStorage.setItem('newdebugbar.preferences.v1', JSON.stringify({theme: 'light', sectionMode: 'all', favorites: []}))");
+    $page->script("localStorage.setItem('newdebugbar.preferences.v1', JSON.stringify({theme: 'light', inspectorMode: 'all', favorites: []}))");
 
     $page
         ->refresh()
         ->resize(1440, 900)
         ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]')
-        ->assertMissing('[data-ndb-section-mode]')
+        ->assertMissing('[data-ndb-inspector-mode]')
         ->assertMissing('[data-ndb-quiet-count]')
         ->assertDontSee('quiet hidden')
         ->assertScript(<<<'JS'
             (() => {
                 const state = Alpine.$data(document.getElementById('newdebugbar'));
-                const visible = state.orderedSections.filter((section) => state.isSectionVisible(section));
+                const visible = state.orderedInspectors.filter((inspector) => state.isInspectorVisible(inspector));
 
-                return visible.length < state.summary.sections.length
-                    && visible.every((section) => section.active !== false || state.favorites.includes(section.key) || section.key === state.selected);
+                return visible.length < state.summary.inspectors.length
+                    && visible.every((inspector) => inspector.active !== false || state.favorites.includes(inspector.key) || inspector.key === state.selected);
             })()
             JS)
         ->assertScript(<<<'JS'
             (() => {
-                const labels = Array.from(document.querySelectorAll('[data-ndb-section-visible="true"] .ndb-section-label'))
+                const labels = Array.from(document.querySelectorAll('[data-ndb-inspector-visible="true"] .ndb-inspector-label'))
                     .map((label) => label.textContent.trim());
                 const sorted = [...labels].sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' }));
 
                 return JSON.stringify(labels) === JSON.stringify(sorted);
             })()
             JS)
-        ->assertMissing('[data-ndb-section="validation"]')
+        ->assertMissing('[data-ndb-inspector="validation"]')
         ->assertScript('document.querySelector("[data-ndb-header-environment]").textContent.trim() === "testing"')
         ->assertScript('!["·", "•", "|"].some((separator) => document.querySelector("[data-ndb-header-facts]").textContent.includes(separator))')
         ->assertScript(<<<'JS'
@@ -45,15 +45,15 @@ it('alphabetizes active sections and keeps quiet sections in the palette', funct
             })()
             JS)
         ->assertScript('getComputedStyle(document.querySelector("[data-ndb-header-toolbar]").parentElement).backgroundColor', 'rgb(255, 255, 255)')
-        ->assertMissing('[data-ndb-section-attention]')
-        ->assertVisible('[data-ndb-section="queries"] .ndb-section-count')
+        ->assertMissing('[data-ndb-inspector-attention]')
+        ->assertVisible('[data-ndb-inspector="queries"] .ndb-inspector-count')
         ->assertMissing('[data-ndb-findings]');
 
-    DebugBarBrowser::selectSectionViaPalette($page, 'validation');
-    DebugBarBrowser::assertSectionSelected($page, 'validation');
+    DebugBarBrowser::selectInspectorViaPalette($page, 'validation');
+    DebugBarBrowser::assertInspectorSelected($page, 'validation');
 
     $page
-        ->assertAttribute('[data-ndb-section="validation"]', 'data-ndb-section-visible', 'true')
+        ->assertAttribute('[data-ndb-inspector="validation"]', 'data-ndb-inspector-visible', 'true')
         ->assertNoJavaScriptErrors();
 });
 
@@ -64,9 +64,9 @@ it('removes Overview from navigation and opens Requests by default', function ()
     DebugBarBrowser::waitForDetails($page);
 
     $page
-        ->assertMissing('[data-ndb-section="overview"]')
-        ->assertMissing('[data-ndb-select-section="overview"]')
-        ->assertMissing('[data-ndb-section-panel="overview"]')
+        ->assertMissing('[data-ndb-inspector="overview"]')
+        ->assertMissing('[data-ndb-select-inspector="overview"]')
+        ->assertMissing('[data-ndb-inspector-panel="overview"]')
         ->assertMissing('[data-ndb-overview-activity]')
         ->assertMissing('[data-ndb-overview-runtime]')
         ->assertScript(<<<'JS'
@@ -74,26 +74,26 @@ it('removes Overview from navigation and opens Requests by default', function ()
                 const state = Alpine.$data(document.getElementById('newdebugbar'));
 
                 return state.selected === 'request'
-                    && state.selectedSection.label === 'Requests'
-                    && !state.sectionKeys.includes('overview')
-                    && !state.allCommands.some((command) => command.id === 'section:overview');
+                    && state.selectedInspector.label === 'Requests'
+                    && !state.inspectorKeys.includes('overview')
+                    && !state.allCommands.some((command) => command.id === 'inspector:overview');
             })()
             JS)
-        ->assertScript('document.querySelector("[data-ndb-section-heading]").textContent.trim() === "Requests"')
+        ->assertScript('document.querySelector("[data-ndb-inspector-heading]").textContent.trim() === "Requests"')
         ->assertNoJavaScriptErrors();
 });
 
-it('uses one non-sticky title and description hierarchy for every section', function () {
+it('uses one non-sticky title and description hierarchy for every inspector', function () {
     $page = visit('/profiled-context')
         ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]')
-        ->assertScript('document.querySelector("[data-ndb-section-description]").getClientRects().length === 0')
-        ->click('[data-ndb-select-section="views"]')
-        ->assertCount('[data-ndb-section-header]', 1)
+        ->assertScript('document.querySelector("[data-ndb-inspector-description]").getClientRects().length === 0')
+        ->click('[data-ndb-select-inspector="views"]')
+        ->assertCount('[data-ndb-inspector-header]', 1)
         ->assertScript(<<<'JS'
             (() => {
-                const header = document.querySelector('[data-ndb-section-header]');
-                const heading = header?.querySelector('[data-ndb-section-heading]');
-                const description = header?.querySelector('[data-ndb-section-description]');
+                const header = document.querySelector('[data-ndb-inspector-header]');
+                const heading = header?.querySelector('[data-ndb-inspector-heading]');
+                const description = header?.querySelector('[data-ndb-inspector-description]');
 
                 return header !== null
                     && heading !== null
@@ -109,16 +109,16 @@ it('uses one non-sticky title and description hierarchy for every section', func
             })()
             JS);
 
-    foreach (['authorization', 'views'] as $section) {
+    foreach (['authorization', 'views'] as $inspector) {
         $page
-            ->click("[data-ndb-select-section=\"{$section}\"]")
+            ->click("[data-ndb-select-inspector=\"{$inspector}\"]")
             ->assertScript(<<<JS
                 (() => {
-                    const selected = document.querySelector('[data-ndb-select-section="{$section}"]');
-                    const heading = document.querySelector('[data-ndb-section-heading]');
-                    const description = document.querySelector('[data-ndb-section-description]');
+                    const selected = document.querySelector('[data-ndb-select-inspector="{$inspector}"]');
+                    const heading = document.querySelector('[data-ndb-inspector-heading]');
+                    const description = document.querySelector('[data-ndb-inspector-description]');
 
-                    return heading.textContent.trim() === selected.querySelector('.ndb-section-label').textContent.trim()
+                    return heading.textContent.trim() === selected.querySelector('.ndb-inspector-label').textContent.trim()
                         && description.textContent.trim().length > 0;
                 })()
                 JS);

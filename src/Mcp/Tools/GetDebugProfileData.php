@@ -18,7 +18,7 @@ final class GetDebugProfileData extends DebugTool
 {
     private const DEFAULT_LIMIT = 10;
 
-    protected const DESCRIPTION = 'Read any captured or derived profile value by JSON Pointer. Start at /sections, then follow returned paths to lists, objects, and exact scalar values. Use /sections/models/payload/model_groups for complete folded model operations, identifiers, sources, timings, query correlation, and guidance. Use /sections/queries/payload/records for grouped query records, per-run SQL, source labels, and EXPLAIN availability. Use /sections/livewire/payload/activity_records for normalized server activity and render links, and /sections/queue/payload/records or /sections/redis/payload/records for inspector records including searchable evidence and display labels. Raw captures remain under activity or items. Use /sections/redis/payload/items/{index}/callsite for a retained Redis client call site. Use /sections/exceptions/payload/items/{index}/causes for retained exception cause messages, frames, and source context. Use /sections/views/payload/items/{index}/data for retained view data; renderable views and lazy component methods are class labels, not executed values.';
+    protected const DESCRIPTION = 'Read any captured or derived profile value by JSON Pointer. Start at /inspectors, then follow returned paths to lists, objects, and exact scalar values. Use /inspectors/models/payload/model_groups for complete folded model operations, identifiers, sources, timings, query correlation, and guidance. Use /inspectors/queries/payload/records for grouped query records, per-run SQL, source labels, and EXPLAIN availability. Use /inspectors/livewire/payload/activity_records for normalized server activity and render links, and /inspectors/queue/payload/records or /inspectors/redis/payload/records for inspector records including searchable evidence and display labels. Raw captures remain under activity or items. Use /inspectors/redis/payload/items/{index}/callsite for a retained Redis client call site. Use /inspectors/exceptions/payload/items/{index}/causes for retained exception cause messages, frames, and source context. Use /inspectors/views/payload/items/{index}/data for retained view data; renderable views and lazy component methods are class labels, not executed values.';
 
     public function __construct(private readonly McpProfilePresenter $profiles) {}
 
@@ -29,8 +29,8 @@ final class GetDebugProfileData extends DebugTool
             'profile_id' => $schema->string()->format('uuid')->required(),
             'path' => $schema->string()
                 ->max(1_000)
-                ->description('JSON Pointer to inspect. Use /sections for diagnostic sections, /stored_at for the latest write time in Unix seconds with microseconds, and an empty string for the profile root.')
-                ->default('/sections'),
+                ->description('JSON Pointer to inspect. Use /inspectors for diagnostic inspectors, /stored_at for the latest write time in Unix seconds with microseconds, and an empty string for the profile root.')
+                ->default('/inspectors'),
             'cursor' => $schema->integer()->min(0)->default(0),
             'limit' => $schema->integer()->min(1)->max($this->profiles->maxItems())->default($this->defaultLimit()),
         ];
@@ -84,7 +84,7 @@ final class GetDebugProfileData extends DebugTool
 
         return $this->safeResponse(fn (): array => $this->profiles->data(
             $input['profile_id'],
-            $input['path'] ?? '/sections',
+            $input['path'] ?? '/inspectors',
             (int) ($input['cursor'] ?? 0),
             (int) ($input['limit'] ?? $this->defaultLimit()),
         ));

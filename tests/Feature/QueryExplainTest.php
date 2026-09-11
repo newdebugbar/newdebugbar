@@ -14,7 +14,7 @@ it('offers runnable SQL and runs manual SQLite explain with the default bindings
     $id = $response->headers->get('X-NewDebugBar-Profile');
     $stored = app(ProfileStore::class)->get($id);
     $profile = app(ProfilePresenter::class)->present($stored);
-    $query = $profile['sections']['queries']['payload']['items'][0];
+    $query = $profile['inspectors']['queries']['payload']['items'][0];
 
     expect($query)
         ->driver->toBe('sqlite')
@@ -23,7 +23,7 @@ it('offers runnable SQL and runs manual SQLite explain with the default bindings
         ->source_preserved->toBeTrue()
         ->runnable_available->toBeTrue()
         ->runnable_sql->toContain('select 1 as number')
-        ->and($profile['sections']['queries']['summary']['count'])->toBe(3);
+        ->and($profile['inspectors']['queries']['summary']['count'])->toBe(3);
 
     $result = app(QueryExplainer::class)->explain($query);
 
@@ -33,7 +33,7 @@ it('offers runnable SQL and runs manual SQLite explain with the default bindings
         ->rows->not->toBeEmpty();
 
     Livewire::test(DebugBar::class, ['profileId' => $id])
-        ->call('loadSection', 'queries')
+        ->call('loadInspector', 'queries')
         ->call('explainQuery', 1)
         ->assertSet('queryExplains.1.driver', 'sqlite')
         ->assertSet('queryExplainErrors', [])
@@ -149,12 +149,12 @@ it('keeps repeated execution evidence in one bounded workspace record', function
         'stack' => [['file' => '/app/Queries/NumberQuery.php', 'line' => 14, 'function' => 'loadNumbers']],
     ], [1, 2, 3]);
     $analysis = (new QueryAnalyzer)->analyze($queries, 20);
-    $section = [
+    $inspector = [
         'summary' => [...$analysis['summary'], 'count' => 3],
         'payload' => $analysis,
     ];
 
-    $html = Blade::render('<x-newdebugbar::query-section :section="$section" />', ['section' => $section]);
+    $html = Blade::render('<x-newdebugbar::query-inspector :inspector="$inspector" />', ['inspector' => $inspector]);
 
     expect(preg_match('/<script type="application\/json" data-ndb-query-payload>\s*(?<payload>[^<]+)\s*<\/script>/', $html, $matches))
         ->toBe(1);
@@ -203,11 +203,11 @@ it('formats query durations with an adaptive unit', function () {
         'query_type' => 'read',
         'bindings' => [],
     ])->all();
-    $section = [
+    $inspector = [
         'summary' => ['count' => count($items), 'total_time_ms' => 1466.04],
         'payload' => ['items' => $items, 'repeated_groups' => []],
     ];
-    $html = Blade::render('<x-newdebugbar::query-section :section="$section" />', ['section' => $section]);
+    $html = Blade::render('<x-newdebugbar::query-inspector :inspector="$inspector" />', ['inspector' => $inspector]);
 
     expect(preg_match('/<script type="application\/json" data-ndb-query-payload>\s*(?<payload>[^<]+)\s*<\/script>/', $html, $matches))
         ->toBe(1);
@@ -229,11 +229,11 @@ it('gives a slow repeated query the stronger row treatment', function () {
         'driver' => 'sqlite',
     ], [120, 20, 10]);
     $analysis = (new QueryAnalyzer)->analyze($queries, 200);
-    $section = [
+    $inspector = [
         'summary' => [...$analysis['summary'], 'count' => 3],
         'payload' => $analysis,
     ];
-    $html = Blade::render('<x-newdebugbar::query-section :section="$section" />', ['section' => $section]);
+    $html = Blade::render('<x-newdebugbar::query-inspector :inspector="$inspector" />', ['inspector' => $inspector]);
 
     expect($html)
         ->toContain('Slow repeated query.')

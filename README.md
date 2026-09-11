@@ -17,7 +17,7 @@ Everything you need to install and use The New Debug Bar is available in the [of
 
 ## Why I built The New Debug Bar
 
-I'm [Benjamin Crozat](https://x.com/benjamincrozat), and I built The New Debug Bar because I wanted a debug bar that looks modern and is pleasant to use every day. Its clearer interface, favorite sections, and command palette make everyday debugging more convenient. Built-in MCP support gives coding agents direct access to focused debug data, making them faster and easier to work with.
+I'm [Benjamin Crozat](https://x.com/benjamincrozat), and I built The New Debug Bar because I wanted a debug bar that looks modern and is pleasant to use every day. Its clearer interface, favorite inspectors, and command palette make everyday debugging more convenient. Built-in MCP support gives coding agents direct access to focused debug data, making them faster and easier to work with.
 
 ## Sponsor The New Debug Bar
 

@@ -39,7 +39,7 @@ export function runtime(saved = null) {
 }
 
 export const summary = {
-  sections: [
+  inspectors: [
     { key: 'request', label: 'Requests', description: 'Request details.' },
     { key: 'queries', label: 'Queries', description: 'Query evidence.' },
     { key: 'logs', label: 'Logs', description: 'Log evidence.' },
@@ -116,13 +116,20 @@ export function toolbarHarness(saved = null) {
   return { browser, capture, pointer, state, toolbar };
 }
 
-// Supplies the parent Livewire scope used by a mounted Alpine section.
-export function sectionHarness(section, summary, browser, recentProfiles = [], profileLimit = 20, trace = null) {
+// Supplies the parent Livewire scope used by a mounted Alpine inspector.
+export function inspectorHarness(
+  inspector,
+  summary,
+  browser,
+  recentProfiles = [],
+  profileLimit = 20,
+  trace = null,
+) {
   const shell = createNewDebugBar(summary, browser, recentProfiles, profileLimit, trace);
-  shell.selected = section;
-  shell.loadedSection = section;
+  shell.selected = inspector;
+  shell.loadedInspector = inspector;
   shell.inspectorOpen = true;
-  const state = shell.createSection(section);
+  const state = shell.createInspector(inspector);
   for (const magic of ['$wire', '$nextTick']) {
     Object.defineProperty(state, magic, {
       configurable: true,

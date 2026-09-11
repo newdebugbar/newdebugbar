@@ -9,7 +9,7 @@ $assertionProfile = function (array $queries = [], int $status = 200): array {
     return [
         'id' => (string) Str::uuid(),
         'metrics' => ['duration_ms' => 20, 'peak_memory_mb' => 8],
-        'sections' => [
+        'inspectors' => [
             'request' => ['summary' => ['method' => 'GET', 'status' => $status], 'payload' => ['path' => '/']],
             'queries' => ['summary' => ['count' => count($queries), 'duration_ms' => array_sum(array_column($queries, 'duration_ms'))], 'payload' => ['items' => $queries]],
             'exceptions' => ['summary' => ['count' => 0], 'payload' => ['items' => []]],

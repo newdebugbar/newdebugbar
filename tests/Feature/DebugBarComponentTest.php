@@ -8,22 +8,22 @@ use NewDebugBar\Presentation\ProfilePresenter;
 use NewDebugBar\Storage\BackgroundActivityStore;
 use NewDebugBar\Storage\ProfileStore;
 
-it('loads only the selected profile section after the inspector asks', function () {
+it('loads only the selected profile inspector after the inspector asks', function () {
     $this->get('/profiled', ['Accept' => 'text/html'])->assertOk();
 
     $file = File::files(config('newdebugbar.storage.path'))[0];
     $profile = json_decode(File::get($file->getPathname()), true, flags: JSON_THROW_ON_ERROR);
 
     $component = Livewire::test(DebugBar::class, ['profileId' => $profile['id']])
-        ->assertSet('sectionLoaded', false)
-        ->assertDontSeeHtml('data-ndb-section-panel="request"')
-        ->call('loadSection', 'request')
-        ->assertSet('sectionLoaded', true)
-        ->assertSet('selectedSection', 'request')
-        ->assertDispatched('newdebugbar-section-loaded', section: 'request')
+        ->assertSet('inspectorLoaded', false)
+        ->assertDontSeeHtml('data-ndb-inspector-panel="request"')
+        ->call('loadInspector', 'request')
+        ->assertSet('inspectorLoaded', true)
+        ->assertSet('selectedInspector', 'request')
+        ->assertDispatched('newdebugbar-inspector-loaded', inspector: 'request')
         ->assertDispatched('newdebugbar-content-updated')
-        ->assertSeeHtml('data-ndb-section-panel="request"')
-        ->assertDontSeeHtml('data-ndb-section-panel="queries"')
+        ->assertSeeHtml('data-ndb-inspector-panel="request"')
+        ->assertDontSeeHtml('data-ndb-inspector-panel="queries"')
         ->assertSeeHtml('data-ndb-request-trace');
 });
 
@@ -36,7 +36,7 @@ it('presents captured request and response evidence in their lifecycle stages', 
         'profile_type' => 'http',
         'environment' => 'testing',
         'metrics' => ['duration_ms' => 12.5, 'peak_memory_mb' => 8],
-        'sections' => [
+        'inspectors' => [
             'request' => [
                 'label' => 'Request',
                 'summary' => ['method' => 'POST', 'status' => $status],
@@ -58,7 +58,7 @@ it('presents captured request and response evidence in their lifecycle stages', 
         ],
     ]);
 
-    $component = Livewire::test(DebugBar::class, ['profileId' => $id])->call('loadSection', 'request');
+    $component = Livewire::test(DebugBar::class, ['profileId' => $id])->call('loadInspector', 'request');
     $document = new DOMDocument;
     $previousLibxmlState = libxml_use_internal_errors(true);
     $document->loadHTML('<?xml encoding="utf-8" ?>'.$component->html());
@@ -105,7 +105,7 @@ it('keeps a data-heavy profile out of the initial Livewire shell', function () {
         'id' => $id,
         'environment' => 'testing',
         'metrics' => ['duration_ms' => 100, 'peak_memory_mb' => 12],
-        'sections' => [
+        'inspectors' => [
             'request' => [
                 'label' => 'Request',
                 'summary' => ['method' => 'GET', 'status' => 200],
@@ -142,17 +142,17 @@ it('locks server-owned profile state', function () {
         ->toThrow(Exception::class);
 
     expect(fn () => Livewire::test(DebugBar::class, ['profileId' => $profile['id']])
-        ->set('sectionLoaded', true))
+        ->set('inspectorLoaded', true))
         ->toThrow(Exception::class);
 
     expect(fn () => Livewire::test(DebugBar::class, ['profileId' => $profile['id']])
-        ->set('selectedSection', 'queries'))
+        ->set('selectedInspector', 'queries'))
         ->toThrow(Exception::class);
 });
 
 it('returns not found when deferred profile details have expired', function () {
     Livewire::test(DebugBar::class, ['profileId' => '00000000-0000-4000-8000-000000000000'])
-        ->call('loadSection', 'request')
+        ->call('loadInspector', 'request')
         ->assertNotFound();
 });
 
@@ -162,9 +162,9 @@ it('keeps captured overview diagnostics out of the inspector UI', function () {
         ->headers->get('X-NewDebugBar-Profile');
 
     Livewire::test(DebugBar::class, ['profileId' => $id])
-        ->assertSet('selectedSection', 'request')
-        ->assertSet('summary.sections', fn (array $sections): bool => collect($sections)->doesntContain('key', 'overview'))
-        ->call('loadSection', 'overview')
+        ->assertSet('selectedInspector', 'request')
+        ->assertSet('summary.inspectors', fn (array $inspectors): bool => collect($inspectors)->doesntContain('key', 'overview'))
+        ->call('loadInspector', 'overview')
         ->assertStatus(422);
 });
 
@@ -177,7 +177,7 @@ it('renders retained exception causes with a truthful current profile action', f
         'profile_type' => $profileType,
         'environment' => 'testing',
         'metrics' => ['duration_ms' => 12.5, 'peak_memory_mb' => 8],
-        'sections' => [
+        'inspectors' => [
             'request' => [
                 'label' => $profileType === 'http' ? 'Request' : 'Runtime',
                 'summary' => ['method' => $profileType === 'http' ? 'GET' : 'CLI', 'status' => 200],
@@ -208,7 +208,7 @@ it('renders retained exception causes with a truthful current profile action', f
     ]);
 
     Livewire::test(DebugBar::class, ['profileId' => $id])
-        ->call('loadSection', 'exceptions')
+        ->call('loadInspector', 'exceptions')
         ->assertSeeHtml('data-ndb-exception-context-action')
         ->assertSeeHtml('data-ndb-exception-detail-tab="causes"')
         ->assertSeeHtml('data-ndb-exception-cause="0"')
@@ -229,7 +229,7 @@ it('summarizes warnings, slow queries, and duplicate sql', function () {
         'id' => $id,
         'environment' => 'testing',
         'metrics' => ['duration_ms' => 15.2, 'peak_memory_mb' => 8.5],
-        'sections' => [
+        'inspectors' => [
             'request' => [
                 'label' => 'Request',
                 'summary' => ['method' => 'POST', 'status' => 500],
@@ -272,20 +272,20 @@ it('summarizes warnings, slow queries, and duplicate sql', function () {
         ->assertSet('summary.slow_query_count', 1)
         ->assertSet('summary.repeated_pattern_count', 1)
         ->assertSet('summary.exception_count', 1)
-        ->assertSet('sectionLoaded', false)
-        ->assertDontSeeHtml('data-ndb-section-panel="exceptions"')
-        ->call('loadSection', 'exceptions')
-        ->assertSet('sectionLoaded', true)
+        ->assertSet('inspectorLoaded', false)
+        ->assertDontSeeHtml('data-ndb-inspector-panel="exceptions"')
+        ->call('loadInspector', 'exceptions')
+        ->assertSet('inspectorLoaded', true)
         ->assertSet('profile.findings.0.summary', 'The request returned HTTP 500.');
 });
 
-it('marks active, quiet, truncated, and incomplete sections for disclosure', function () {
+it('marks active, quiet, truncated, and incomplete inspectors for disclosure', function () {
     $id = (string) Str::uuid();
     app(ProfileStore::class)->put([
         'id' => $id,
         'environment' => 'testing',
         'metrics' => ['duration_ms' => 15.2, 'peak_memory_mb' => 8.5],
-        'sections' => [
+        'inspectors' => [
             'overview' => ['label' => 'Overview', 'summary' => [], 'payload' => []],
             'request' => [
                 'label' => 'Request',
@@ -323,28 +323,28 @@ it('marks active, quiet, truncated, and incomplete sections for disclosure', fun
 
     $component = Livewire::test(DebugBar::class, ['profileId' => $id])
         ->assertSet('summary.warning', true)
-        ->assertSet('summary.sections', function (array $sections): bool {
-            $sections = collect($sections)->keyBy('key');
+        ->assertSet('summary.inspectors', function (array $inspectors): bool {
+            $inspectors = collect($inspectors)->keyBy('key');
 
-            return $sections->every(fn (array $section): bool => filled($section['description'] ?? null))
-                && ! isset($sections['overview'])
-                && $sections['request']['active'] === true
-                && $sections['queries']['active'] === false
-                && $sections['logs']['active'] === false
-                && $sections['exceptions']['active'] === false
-                && $sections['views']['active'] === true
-                && $sections['views']['attention'] === true
-                && $sections['views']['truncated'] === true
-                && $sections['views']['finding_count'] === 1
-                && $sections['timeline']['active'] === true
-                && $sections['timeline']['attention'] === true
-                && $sections['timeline']['incomplete'] === true;
+            return $inspectors->every(fn (array $inspector): bool => filled($inspector['description'] ?? null))
+                && ! isset($inspectors['overview'])
+                && $inspectors['request']['active'] === true
+                && $inspectors['queries']['active'] === false
+                && $inspectors['logs']['active'] === false
+                && $inspectors['exceptions']['active'] === false
+                && $inspectors['views']['active'] === true
+                && $inspectors['views']['attention'] === true
+                && $inspectors['views']['truncated'] === true
+                && $inspectors['views']['finding_count'] === 1
+                && $inspectors['timeline']['active'] === true
+                && $inspectors['timeline']['attention'] === true
+                && $inspectors['timeline']['incomplete'] === true;
         })
-        ->call('loadSection', 'views')
+        ->call('loadInspector', 'views')
         ->assertDontSeeHtml('data-ndb-findings')
         ->assertSeeHtml('data-ndb-collection-status="views"')
         ->assertSee('Showing 0 of 2 views.')
-        ->call('loadSection', 'timeline')
+        ->call('loadInspector', 'timeline')
         ->assertSeeHtml('data-ndb-timeline-incomplete');
 
     expect(preg_replace('/\s+/', ' ', $component->html()))
@@ -357,7 +357,7 @@ it('marks secondary query transaction omissions as truncated', function () {
         'id' => $id,
         'environment' => 'testing',
         'metrics' => ['duration_ms' => 10, 'peak_memory_mb' => 8],
-        'sections' => [
+        'inspectors' => [
             'request' => [
                 'label' => 'Request',
                 'summary' => ['method' => 'GET', 'status' => 200],
@@ -383,14 +383,14 @@ it('marks secondary query transaction omissions as truncated', function () {
     ]);
 
     $component = Livewire::test(DebugBar::class, ['profileId' => $id])
-        ->assertSet('summary.sections', function (array $sections): bool {
-            $queries = collect($sections)->firstWhere('key', 'queries');
+        ->assertSet('summary.inspectors', function (array $inspectors): bool {
+            $queries = collect($inspectors)->firstWhere('key', 'queries');
 
             return $queries['active'] === true
                 && $queries['attention'] === true
                 && $queries['truncated'] === true;
         })
-        ->call('loadSection', 'queries')
+        ->call('loadInspector', 'queries')
         ->assertSeeHtml('data-ndb-collection-status="query-transactions"');
 
     expect(preg_replace('/\s+/', ' ', $component->html()))
@@ -402,7 +402,7 @@ it('uses the shared presenter for deferred query details and findings', function
     app(ProfileStore::class)->put([
         'id' => $id,
         'metrics' => ['duration_ms' => 100],
-        'sections' => [
+        'inspectors' => [
             'request' => ['label' => 'Request', 'summary' => ['method' => 'GET', 'status' => 200], 'payload' => [
                 'method' => 'GET',
                 'status' => 200,
@@ -419,9 +419,9 @@ it('uses the shared presenter for deferred query details and findings', function
     ]);
 
     Livewire::test(DebugBar::class, ['profileId' => $id])
-        ->call('loadSection', 'queries')
-        ->assertSet('profile.sections.queries.summary.repeated_pattern_count', 1)
-        ->assertSet('profile.sections.queries.payload.items.0.repeated_count', 2)
+        ->call('loadInspector', 'queries')
+        ->assertSet('profile.inspectors.queries.summary.repeated_pattern_count', 1)
+        ->assertSet('profile.inspectors.queries.payload.items.0.repeated_count', 2)
         ->assertSet('profile.findings.0.rule_id', 'query.repeated')
         ->assertSeeHtml('data-ndb-query-group')
         ->assertSeeHtml('data-ndb-query-item');
@@ -432,7 +432,7 @@ it('paginates long timelines in deterministic batches', function () {
     app(ProfileStore::class)->put([
         'id' => $id,
         'metrics' => ['duration_ms' => 121],
-        'sections' => [
+        'inspectors' => [
             'request' => ['label' => 'Request', 'summary' => ['method' => 'GET', 'status' => 200], 'payload' => [
                 'method' => 'GET',
                 'status' => 200,
@@ -453,47 +453,47 @@ it('paginates long timelines in deterministic batches', function () {
     ]);
 
     Livewire::test(DebugBar::class, ['profileId' => $id])
-        ->call('loadSection', 'timeline')
-        ->assertSet('profile.sections.timeline.payload.matching_item_count', 2)
+        ->call('loadInspector', 'timeline')
+        ->assertSet('profile.inspectors.timeline.payload.matching_item_count', 2)
         ->call('filterTimeline', 'all', '')
         ->assertSet('timelineLimit', 50)
-        ->assertSet('profile.sections.timeline.payload.items', fn (array $items): bool => count($items) === 50)
-        ->assertSet('profile.sections.timeline.payload.total_item_count', 122)
-        ->assertSet('profile.sections.timeline.payload.has_more', true)
+        ->assertSet('profile.inspectors.timeline.payload.items', fn (array $items): bool => count($items) === 50)
+        ->assertSet('profile.inspectors.timeline.payload.total_item_count', 122)
+        ->assertSet('profile.inspectors.timeline.payload.has_more', true)
         ->assertSee('Showing 50 of 122 timeline')
         ->assertSee('More activity loads as you scroll.')
         ->assertSeeHtml('data-ndb-timeline-page-sentinel')
         ->assertDontSeeHtml('data-ndb-timeline-load-more')
         ->call('loadMoreTimeline')
         ->assertSet('timelineLimit', 100)
-        ->assertSet('profile.sections.timeline.payload.items', fn (array $items): bool => count($items) === 100)
+        ->assertSet('profile.inspectors.timeline.payload.items', fn (array $items): bool => count($items) === 100)
         ->call('loadMoreTimeline')
         ->assertSet('timelineLimit', 122)
-        ->assertSet('profile.sections.timeline.payload.items', fn (array $items): bool => count($items) === 122)
-        ->assertSet('profile.sections.timeline.payload.has_more', false)
+        ->assertSet('profile.inspectors.timeline.payload.items', fn (array $items): bool => count($items) === 122)
+        ->assertSet('profile.inspectors.timeline.payload.has_more', false)
         ->assertDontSeeHtml('data-ndb-timeline-page-sentinel')
         ->assertSee('All 122 timeline events are loaded.')
         ->call('filterTimeline', 'logs', 'event 119')
         ->assertSet('timelineLimit', 50)
-        ->assertSet('profile.sections.timeline.payload.matching_item_count', 1)
-        ->assertSet('profile.sections.timeline.payload.items.0.id', 'logs-118')
-        ->assertSet('profile.sections.timeline.payload.has_more', false)
+        ->assertSet('profile.inspectors.timeline.payload.matching_item_count', 1)
+        ->assertSet('profile.inspectors.timeline.payload.items.0.id', 'logs-118')
+        ->assertSet('profile.inspectors.timeline.payload.has_more', false)
         ->call('filterTimeline', 'logs', 'no such activity')
-        ->assertSet('profile.sections.timeline.payload.items', [])
+        ->assertSet('profile.inspectors.timeline.payload.items', [])
         ->assertSeeHtml('data-ndb-timeline-search-field')
         ->assertSee('No timeline activity matches this search and filter.')
         ->call('filterTimeline', 'all', '')
-        ->assertSet('profile.sections.timeline.payload.matching_item_count', 122);
+        ->assertSet('profile.inspectors.timeline.payload.matching_item_count', 122);
 });
 
-it('keeps view data out of section html until its exact render asks', function () {
+it('keeps view data out of inspector html until its exact render asks', function () {
     $profileId = $this->get('/profiled-views', ['Accept' => 'text/html'])
         ->assertOk()
         ->headers->get('X-NewDebugBar-Profile');
 
     $component = Livewire::test(DebugBar::class, ['profileId' => $profileId])
-        ->call('loadSection', 'views')
-        ->assertSet('profile.sections.views.payload.groups.0.items.0', fn (array $view): bool => ! array_key_exists('data', $view))
+        ->call('loadInspector', 'views')
+        ->assertSet('profile.inspectors.views.payload.groups.0.items.0', fn (array $view): bool => ! array_key_exists('data', $view))
         ->assertSeeHtml('data-ndb-view-data-panel')
         ->assertSeeHtml('data-ndb-view-data-loading')
         ->assertDontSee('view-data-value');
@@ -522,13 +522,13 @@ it('switches to an exact foreground application profile', function () {
         ->headers->get('X-NewDebugBar-Profile');
 
     Livewire::test(DebugBar::class, ['profileId' => $firstId])
-        ->call('loadSection', 'request')
-        ->assertSet('sectionLoaded', true)
+        ->call('loadInspector', 'request')
+        ->assertSet('inspectorLoaded', true)
         ->call('switchProfile', $nextId)
         ->assertSet('profileId', $nextId)
         ->assertSet('summary.path', '/profiled-next')
-        ->assertSet('sectionLoaded', false)
-        ->assertSet('selectedSection', 'request')
+        ->assertSet('inspectorLoaded', false)
+        ->assertSet('selectedInspector', 'request')
         ->assertDispatched('newdebugbar-profile-switched');
 });
 
@@ -546,7 +546,7 @@ it('announces later requests without changing the selected profile', function ()
         ->assertSeeHtml('data-ndb-request-picker-trigger="header-mobile"')
         ->assertSeeHtml('data-ndb-request-picker-trigger="header"')
         ->assertSeeHtml('aria-haspopup="listbox"')
-        ->assertSet('summary.sections', fn (array $sections): bool => collect($sections)->firstWhere('key', 'request')['label'] === 'Requests')
+        ->assertSet('summary.inspectors', fn (array $inspectors): bool => collect($inspectors)->firstWhere('key', 'request')['label'] === 'Requests')
         ->call('noticeProfile', $nextId)
         ->assertSet('profileId', $firstId)
         ->assertDispatched('newdebugbar-profile-noticed', function (string $name, array $params) use ($nextId): bool {
@@ -568,9 +568,9 @@ it('refreshes bounded background activity and announces completed worker profile
     $worker = $origin;
     $worker['id'] = $workerId;
     $worker['profile_type'] = 'queue';
-    $worker['sections']['request']['label'] = 'Runtime';
-    $worker['sections']['request']['summary'] = ['method' => 'CLI', 'status' => 0, 'exit_code' => 0];
-    $worker['sections']['request']['payload'] = [
+    $worker['inspectors']['request']['label'] = 'Runtime';
+    $worker['inspectors']['request']['summary'] = ['method' => 'CLI', 'status' => 0, 'exit_code' => 0];
+    $worker['inspectors']['request']['payload'] = [
         'path' => 'queue:SendQueuedMailable',
         'runtime_type' => 'queue',
         'name' => 'SendQueuedMailable',
@@ -580,7 +580,7 @@ it('refreshes bounded background activity and announces completed worker profile
 
     $component = Livewire::test(DebugBar::class, ['profileId' => $originId])
         ->assertSet('summary.background_pending', true)
-        ->call('loadSection', 'queue');
+        ->call('loadInspector', 'queue');
 
     app(BackgroundActivityStore::class)->recordOutcome($correlationKeys[0], 'sent', $workerId, 1);
     app(BackgroundActivityStore::class)->recordOutcome($correlationKeys[1], 'failed', $workerId, 1, RuntimeException::class);
@@ -600,19 +600,19 @@ it('refreshes bounded background activity and announces completed worker profile
     expect($component->effects)->not->toHaveKey('html');
 });
 
-it('returns the selected section when an activity refresh shares its message', function (string $path, string $section, bool $refreshFirst) {
+it('returns the selected inspector when an activity refresh shares its message', function (string $path, string $inspector, bool $refreshFirst) {
     $profileId = $this->get($path, ['Accept' => 'text/html'])
         ->assertOk()
         ->headers->get('X-NewDebugBar-Profile');
-    $metadata = ['island' => ['name' => 'section-details', 'mode' => 'morph']];
-    $load = ['method' => 'loadSection', 'params' => [$section], 'metadata' => $metadata];
+    $metadata = ['island' => ['name' => 'inspector-details', 'mode' => 'morph']];
+    $load = ['method' => 'loadInspector', 'params' => [$inspector], 'metadata' => $metadata];
     $refresh = ['method' => 'refreshRelatedActivity', 'params' => [], 'metadata' => $metadata];
 
     $component = Livewire::test(DebugBar::class, ['profileId' => $profileId])
         ->update(calls: $refreshFirst ? [$refresh, $load] : [$load, $refresh])
-        ->assertSet('selectedSection', $section)
-        ->assertSet('sectionLoaded', true)
-        ->assertDispatched('newdebugbar-section-loaded', section: $section)
+        ->assertSet('selectedInspector', $inspector)
+        ->assertSet('inspectorLoaded', true)
+        ->assertDispatched('newdebugbar-inspector-loaded', inspector: $inspector)
         ->assertDispatched('newdebugbar-profile-refreshed');
 
     expect($component->effects)->not->toHaveKey('html')
@@ -622,15 +622,15 @@ it('returns the selected section when an activity refresh shares its message', f
     $document->loadHTML($component->effects['islandFragments'][0], LIBXML_NOERROR | LIBXML_NOWARNING);
     $fragment = new DOMXPath($document);
 
-    expect($fragment->query('//*[@data-ndb-section-panel]')->length)->toBe(1)
-        ->and($fragment->evaluate('string(//*[@data-ndb-section-panel]/@data-ndb-section-panel)'))->toBe($section)
+    expect($fragment->query('//*[@data-ndb-inspector-panel]')->length)->toBe(1)
+        ->and($fragment->evaluate('string(//*[@data-ndb-inspector-panel]/@data-ndb-inspector-panel)'))->toBe($inspector)
         ->and($fragment->query('//*[@id="newdebugbar"]')->length)->toBe(0);
 
     $component->update(calls: [$refresh])
-        ->assertSet('selectedSection', $section)
-        ->assertSet('sectionLoaded', true)
+        ->assertSet('selectedInspector', $inspector)
+        ->assertSet('inspectorLoaded', true)
         ->assertDispatched('newdebugbar-profile-refreshed')
-        ->assertNotDispatched('newdebugbar-section-loaded');
+        ->assertNotDispatched('newdebugbar-inspector-loaded');
 
     expect($component->effects)->not->toHaveKey('html')
         ->not->toHaveKey('islandFragments');
@@ -647,17 +647,17 @@ it('returns the next timeline page when an activity refresh shares its message',
     $profileId = $this->get('/profiled-timeline-long', ['Accept' => 'text/html'])
         ->assertOk()
         ->headers->get('X-NewDebugBar-Profile');
-    $metadata = ['island' => ['name' => 'section-details', 'mode' => 'morph']];
+    $metadata = ['island' => ['name' => 'inspector-details', 'mode' => 'morph']];
     $load = ['method' => 'loadMoreTimeline', 'params' => [], 'metadata' => $metadata];
     $refresh = ['method' => 'refreshRelatedActivity', 'params' => [], 'metadata' => $metadata];
     $component = Livewire::test(DebugBar::class, ['profileId' => $profileId])
-        ->update(calls: [['method' => 'loadSection', 'params' => ['timeline'], 'metadata' => $metadata]])
+        ->update(calls: [['method' => 'loadInspector', 'params' => ['timeline'], 'metadata' => $metadata]])
         ->assertSet('timelineLimit', 50);
 
     $component->update(calls: $refreshFirst ? [$refresh, $load] : [$load, $refresh])
-        ->assertSet('selectedSection', 'timeline')
+        ->assertSet('selectedInspector', 'timeline')
         ->assertSet('timelineLimit', 100)
-        ->assertDispatched('newdebugbar-section-loaded', section: 'timeline')
+        ->assertDispatched('newdebugbar-inspector-loaded', inspector: 'timeline')
         ->assertDispatched('newdebugbar-profile-refreshed');
 
     expect($component->effects)->not->toHaveKey('html')
@@ -668,8 +668,8 @@ it('returns the next timeline page when an activity refresh shares its message',
     $fragment = new DOMXPath($document);
 
     expect($fragment->query('//*[@data-ndb-timeline-item]')->length)->toBe(100)
-        ->and($fragment->query('//*[@data-ndb-section-panel]')->length)->toBe(1)
-        ->and($fragment->evaluate('string(//*[@data-ndb-section-panel]/@data-ndb-section-panel)'))->toBe('timeline');
+        ->and($fragment->query('//*[@data-ndb-inspector-panel]')->length)->toBe(1)
+        ->and($fragment->evaluate('string(//*[@data-ndb-inspector-panel]/@data-ndb-inspector-panel)'))->toBe('timeline');
 })->with([
     'refresh first' => true,
     'refresh last' => false,

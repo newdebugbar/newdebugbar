@@ -1,45 +1,45 @@
-export const DEFAULT_SECTION = 'request';
+export const DEFAULT_INSPECTOR = 'request';
 
 /** Owns navigation shell behavior. */
 export function createNavigation(context) {
   const { browser } = context;
   return {
-    get sectionKeys() {
-      return (this.summary.sections ?? []).map((section) => section.key);
+    get inspectorKeys() {
+      return (this.summary.inspectors ?? []).map((inspector) => inspector.key);
     },
 
-    get sectionsInOrder() {
-      const allSections = this.summary.sections ?? [];
-      const byKey = new Map(allSections.map((section) => [section.key, section]));
-      const remaining = allSections
-        .filter((section) => !this.sectionOrder.includes(section.key))
+    get inspectorsInOrder() {
+      const allInspectors = this.summary.inspectors ?? [];
+      const byKey = new Map(allInspectors.map((inspector) => [inspector.key, inspector]));
+      const remaining = allInspectors
+        .filter((inspector) => !this.inspectorOrder.includes(inspector.key))
         .sort((left, right) =>
           left.label.localeCompare(right.label, undefined, {
             sensitivity: 'base',
           }),
         );
 
-      return [...this.sectionOrder.map((key) => byKey.get(key)).filter(Boolean), ...remaining];
+      return [...this.inspectorOrder.map((key) => byKey.get(key)).filter(Boolean), ...remaining];
     },
 
-    get orderedSections() {
-      const sections = this.sectionsInOrder;
-      const byKey = new Map(sections.map((section) => [section.key, section]));
+    get orderedInspectors() {
+      const inspectors = this.inspectorsInOrder;
+      const byKey = new Map(inspectors.map((inspector) => [inspector.key, inspector]));
       const favorites = this.favorites.map((key) => byKey.get(key)).filter(Boolean);
 
-      return [...favorites, ...sections.filter((section) => !this.isFavorite(section.key))];
+      return [...favorites, ...inspectors.filter((inspector) => !this.isFavorite(inspector.key))];
     },
 
-    navigationSections(favorite) {
-      return this.orderedSections.filter(
-        (section) => this.isFavorite(section.key) === favorite && this.isSectionVisible(section),
+    navigationInspectors(favorite) {
+      return this.orderedInspectors.filter(
+        (inspector) => this.isFavorite(inspector.key) === favorite && this.isInspectorVisible(inspector),
       );
     },
 
-    get selectedSection() {
+    get selectedInspector() {
       return (
-        (this.summary.sections ?? []).find((section) => section.key === this.selected) ?? {
-          key: DEFAULT_SECTION,
+        (this.summary.inspectors ?? []).find((inspector) => inspector.key === this.selected) ?? {
+          key: DEFAULT_INSPECTOR,
           label: 'Requests',
           description: '',
           layout: 'workspace',
@@ -48,42 +48,46 @@ export function createNavigation(context) {
       );
     },
 
-    isSectionActive(section) {
-      return section?.active !== false;
+    isInspectorActive(inspector) {
+      return inspector?.active !== false;
     },
 
-    isSectionVisible(section) {
-      return this.isSectionActive(section) || this.isFavorite(section.key) || section.key === this.selected;
+    isInspectorVisible(inspector) {
+      return (
+        this.isInspectorActive(inspector) || this.isFavorite(inspector.key) || inspector.key === this.selected
+      );
     },
 
-    selectSection(section, filter = null, focusHeading = false) {
-      const nextSection = this.sectionKeys.includes(section) ? section : DEFAULT_SECTION;
-      const needsSection = this.inspectorOpen && (this.loadedSection !== nextSection || this.sectionError);
-      this.selected = nextSection;
-      if (filter !== null) this.pendingSectionIntent = { profileId: this.summary.id, section: nextSection, filter };
-      else if (this.pendingSectionIntent?.section !== nextSection) this.pendingSectionIntent = null;
-      this.syncSectionLifecycle();
+    selectInspector(inspector, filter = null, focusHeading = false) {
+      const nextInspector = this.inspectorKeys.includes(inspector) ? inspector : DEFAULT_INSPECTOR;
+      const needsInspector =
+        this.inspectorOpen && (this.loadedInspector !== nextInspector || this.inspectorError);
+      this.selected = nextInspector;
+      if (filter !== null)
+        this.pendingInspectorIntent = { profileId: this.summary.id, inspector: nextInspector, filter };
+      else if (this.pendingInspectorIntent?.inspector !== nextInspector) this.pendingInspectorIntent = null;
+      this.syncInspectorLifecycle();
       this.$nextTick?.(() => {
-        this.syncSectionPanels();
+        this.syncInspectorPanels();
         if (this.$refs?.content) this.$refs.content.scrollTop = 0;
-        this.deliverSectionIntent();
-        if (focusHeading) this.$refs?.sectionHeading?.focus?.();
+        this.deliverInspectorIntent();
+        if (focusHeading) this.$refs?.inspectorHeading?.focus?.();
         browser.highlight?.();
       });
-      if (needsSection) this.requestSection(this.selected);
+      if (needsInspector) this.requestInspector(this.selected);
     },
 
-    navigateToSection(section, filter = null) {
-      const target = this.sectionKeys.includes(section) ? section : DEFAULT_SECTION;
+    navigateToInspector(inspector, filter = null) {
+      const target = this.inspectorKeys.includes(inspector) ? inspector : DEFAULT_INSPECTOR;
 
-      this.selectSection(target, filter, true);
+      this.selectInspector(target, filter, true);
     },
 
-    openRequestSection(returnFocus = null) {
+    openRequestInspector(returnFocus = null) {
       this.closeRequestPicker(false);
 
       if (this.inspectorOpen) {
-        this.selectSection('request');
+        this.selectInspector('request');
 
         return;
       }

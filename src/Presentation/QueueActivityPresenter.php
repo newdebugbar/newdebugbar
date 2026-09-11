@@ -58,7 +58,7 @@ final class QueueActivityPresenter
                 ? $item['communication_type']
                 : null;
             $mailChannel = $communicationType === 'mail' || in_array('mail', $channels, true);
-            $relatedSection = $isOrigin && $mailChannel && $status === 'sent' ? 'mail' : 'queue';
+            $relatedInspector = $isOrigin && $mailChannel && $status === 'sent' ? 'mail' : 'queue';
             $job = is_string($item['job'] ?? null) && $item['job'] !== '' ? $item['job'] : 'Job';
             $connection = is_string($item['connection'] ?? null) && $item['connection'] !== ''
                 ? $item['connection']
@@ -129,9 +129,9 @@ final class QueueActivityPresenter
                 'will_retry' => (bool) ($item['will_retry'] ?? $status === 'waiting'),
                 'attempts' => $attempts,
                 'related_profile_id' => $relatedProfileId,
-                'related_section' => $relatedSection,
+                'related_inspector' => $relatedInspector,
                 'related_label' => $isOrigin
-                    ? ($relatedSection === 'mail' ? 'Open mail preview' : 'Open worker')
+                    ? ($relatedInspector === 'mail' ? 'Open mail preview' : 'Open worker')
                     : 'Open request',
             ];
         })->all();
