@@ -12,7 +12,13 @@ export function createInspector(context) {
     },
     mountSection(section, profileId, controller, instance) {
       this.unmountActiveSection();
-      context.section = { section, profileId, controller, instance, active: false };
+      context.section = {
+        section,
+        profileId,
+        controller,
+        instance,
+        active: false,
+      };
       this.syncSectionLifecycle();
       this.$nextTick?.(() => this.refreshSection());
     },
@@ -149,7 +155,9 @@ export function createInspector(context) {
 
       if (!this.inspectorOpen) {
         this.inspectorReturnFocus =
-          returnFocus ?? (this.mobileToolbarMenu ? this.mobileToolbarReturnFocus : null) ?? browser.activeElement?.();
+          returnFocus ??
+          (this.mobileToolbarMenu ? this.mobileToolbarReturnFocus : null) ??
+          browser.activeElement?.();
       }
 
       this.mobileToolbarMenu = null;
@@ -177,9 +185,7 @@ export function createInspector(context) {
       if (!force && this.loadedSection === target) return;
       if (!force && this.sectionLoading && this.requestedSection === target) return;
 
-      const island = this.$wire?.$island;
-      const scopedWire = typeof island === 'function' ? island.call(this.$wire, 'section-details') : this.$wire;
-      const action = scopedWire?.loadSection;
+      const action = this.$wire?.loadSection;
       const profileId = this.summary.id;
       const requestVersion = ++this.sectionRequestVersion;
       this.requestedSection = target;
@@ -212,7 +218,7 @@ export function createInspector(context) {
         return;
       }
 
-      Promise.resolve(action.call(scopedWire, target))
+      Promise.resolve(action.call(this.$wire, target))
         .then(() => {
           if (requestVersion !== this.sectionRequestVersion || profileId !== this.summary.id) return;
           if (this.loadedSection !== target) this.receiveSection(target, profileId);
@@ -230,7 +236,8 @@ export function createInspector(context) {
     },
 
     receiveSection(section, profileId) {
-      if (profileId !== this.summary.id || !this.sectionKeys.includes(section) || section !== this.selected) return;
+      if (profileId !== this.summary.id || !this.sectionKeys.includes(section) || section !== this.selected)
+        return;
 
       this.loadedSection = section;
       this.requestedSection = null;

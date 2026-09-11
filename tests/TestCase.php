@@ -29,6 +29,8 @@ abstract class TestCase extends Orchestra
 
         $app['config']->set('newdebugbar.environments', ['testing']);
         $app['config']->set('newdebugbar.storage.path', storage_path('framework/'.$profileDirectory));
+        // Parallel workers boot separate applications, including their Blade and island caches.
+        $app['config']->set('view.compiled', storage_path('framework/'.$profileDirectory.'-views'));
         $app['config']->set('newdebugbar.collection.application_path', dirname(__DIR__));
         $app['config']->set('cache.default', 'array');
         $app['config']->set('database.default', 'testing');

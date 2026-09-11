@@ -2,6 +2,50 @@
 
 use NewDebugBar\Tests\Support\DebugBarBrowser;
 
+it('renders one section when loading and refreshing are batched', function (bool $refreshFirst) {
+    $page = visit('/profiled-views')
+        ->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
+
+    DebugBarBrowser::waitForDetails($page);
+    $refreshFirst = json_encode($refreshFirst, JSON_THROW_ON_ERROR);
+
+    $page->script(<<<JS
+        (() => {
+            const root = document.getElementById('newdebugbar');
+            const wire = Livewire.find(root.getAttribute('wire:id'));
+            window.newdebugbarBatchResult = null;
+            const stop = Livewire.interceptMessage(({ message, onSuccess }) => {
+                if (message.component.id !== root.getAttribute('wire:id')) return;
+                onSuccess(({ payload }) => {
+                    stop();
+                    window.newdebugbarBatchResult = {
+                        actions: [...message.actions].map(action => action.name),
+                        fragments: (payload.effects.islandFragments ?? []).length,
+                        rootHtml: Object.hasOwn(payload.effects, 'html'),
+                    };
+                });
+            });
+
+            if ({$refreshFirst}) wire.refreshRelatedActivity();
+            root.querySelector('[data-ndb-select-section="views"]').click();
+            if (!{$refreshFirst}) wire.refreshRelatedActivity();
+        })()
+        JS);
+
+    DebugBarBrowser::assertSectionSelected($page, 'views');
+    $page->assertScript('window.newdebugbarBatchResult !== null');
+    $result = $page->script('window.newdebugbarBatchResult');
+
+    expect($result['actions'])->toHaveCount(2)->toContain('loadSection', 'refreshRelatedActivity')
+        ->and($result['fragments'])->toBe(1)
+        ->and($result['rootHtml'])->toBeFalse();
+
+    $page->assertNoJavaScriptErrors();
+})->with([
+    'refresh first' => true,
+    'refresh last' => false,
+]);
+
 it('switches every section after Livewire navigation with one active state', function () {
     $page = visit('/profiled')
         ->click('[data-testid="host-navigation"]')

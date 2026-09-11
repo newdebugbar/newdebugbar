@@ -96,13 +96,21 @@ it('keeps mobile metric values readable across duration formats', function (int 
         if ($scope === 'header') {
             $page->click('[data-ndb-mobile-toolbar-metric-scope="toolbar"][data-ndb-mobile-toolbar-metric="duration"]')
                 ->assertVisible('[data-ndb-mobile-request-metrics="header"]');
+
+            DebugBarBrowser::waitForDetails($page);
         }
 
         foreach ([0, 0.0005, 0.5, 27.63, 99.99, 999.99, 1_453.51, 10_000] as $duration) {
             $label = DurationFormatter::format($duration);
             $summary = json_encode(['duration_label' => $label, 'query_count' => 999, 'peak_memory_mb' => 128.25], JSON_THROW_ON_ERROR);
 
-            $page->script("Object.assign(Alpine.\$data(document.getElementById('newdebugbar')).summary, {$summary})");
+            $page->script(<<<JS
+                (() => {
+                    const state = Alpine.\$data(document.getElementById('newdebugbar'));
+                    state.summary = { ...state.summary, ...{$summary} };
+                })()
+                JS);
+            $page->script('new Promise(resolve => setTimeout(() => resolve(true), 0))');
 
             $page->assertScript("document.querySelector('[data-ndb-mobile-request-metrics=\"{$scope}\"] [data-ndb-mobile-toolbar-summary=\"duration\"]').textContent", $label);
 

@@ -3,6 +3,7 @@
 use Livewire\Livewire;
 use NewDebugBar\Livewire\DebugBar;
 use NewDebugBar\Storage\ProfileStore;
+use NewDebugBar\Tests\Support\DebugBarAssertions;
 
 it('stores and serves bounded local previews with downloadable attachments', function () {
     $response = $this->get('/profiled-messages', ['Accept' => 'text/html'])->assertOk();
@@ -82,9 +83,10 @@ it('stores and serves bounded local previews with downloadable attachments', fun
 
     Livewire::test(DebugBar::class, ['profileId' => $profileId])
         ->call('loadSection', 'mail')
-        ->assertSee('Download .EML')
-        ->assertSee('Download')
-        ->assertSee('Open preview');
+        ->tap(fn ($component) => DebugBarAssertions::sectionResponse($component)
+            ->assertSee('Download .EML')
+            ->assertSee('Download')
+            ->assertSee('Open preview'));
 
     $this->get(route('newdebugbar.mail-attachment', [
         'profile' => $profileId,

@@ -3,7 +3,10 @@
 ## Scope and compatibility
 
 - Build for Laravel only. Do not add support for other PHP frameworks.
-- Match the minimum PHP and Laravel versions supported by Livewire 4.
+- Support Livewire **4.3.4** and later stable 4.x releases. Keep the dependency constraint at `^4.3.4`. Livewire 4.0.0 was the first stable release, but older runtimes fail current session-rotation, cached-route, drag-ordering, or fixed-popover behavior. Livewire 4.3 adds the required Alpine behavior, and 4.3.4 is the first release in that line with the fix for [CVE-2026-81887](https://github.com/livewire/livewire/security/advisories/GHSA-g3hc-697w-wm82). Preserve these working flows when maintaining compatibility.
+- Keep **PHP 8.1.0** and **Laravel 10** as the platform floors, matching Livewire 4. The effective Laravel 10 minimum is **10.49.0**, required by `laravel/mcp` 0.4.0. Continue supporting Laravel 10–13.
+- These minimums are a compatibility contract. Preserve them unless the user explicitly approves a support-policy change. Fix regressions within this contract; an upstream patch or minor release must not silently become the minimum.
+- Test the exact Livewire 4.3.4 baseline and current stable Livewire 4 in CI, including initial HTML injection, cached routes, batched renderless actions, section fragments, timeline pagination, profile switching, host component updates, and session rotation. A dependency-constraint assertion alone does not prove compatibility.
 - Use `NewDebugBar` or `newdebugbar` as one word in machine-facing names. Use “New Debug Bar” in text written for people.
 
 ## Local checks before pushing

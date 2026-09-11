@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Livewire\Mechanisms\HandleRequests\HandleRequests;
 use NewDebugBar\Contracts\Collector;
 use NewDebugBar\Http\Controllers\AssetController;
 use NewDebugBar\Http\Middleware\ProfileRequest;
@@ -42,6 +43,25 @@ it('loads the toolbar state before Livewire starts Alpine', function () {
         ->and($livewireScript)->toBeInt()
         ->and($debugBarScript)->toBeLessThan($toolbar)
         ->and($toolbar)->toBeLessThan($livewireScript);
+});
+
+it('injects the toolbar when the Livewire update route exists before boot', function () {
+    $updateUri = app('livewire')->getUpdateUri();
+
+    // Cached routes are already registered when Livewire's request mechanism boots.
+    app()->forgetInstance(HandleRequests::class);
+    app(HandleRequests::class)->boot();
+
+    $response = response('<!doctype html><html><head></head><body>Application response</body></html>');
+    app(BarInjector::class)->inject($response, (string) Str::uuid());
+
+    $document = new DOMDocument;
+    $document->loadHTML($response->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+    $html = new DOMXPath($document);
+
+    expect($html->query('//*[@id="newdebugbar"]')->length)->toBe(1)
+        ->and($html->query('//script[@data-update-uri]')->length)->toBe(1)
+        ->and(parse_url($html->evaluate('string(//script/@data-update-uri)'), PHP_URL_PATH))->toBe($updateUri);
 });
 
 it('serves its compiled assets through local package routes', function () {

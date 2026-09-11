@@ -72,7 +72,11 @@
                                         ::aria-label="`Explain ${livewirePhaseLabel(phase.name)}`"
                                         ::aria-expanded="phaseHelpIndex === index"
                                         ::aria-describedby="phaseHelpIndex === index ? $id('newdebugbar-livewire-phase-help') : null"
-                                        @pointerenter="if ($event.pointerType !== 'touch') showPhaseHelp(index, $el);"
+                                        @pointermove="
+                                            $event.pointerType !== 'touch' &&
+                                                ($event.movementX || $event.movementY) &&
+                                                showPhaseHelp(index, $el)
+                                        "
                                         @pointerleave="leavePhaseHelp()"
                                         @focus="showPhaseHelp(index, $el)"
                                         @blur="leavePhaseHelp()"

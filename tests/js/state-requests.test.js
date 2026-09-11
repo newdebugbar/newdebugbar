@@ -16,7 +16,10 @@ test('malformed startup inputs use safe request defaults', () => {
   assert.equal(state.currentRequestProfile, initial);
 
   state.currentRequestId = 'current';
-  state.recentProfiles = [{ id: 'current' }, ...Array.from({ length: 10 }, (_, index) => ({ id: `later-${index}` }))];
+  state.recentProfiles = [
+    { id: 'current' },
+    ...Array.from({ length: 10 }, (_, index) => ({ id: `later-${index}` })),
+  ];
 
   assert.equal(state.requestBadgeCount, '9+');
   assert.equal(state.requestPickerButtonLabel, 'Choose request, 10 unread requests');
@@ -177,7 +180,10 @@ test('counts requests as unread until a successful selection and keeps viewed re
   assert.equal(state.unreadRequestCount, 0);
   assert.equal(state.hasOtherRequests, true);
   assert.equal(state.requestPickerButtonLabel, 'Choose request');
-  assert.deepEqual(new Set(state.recentProfiles.map(({ id }) => id)), new Set([current.id, first.id, second.id]));
+  assert.deepEqual(
+    new Set(state.recentProfiles.map(({ id }) => id)),
+    new Set([current.id, first.id, second.id]),
+  );
   state.receiveProfile({ ...first, path: '/updated' });
   assert.equal(state.unreadRequestCount, 0);
 
@@ -194,7 +200,10 @@ test('counts requests as unread until a successful selection and keeps viewed re
   await Promise.resolve();
   assert.equal(state.unreadRequestCount, 1);
 
-  state.switchProfile({ ...summary, id: '550e8400-e29b-41d4-a716-446655440002' });
+  state.switchProfile({
+    ...summary,
+    id: '550e8400-e29b-41d4-a716-446655440002',
+  });
   assert.equal(state.unreadRequestCount, 0);
   assert.deepEqual(state.viewedProfileIds, [state.summary.id]);
 });
@@ -253,21 +262,21 @@ test('background refresh is useful-only, bounded, and preserves related navigati
     sections: [...summary.sections, { key: 'mail', label: 'Mail' }],
   };
   const browser = runtime();
-  const islandCalls = [];
+  const actions = [];
   let refreshes = 0;
   let switched = null;
   const state = createNewDebugBar(origin, browser);
   state.$nextTick = (callback) => callback();
   state.$root = { querySelector: () => null, querySelectorAll: () => [] };
-  const sectionWire = {
-    loadSection: async () => {},
-    refreshRelatedActivity: async () => refreshes++,
-  };
   state.$wire = {
-    $island(name) {
-      islandCalls.push(name);
-
-      return sectionWire;
+    async loadSection() {
+      assert.equal(this, state.$wire);
+      actions.push('loadSection');
+    },
+    async refreshRelatedActivity() {
+      assert.equal(this, state.$wire);
+      actions.push('refreshRelatedActivity');
+      refreshes++;
     },
     switchProfile: async (id) => {
       switched = id;
@@ -279,7 +288,7 @@ test('background refresh is useful-only, bounded, and preserves related navigati
   browser.runTimers();
   await Promise.resolve();
   assert.equal(refreshes, 1);
-  assert.deepEqual(islandCalls, ['section-details', 'section-details']);
+  assert.deepEqual(actions, ['loadSection', 'refreshRelatedActivity']);
 
   for (let attempt = 0; attempt < 35; attempt++) {
     browser.runTimers();
@@ -287,10 +296,6 @@ test('background refresh is useful-only, bounded, and preserves related navigati
   }
 
   assert.equal(refreshes, 30);
-  assert.equal(
-    islandCalls.every((name) => name === 'section-details'),
-    true,
-  );
   assert.equal(state.activityPollTimer, null);
 
   state.receiveActivityRefresh({ ...origin, background_pending: false }, [worker]);
@@ -346,7 +351,11 @@ test('background read and network failures stay visible through bounded retries 
 
   state.$wire.refreshRelatedActivity = async () => {
     refreshes++;
-    state.receiveActivityRefresh({ ...origin, background_pending: false, background_error: null });
+    state.receiveActivityRefresh({
+      ...origin,
+      background_pending: false,
+      background_error: null,
+    });
   };
   state.refreshBackgroundActivity(true);
   await new Promise(setImmediate);
@@ -365,7 +374,11 @@ test('a stale background request failure does not affect a different profile', a
     refreshRelatedActivity: () => new Promise((resolve, reject) => (rejectRefresh = reject)),
   };
   state.refreshBackgroundActivity();
-  state.switchProfile({ ...summary, id: '6ba7b810-9dad-41d1-80b4-00c04fd430c8', background_pending: false });
+  state.switchProfile({
+    ...summary,
+    id: '6ba7b810-9dad-41d1-80b4-00c04fd430c8',
+    background_pending: false,
+  });
   rejectRefresh(new Error('Old request failed'));
   await new Promise(setImmediate);
 

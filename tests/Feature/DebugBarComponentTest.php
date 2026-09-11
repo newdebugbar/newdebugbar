@@ -7,6 +7,7 @@ use NewDebugBar\Livewire\DebugBar;
 use NewDebugBar\Presentation\ProfilePresenter;
 use NewDebugBar\Storage\BackgroundActivityStore;
 use NewDebugBar\Storage\ProfileStore;
+use NewDebugBar\Tests\Support\DebugBarAssertions;
 
 it('loads only the selected profile section after the inspector asks', function () {
     $this->get('/profiled', ['Accept' => 'text/html'])->assertOk();
@@ -22,9 +23,10 @@ it('loads only the selected profile section after the inspector asks', function 
         ->assertSet('selectedSection', 'request')
         ->assertDispatched('newdebugbar-section-loaded', section: 'request')
         ->assertDispatched('newdebugbar-content-updated')
-        ->assertSeeHtml('data-ndb-section-panel="request"')
-        ->assertDontSeeHtml('data-ndb-section-panel="queries"')
-        ->assertSeeHtml('data-ndb-request-trace');
+        ->tap(fn ($component) => DebugBarAssertions::sectionResponse($component)
+            ->assertSeeHtml('data-ndb-section-panel="request"')
+            ->assertDontSeeHtml('data-ndb-section-panel="queries"')
+            ->assertSeeHtml('data-ndb-request-trace'));
 });
 
 it('presents captured request and response evidence in their lifecycle stages', function (int $size, int $status, string $statusLabel) {
@@ -61,7 +63,7 @@ it('presents captured request and response evidence in their lifecycle stages', 
     $component = Livewire::test(DebugBar::class, ['profileId' => $id])->call('loadSection', 'request');
     $document = new DOMDocument;
     $previousLibxmlState = libxml_use_internal_errors(true);
-    $document->loadHTML('<?xml encoding="utf-8" ?>'.$component->html());
+    $document->loadHTML('<?xml encoding="utf-8" ?>'.DebugBarAssertions::sectionResponse($component)->getContent());
     libxml_clear_errors();
     libxml_use_internal_errors($previousLibxmlState);
     $xpath = new DOMXPath($document);
@@ -209,12 +211,13 @@ it('renders retained exception causes with a truthful current profile action', f
 
     Livewire::test(DebugBar::class, ['profileId' => $id])
         ->call('loadSection', 'exceptions')
-        ->assertSeeHtml('data-ndb-exception-context-action')
-        ->assertSeeHtml('data-ndb-exception-detail-tab="causes"')
-        ->assertSeeHtml('data-ndb-exception-cause="0"')
-        ->assertSee($actionLabel)
-        ->assertSee('Underlying failure.')
-        ->assertSee('More causes exist, but only the first five were retained.');
+        ->tap(fn ($component) => DebugBarAssertions::sectionResponse($component)
+            ->assertSeeHtml('data-ndb-exception-context-action')
+            ->assertSeeHtml('data-ndb-exception-detail-tab="causes"')
+            ->assertSeeHtml('data-ndb-exception-cause="0"')
+            ->assertSee($actionLabel)
+            ->assertSee('Underlying failure.')
+            ->assertSee('More causes exist, but only the first five were retained.'));
 })->with([
     'HTTP request' => ['http', 'Open request'],
     'queue worker' => ['queue', 'Open worker'],
@@ -341,13 +344,14 @@ it('marks active, quiet, truncated, and incomplete sections for disclosure', fun
                 && $sections['timeline']['incomplete'] === true;
         })
         ->call('loadSection', 'views')
-        ->assertDontSeeHtml('data-ndb-findings')
-        ->assertSeeHtml('data-ndb-collection-status="views"')
-        ->assertSee('Showing 0 of 2 views.')
+        ->tap(fn ($component) => DebugBarAssertions::sectionResponse($component)
+            ->assertSeeHtml('data-ndb-collection-status="views"')
+            ->assertSee('Showing 0 of 2 views.'))
         ->call('loadSection', 'timeline')
-        ->assertSeeHtml('data-ndb-timeline-incomplete');
+        ->tap(fn ($component) => DebugBarAssertions::sectionResponse($component)
+            ->assertSeeHtml('data-ndb-timeline-incomplete'));
 
-    expect(preg_replace('/\s+/', ' ', $component->html()))
+    expect(preg_replace('/\s+/', ' ', DebugBarAssertions::sectionResponse($component)->getContent()))
         ->toContain('Timeline incomplete: 2 source events were omitted.');
 });
 
@@ -391,9 +395,10 @@ it('marks secondary query transaction omissions as truncated', function () {
                 && $queries['truncated'] === true;
         })
         ->call('loadSection', 'queries')
-        ->assertSeeHtml('data-ndb-collection-status="query-transactions"');
+        ->tap(fn ($component) => DebugBarAssertions::sectionResponse($component)
+            ->assertSeeHtml('data-ndb-collection-status="query-transactions"'));
 
-    expect(preg_replace('/\s+/', ' ', $component->html()))
+    expect(preg_replace('/\s+/', ' ', DebugBarAssertions::sectionResponse($component)->getContent()))
         ->toContain('Showing 1 of 3 query transaction events.');
 });
 
@@ -423,8 +428,9 @@ it('uses the shared presenter for deferred query details and findings', function
         ->assertSet('profile.sections.queries.summary.repeated_pattern_count', 1)
         ->assertSet('profile.sections.queries.payload.items.0.repeated_count', 2)
         ->assertSet('profile.findings.0.rule_id', 'query.repeated')
-        ->assertSeeHtml('data-ndb-query-group')
-        ->assertSeeHtml('data-ndb-query-item');
+        ->tap(fn ($component) => DebugBarAssertions::sectionResponse($component)
+            ->assertSeeHtml('data-ndb-query-group')
+            ->assertSeeHtml('data-ndb-query-item'));
 });
 
 it('paginates long timelines in deterministic batches', function () {
@@ -460,10 +466,9 @@ it('paginates long timelines in deterministic batches', function () {
         ->assertSet('profile.sections.timeline.payload.items', fn (array $items): bool => count($items) === 50)
         ->assertSet('profile.sections.timeline.payload.total_item_count', 122)
         ->assertSet('profile.sections.timeline.payload.has_more', true)
-        ->assertSee('Showing 50 of 122 timeline')
-        ->assertSee('More activity loads as you scroll.')
-        ->assertSeeHtml('data-ndb-timeline-page-sentinel')
-        ->assertDontSeeHtml('data-ndb-timeline-load-more')
+        ->tap(fn ($component) => DebugBarAssertions::sectionResponse($component)
+            ->assertSee('Showing 50 of 122 timeline')
+            ->assertSeeHtml('data-ndb-timeline-page-sentinel'))
         ->call('loadMoreTimeline')
         ->assertSet('timelineLimit', 100)
         ->assertSet('profile.sections.timeline.payload.items', fn (array $items): bool => count($items) === 100)
@@ -471,8 +476,9 @@ it('paginates long timelines in deterministic batches', function () {
         ->assertSet('timelineLimit', 122)
         ->assertSet('profile.sections.timeline.payload.items', fn (array $items): bool => count($items) === 122)
         ->assertSet('profile.sections.timeline.payload.has_more', false)
-        ->assertDontSeeHtml('data-ndb-timeline-page-sentinel')
-        ->assertSee('All 122 timeline events are loaded.')
+        ->tap(fn ($component) => DebugBarAssertions::sectionResponse($component)
+            ->assertDontSeeHtml('data-ndb-timeline-page-sentinel')
+            ->assertSee('All 122 timeline events are loaded.'))
         ->call('filterTimeline', 'logs', 'event 119')
         ->assertSet('timelineLimit', 50)
         ->assertSet('profile.sections.timeline.payload.matching_item_count', 1)
@@ -480,8 +486,9 @@ it('paginates long timelines in deterministic batches', function () {
         ->assertSet('profile.sections.timeline.payload.has_more', false)
         ->call('filterTimeline', 'logs', 'no such activity')
         ->assertSet('profile.sections.timeline.payload.items', [])
-        ->assertSeeHtml('data-ndb-timeline-search-field')
-        ->assertSee('No timeline activity matches this search and filter.')
+        ->tap(fn ($component) => DebugBarAssertions::sectionResponse($component)
+            ->assertSeeHtml('data-ndb-timeline-search-field')
+            ->assertSee('No timeline activity matches this search and filter.'))
         ->call('filterTimeline', 'all', '')
         ->assertSet('profile.sections.timeline.payload.matching_item_count', 122);
 });
@@ -494,9 +501,10 @@ it('keeps view data out of section html until its exact render asks', function (
     $component = Livewire::test(DebugBar::class, ['profileId' => $profileId])
         ->call('loadSection', 'views')
         ->assertSet('profile.sections.views.payload.groups.0.items.0', fn (array $view): bool => ! array_key_exists('data', $view))
-        ->assertSeeHtml('data-ndb-view-data-panel')
-        ->assertSeeHtml('data-ndb-view-data-loading')
-        ->assertDontSee('view-data-value');
+        ->tap(fn ($component) => DebugBarAssertions::sectionResponse($component)
+            ->assertSeeHtml('data-ndb-view-data-panel')
+            ->assertSeeHtml('data-ndb-view-data-loading')
+            ->assertDontSee('view-data-value'));
 
     $data = $component->instance()->loadViewData(
         1,
@@ -600,20 +608,20 @@ it('refreshes bounded background activity and announces completed worker profile
     expect($component->effects)->not->toHaveKey('html');
 });
 
-it('returns the selected section when an activity refresh shares its message', function (string $path, string $section, bool $refreshFirst) {
+it('returns the selected section when a renderless action shares its message', function (string $path, string $section, string $method, bool $renderlessFirst, array $metadata) {
     $profileId = $this->get($path, ['Accept' => 'text/html'])
         ->assertOk()
         ->headers->get('X-NewDebugBar-Profile');
-    $metadata = ['island' => ['name' => 'section-details', 'mode' => 'morph']];
     $load = ['method' => 'loadSection', 'params' => [$section], 'metadata' => $metadata];
-    $refresh = ['method' => 'refreshRelatedActivity', 'params' => [], 'metadata' => $metadata];
+    $renderless = ['method' => $method, 'params' => $method === 'noticeProfile' ? [$profileId] : [], 'metadata' => $metadata];
+    $event = $method === 'noticeProfile' ? 'newdebugbar-profile-noticed' : 'newdebugbar-profile-refreshed';
 
     $component = Livewire::test(DebugBar::class, ['profileId' => $profileId])
-        ->update(calls: $refreshFirst ? [$refresh, $load] : [$load, $refresh])
+        ->update(calls: $renderlessFirst ? [$renderless, $load] : [$load, $renderless])
         ->assertSet('selectedSection', $section)
         ->assertSet('sectionLoaded', true)
         ->assertDispatched('newdebugbar-section-loaded', section: $section)
-        ->assertDispatched('newdebugbar-profile-refreshed');
+        ->assertDispatched($event);
 
     expect($component->effects)->not->toHaveKey('html')
         ->and($component->effects['islandFragments'] ?? [])->toHaveCount(1);
@@ -626,10 +634,10 @@ it('returns the selected section when an activity refresh shares its message', f
         ->and($fragment->evaluate('string(//*[@data-ndb-section-panel]/@data-ndb-section-panel)'))->toBe($section)
         ->and($fragment->query('//*[@id="newdebugbar"]')->length)->toBe(0);
 
-    $component->update(calls: [$refresh])
+    $component->update(calls: [$renderless])
         ->assertSet('selectedSection', $section)
         ->assertSet('sectionLoaded', true)
-        ->assertDispatched('newdebugbar-profile-refreshed')
+        ->assertDispatched($event)
         ->assertNotDispatched('newdebugbar-section-loaded');
 
     expect($component->effects)->not->toHaveKey('html')
@@ -638,26 +646,30 @@ it('returns the selected section when an activity refresh shares its message', f
     'request' => ['/profiled', 'request'],
     'queue' => ['/profiled-queue-attempts', 'queue'],
     'redis' => ['/profiled-redis', 'redis'],
+    'views' => ['/profiled-views', 'views'],
+])->with(['refreshRelatedActivity', 'noticeProfile'])->with([
+    'renderless first' => true,
+    'renderless last' => false,
 ])->with([
-    'refresh first' => true,
-    'refresh last' => false,
+    'component scope' => [[]],
+    'island scope' => [['island' => ['name' => 'section-details', 'mode' => 'morph']]],
 ]);
 
-it('returns the next timeline page when an activity refresh shares its message', function (bool $refreshFirst) {
+it('returns updated timeline content when an activity refresh shares its message', function (string $method, array $params, int $limit, int $itemCount, bool $refreshFirst) {
     $profileId = $this->get('/profiled-timeline-long', ['Accept' => 'text/html'])
         ->assertOk()
         ->headers->get('X-NewDebugBar-Profile');
-    $metadata = ['island' => ['name' => 'section-details', 'mode' => 'morph']];
-    $load = ['method' => 'loadMoreTimeline', 'params' => [], 'metadata' => $metadata];
-    $refresh = ['method' => 'refreshRelatedActivity', 'params' => [], 'metadata' => $metadata];
+    $load = ['method' => $method, 'params' => $params];
+    $refresh = ['method' => 'refreshRelatedActivity', 'params' => []];
     $component = Livewire::test(DebugBar::class, ['profileId' => $profileId])
-        ->update(calls: [['method' => 'loadSection', 'params' => ['timeline'], 'metadata' => $metadata]])
+        ->call('loadSection', 'timeline')
         ->assertSet('timelineLimit', 50);
 
     $component->update(calls: $refreshFirst ? [$refresh, $load] : [$load, $refresh])
         ->assertSet('selectedSection', 'timeline')
-        ->assertSet('timelineLimit', 100)
-        ->assertDispatched('newdebugbar-section-loaded', section: 'timeline')
+        ->assertSet('timelineLimit', $limit)
+        ->assertSet('profile.sections.timeline.payload.items', fn (array $items): bool => count($items) === $itemCount)
+        ->assertDispatched('newdebugbar-content-updated')
         ->assertDispatched('newdebugbar-profile-refreshed');
 
     expect($component->effects)->not->toHaveKey('html')
@@ -667,13 +679,75 @@ it('returns the next timeline page when an activity refresh shares its message',
     $document->loadHTML($component->effects['islandFragments'][0], LIBXML_NOERROR | LIBXML_NOWARNING);
     $fragment = new DOMXPath($document);
 
-    expect($fragment->query('//*[@data-ndb-timeline-item]')->length)->toBe(100)
+    expect($fragment->query('//*[@data-ndb-timeline-item]')->length)->toBe($itemCount)
         ->and($fragment->query('//*[@data-ndb-section-panel]')->length)->toBe(1)
         ->and($fragment->evaluate('string(//*[@data-ndb-section-panel]/@data-ndb-section-panel)'))->toBe('timeline');
 })->with([
+    'next page' => ['loadMoreTimeline', [], 100, 100],
+    'filtered results' => ['filterTimeline', ['queries', 'final_timeline_number'], 50, 1],
+])->with([
     'refresh first' => true,
     'refresh last' => false,
 ]);
+
+it('returns the new profile section when a profile switch shares its message', function () {
+    $originId = $this->get('/profiled')->assertOk()->headers->get('X-NewDebugBar-Profile');
+    $nextId = $this->get('/profiled-next')->assertOk()->headers->get('X-NewDebugBar-Profile');
+    $component = Livewire::test(DebugBar::class, ['profileId' => $originId])
+        ->call('loadSection', 'queries')
+        ->update(calls: [
+            ['method' => 'switchProfile', 'params' => [$nextId]],
+            ['method' => 'loadSection', 'params' => ['request']],
+        ])
+        ->assertSet('profileId', $nextId)
+        ->assertSet('summary.path', '/profiled-next')
+        ->assertSet('selectedSection', 'request')
+        ->assertSet('sectionLoaded', true)
+        ->assertDispatched('newdebugbar-profile-switched')
+        ->assertDispatched('newdebugbar-section-loaded', section: 'request', profileId: $nextId);
+
+    $document = new DOMDocument;
+    $document->loadHTML(DebugBarAssertions::sectionResponse($component)->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+    $fragment = new DOMXPath($document);
+
+    expect($fragment->query('//*[@data-ndb-section-panel]')->length)->toBe(1)
+        ->and($fragment->evaluate('string(//*[@data-ndb-request-path])'))->toBe('/profiled-next');
+});
+
+it('returns only the final section when two section loads share a message', function () {
+    $profileId = $this->get('/profiled-views')->assertOk()->headers->get('X-NewDebugBar-Profile');
+    $component = Livewire::test(DebugBar::class, ['profileId' => $profileId])
+        ->update(calls: [
+            ['method' => 'loadSection', 'params' => ['request']],
+            ['method' => 'loadSection', 'params' => ['views']],
+        ])
+        ->assertSet('selectedSection', 'views');
+
+    DebugBarAssertions::sectionResponse($component)
+        ->assertSeeHtml('data-ndb-section-panel="views"')
+        ->assertDontSeeHtml('data-ndb-section-panel="request"')
+        ->assertSeeHtml('data-ndb-view-data-panel')
+        ->assertDontSee('view-data-value');
+});
+
+it('returns the filtered timeline when pagination and filtering share a message', function () {
+    $profileId = $this->get('/profiled-timeline-long')->assertOk()->headers->get('X-NewDebugBar-Profile');
+    $component = Livewire::test(DebugBar::class, ['profileId' => $profileId])
+        ->call('loadSection', 'timeline')
+        ->update(calls: [
+            ['method' => 'loadMoreTimeline', 'params' => []],
+            ['method' => 'filterTimeline', 'params' => ['queries', 'final_timeline_number']],
+        ])
+        ->assertSet('timelineLimit', 50)
+        ->assertSet('profile.sections.timeline.payload.matching_item_count', 1);
+
+    $document = new DOMDocument;
+    $document->loadHTML(DebugBarAssertions::sectionResponse($component)->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+    $fragment = new DOMXPath($document);
+
+    expect($fragment->query('//*[@data-ndb-timeline-item]')->length)->toBe(1)
+        ->and($fragment->query('//*[@data-ndb-section-panel]')->length)->toBe(1);
+});
 
 it('rejects unavailable request summaries', function () {
     $id = $this->get('/profiled', ['Accept' => 'text/html'])

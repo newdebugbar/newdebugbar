@@ -56,9 +56,7 @@ export function createActivityRefresh(context) {
       if (reset) this.cancelActivityRefresh(true);
       if (!this.inspectorOpen || this.activityRefreshPending) return;
 
-      const island = this.$wire?.$island;
-      const scopedWire = typeof island === 'function' ? island.call(this.$wire, 'section-details') : this.$wire;
-      const action = scopedWire?.refreshRelatedActivity;
+      const action = this.$wire?.refreshRelatedActivity;
       if (typeof action !== 'function') return;
       if (!reset && (!this.hasPendingActivity() || this.activityPollAttempts >= ACTIVITY_POLL_LIMIT)) return;
 
@@ -66,7 +64,7 @@ export function createActivityRefresh(context) {
       this.activityPollAttempts++;
       this.activityRefreshPending = true;
 
-      Promise.resolve(action.call(scopedWire))
+      Promise.resolve(action.call(this.$wire))
         .then(() => {
           if (profileId !== this.summary.id) return;
 
@@ -102,15 +100,23 @@ export function createActivityRefresh(context) {
         return !existing || JSON.stringify({ ...existing, ...profile }) !== JSON.stringify(existing);
       });
       const sectionNeedsRefresh =
-        ['timeline', 'queue', 'mail', 'notifications'].includes(this.selected) && (backgroundChanged || relatedChanged);
+        ['timeline', 'queue', 'mail', 'notifications'].includes(this.selected) &&
+        (backgroundChanged || relatedChanged);
 
       this.summary = nextSummary;
       this.activityRefreshError = null;
       this.rememberProfile(this.summary);
-      (Array.isArray(relatedProfiles) ? relatedProfiles : []).forEach((profile) => this.receiveProfile(profile));
+      (Array.isArray(relatedProfiles) ? relatedProfiles : []).forEach((profile) =>
+        this.receiveProfile(profile),
+      );
       this.activityRefreshPending = false;
 
-      if (sectionNeedsRefresh && this.inspectorOpen && this.loadedSection === this.selected && !this.sectionLoading) {
+      if (
+        sectionNeedsRefresh &&
+        this.inspectorOpen &&
+        this.loadedSection === this.selected &&
+        !this.sectionLoading
+      ) {
         this.requestSection(this.selected, true);
       }
 

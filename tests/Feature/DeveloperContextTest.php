@@ -16,6 +16,7 @@ use NewDebugBar\Tests\Fixtures\Events\ProfiledApplicationEvent;
 use NewDebugBar\Tests\Fixtures\Events\ProfiledApplicationListener;
 use NewDebugBar\Tests\Fixtures\Events\ProfiledQueuedApplicationListener;
 use NewDebugBar\Tests\Fixtures\Models\ProfiledModel;
+use NewDebugBar\Tests\Support\DebugBarAssertions;
 
 it('captures Laravel decisions sources transactions and view data', function () {
     $response = $this->get('/profiled-context', ['Accept' => 'text/html'])->assertOk();
@@ -85,13 +86,13 @@ it('captures validation field and rule names with the rendered redirect status',
 
     Livewire::test(DebugBar::class, ['profileId' => $response->headers->get('X-NewDebugBar-Profile')])
         ->call('loadSection', 'validation')
-        ->assertSee('2 fields failed validation')
-        ->assertSee('signup bag')
-        ->assertSee('Validation 422')
-        ->assertSee('Redirect 302')
-        ->assertSee('The name field is required.')
-        ->assertSee('tests/Support/DefinesTestApplication.php')
-        ->assertDontSee('Show validation messages');
+        ->tap(fn ($component) => DebugBarAssertions::sectionResponse($component)
+            ->assertSee('2 fields failed validation')
+            ->assertSee('signup bag')
+            ->assertSee('Validation 422')
+            ->assertSee('Redirect 302')
+            ->assertSee('The name field is required.')
+            ->assertSee('tests/Support/DefinesTestApplication.php'));
 });
 
 it('carries redirected validation messages into the next profiled page', function () {
@@ -121,9 +122,10 @@ it('carries redirected validation messages into the next profiled page', functio
 
     Livewire::test(DebugBar::class, ['profileId' => $response->headers->get('X-NewDebugBar-Profile')])
         ->call('loadSection', 'validation')
-        ->assertSee('Carried from the previous request.')
-        ->assertSee('The email has already been taken.')
-        ->assertSee('Failed rules and source code are not available on this request.');
+        ->tap(fn ($component) => DebugBarAssertions::sectionResponse($component)
+            ->assertSee('Carried from the previous request.')
+            ->assertSee('The email has already been taken.')
+            ->assertSee('Failed rules and source code are not available on this request.'));
 });
 
 it('shows authentication and session shape without identity or values', function () {

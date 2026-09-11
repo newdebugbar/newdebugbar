@@ -9,11 +9,15 @@ permissions:
 
 jobs:
   package:
-    name: Laravel ${{ matrix.laravel }} / PHP ${{ matrix.php }}
+    name: Laravel ${{ matrix.laravel }} / PHP ${{ matrix.php }} / Livewire ${{ matrix.livewire }}
     runs-on: ubuntu-24.04
+    env:
+      NEWDEBUGBAR_TEST_LIVEWIRE: ${{ matrix.livewire }}
     strategy:
       fail-fast: false
       matrix:
+        laravel: ['10', '11', '12', '13']
+        livewire: ['4.3.4', '^4.3.4']
         include:
           - laravel: '10'
             php: '8.1'
@@ -39,6 +43,9 @@ jobs:
             mcp: '^0.9'
             testbench: '^11.1'
             pest: '^4.4'
+          - laravel: '10'
+            livewire: '4.3.4'
+            framework: '10.49.0'
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -47,14 +54,21 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
       - run: composer remove --dev pestphp/pest-plugin-browser --no-update
+      - if: matrix.php != '8.5'
+        run: composer remove --dev laravel/pint --no-update
       - if: matrix.php == '8.1'
-        run: composer remove --dev laravel/pint larastan/larastan --no-update
+        run: composer remove --dev larastan/larastan --no-update
       - run: composer config platform.php ${{ matrix.php }}.0
       - if: matrix.laravel == '10' || matrix.laravel == '11'
         run: composer config policy.advisories.block false
-      - run: composer require --no-update "laravel/framework:${{ matrix.framework }}" "laravel/mcp:${{ matrix.mcp }}"
-      - run: composer require --dev --no-update "orchestra/testbench:${{ matrix.testbench }}" "pestphp/pest:${{ matrix.pest }}"
-      - run: composer update --with-all-dependencies --prefer-dist --no-interaction --no-progress
+      - run: >-
+          composer update livewire/livewire laravel/framework laravel/mcp orchestra/testbench pestphp/pest
+          --with-all-dependencies --minimal-changes --prefer-dist --no-interaction --no-progress
+          --with "laravel/framework:${{ matrix.framework }}"
+          --with "laravel/mcp:${{ matrix.mcp }}"
+          --with "orchestra/testbench:${{ matrix.testbench }}"
+          --with "pestphp/pest:${{ matrix.pest }}"
+          --with "livewire/livewire:${{ matrix.livewire }}"
       - if: matrix.laravel == '13'
         run: composer validate --strict
       - name: Audit dependencies
@@ -96,8 +110,22 @@ jobs:
       - run: git diff --exit-code -- dist
 
   browser:
-    name: Browser
+    name: Browser / Livewire ${{ matrix.livewire }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      COMPOSER_PROCESS_TIMEOUT: '0'
+      NEWDEBUGBAR_TEST_LIVEWIRE: ${{ matrix.livewire }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - livewire: '4.3.4'
+            framework: '^12.41'
+            testbench: '^10.0'
+          - livewire: '^4.3.4'
+            framework: '^13.0'
+            testbench: '^11.1'
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -109,7 +137,13 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: composer install --prefer-dist --no-interaction --no-progress
+      - run: >-
+          composer update livewire/livewire laravel/framework orchestra/testbench
+          --with-all-dependencies --minimal-changes --prefer-dist --no-interaction --no-progress
+          --with "laravel/framework:${{ matrix.framework }}"
+          --with "orchestra/testbench:${{ matrix.testbench }}"
+          --with "livewire/livewire:${{ matrix.livewire }}"
+      - run: vendor/bin/pest tests/Architecture/DependencyCompatibilityTest.php
       - run: npm ci
       - run: composer lint:check
       - run: npx playwright install --only-shell chromium

@@ -9,7 +9,11 @@ test('timeline filters request the full capture and preserve detail navigation',
     'timeline',
     {
       ...summary,
-      sections: [...summary.sections, { key: 'timeline', label: 'Timeline' }, { key: 'events', label: 'Events' }],
+      sections: [
+        ...summary.sections,
+        { key: 'timeline', label: 'Timeline' },
+        { key: 'events', label: 'Events' },
+      ],
     },
     browser,
   );
@@ -117,20 +121,14 @@ test('timeline loads bounded pages near the scroll end and exposes retry state',
   const nextSentinel = { isConnected: true };
   let resolvePage;
   let pageCalls = 0;
-  const scopedWire = {
+  const wire = {
     loadMoreTimeline() {
+      assert.equal(this, wire);
       pageCalls++;
 
       return new Promise((resolve) => {
         resolvePage = resolve;
       });
-    },
-  };
-  const wire = {
-    $island(name) {
-      assert.equal(name, 'section-details');
-
-      return scopedWire;
     },
   };
 
@@ -160,7 +158,7 @@ test('timeline loads bounded pages near the scroll end and exposes retry state',
   assert.equal(observers.length, 2);
   assert.equal(observers[1].target, nextSentinel);
 
-  scopedWire.loadMoreTimeline = async () => {
+  wire.loadMoreTimeline = async () => {
     pageCalls++;
     throw new Error('expired');
   };
@@ -172,7 +170,7 @@ test('timeline loads bounded pages near the scroll end and exposes retry state',
   assert.equal(await observers[1].callback(), false);
   assert.equal(pageCalls, failedPageCalls);
 
-  scopedWire.loadMoreTimeline = async () => {
+  wire.loadMoreTimeline = async () => {
     pageCalls++;
   };
   assert.equal(await state.retryTimelinePage(wire), true);

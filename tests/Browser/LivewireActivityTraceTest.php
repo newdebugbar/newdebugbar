@@ -144,11 +144,35 @@ it('keeps activity evidence and every trace step together with accessible help',
         ->assertScript($assertHelp)
         ->click($first)
         ->assertMissing($help)
-        ->keys($first, 'Tab')
+        ->keys($first, 'Tab');
+
+    $page->script('new Promise(resolve => setTimeout(() => resolve(true), 0))');
+
+    $page
         ->assertScript('document.activeElement === document.querySelector(\''.$second.'\')')
         ->assertVisible($help)
         ->assertScript($assertHelp)
-        ->keys($second, 'Escape')
+        ->keys($second, 'Escape');
+
+    $page->script('new Promise(resolve => setTimeout(() => resolve(true), 0))');
+
+    // Removing an overlay can reveal another trigger beneath a stationary pointer.
+    $page->script(<<<'JS'
+        (() => {
+            const trigger = document.querySelector('[data-ndb-livewire-phase="Queued"] [data-ndb-livewire-phase-trigger]');
+
+            for (const type of ['pointerenter', 'pointermove']) {
+                trigger.dispatchEvent(new PointerEvent(type, { pointerType: 'mouse', movementX: 0, movementY: 0 }));
+            }
+
+            return new Promise(resolve => setTimeout(() => resolve(true), 0));
+        })()
+        JS);
+
+    $page
+        ->assertScript(<<<'JS'
+            Alpine.$data(document.querySelector('[data-ndb-livewire-trace]')).phaseHelpIndex === null
+            JS)
         ->assertMissing($help)
         ->assertVisible('[data-ndb-livewire-activity-evidence]')
         ->assertScript('document.activeElement === document.querySelector(\''.$second.'\')')

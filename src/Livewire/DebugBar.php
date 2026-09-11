@@ -22,6 +22,8 @@ final class DebugBar extends Component
 
     private const TIMELINE_KEY_SECTIONS = ['request', 'queries', 'http_client', 'exceptions', 'authorization', 'validation', 'queue'];
 
+    private bool $sectionNeedsRender = false;
+
     /** @var array<string, string> */
     private const SECTION_DESCRIPTIONS = [
         'authorization' => 'See what Laravel allowed or denied, for which user and arguments, then inspect the policy or Gate and source.',
@@ -88,6 +90,7 @@ final class DebugBar extends Component
         $this->summary = $this->makeSummary($profile, $summaries);
     }
 
+    #[Renderless]
     public function loadSection(
         string $section,
         ProfileStore $store,
@@ -110,10 +113,12 @@ final class DebugBar extends Component
 
         $this->selectedSection = $section;
         $this->sectionLoaded = true;
+        $this->sectionNeedsRender = true;
         $this->dispatch('newdebugbar-section-loaded', section: $section, profileId: $this->profileId);
         $this->dispatch('newdebugbar-content-updated');
     }
 
+    #[Renderless]
     public function loadMoreTimeline(
         ProfileStore $store,
         ProfilePresenter $presenter,
@@ -125,10 +130,12 @@ final class DebugBar extends Component
         $profile = $presenter->present($stored);
         $items = $this->filteredTimelineItems((array) ($profile['sections']['timeline']['payload']['items'] ?? []));
         $this->timelineLimit = min(count($items), $this->timelineLimit + self::TIMELINE_PAGE_SIZE);
+        $this->sectionNeedsRender = true;
         $this->dispatch('newdebugbar-section-loaded', section: 'timeline', profileId: $this->profileId);
         $this->dispatch('newdebugbar-content-updated');
     }
 
+    #[Renderless]
     public function filterTimeline(string $filter, string $search): void
     {
         abort_unless($this->sectionLoaded && $this->selectedSection === 'timeline', 422);
@@ -138,6 +145,7 @@ final class DebugBar extends Component
         $this->timelineFilter = $filter;
         $this->timelineSearch = $search;
         $this->timelineLimit = self::TIMELINE_PAGE_SIZE;
+        $this->sectionNeedsRender = true;
         $this->dispatch('newdebugbar-content-updated');
     }
 
@@ -334,6 +342,25 @@ final class DebugBar extends Component
     public function render(): View
     {
         return view('newdebugbar::livewire.debug-bar');
+    }
+
+    public function hasRenderedIslandFragments(): bool
+    {
+        return $this->sectionNeedsRender || parent::hasRenderedIslandFragments();
+    }
+
+    /** @return array<int, string> */
+    public function getRenderedIslandFragments(): array
+    {
+        if ($this->sectionNeedsRender) {
+            // Livewire collects fragments after every action has run. Render once here
+            // so batches use their final section, profile, filter, and page on all 4.x.
+            unset($this->profile);
+            $this->renderIsland('section-details');
+            $this->sectionNeedsRender = false;
+        }
+
+        return parent::getRenderedIslandFragments();
     }
 
     /**

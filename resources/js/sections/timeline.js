@@ -77,9 +77,7 @@ export function createTimeline(context) {
         return Promise.resolve(false);
       }
 
-      const island = wire?.$island;
-      const scopedWire = typeof island === 'function' ? island.call(wire, 'section-details') : wire;
-      const action = scopedWire?.loadMoreTimeline;
+      const action = wire?.loadMoreTimeline;
 
       if (typeof action !== 'function') {
         this.timelinePaginationError = true;
@@ -92,7 +90,7 @@ export function createTimeline(context) {
       this.timelineLoadingMore = true;
       this.timelinePaginationError = false;
 
-      return Promise.resolve(action.call(scopedWire))
+      return Promise.resolve(action.call(wire))
         .then(() => {
           if (request !== this.timelinePaginationRequest || profileId !== shell.summary.id) return false;
 
@@ -135,18 +133,21 @@ export function createTimeline(context) {
     },
 
     async applyTimelineFilters(wire = this.$wire) {
-      if (this.destroyed || profileId !== shell.summary.id || !shell.inspectorOpen || shell.selected !== 'timeline')
+      if (
+        this.destroyed ||
+        profileId !== shell.summary.id ||
+        !shell.inspectorOpen ||
+        shell.selected !== 'timeline'
+      )
         return;
-      const island = wire?.$island;
-      const scopedWire = typeof island === 'function' ? island.call(wire, 'section-details') : wire;
-      if (typeof scopedWire?.filterTimeline !== 'function') return;
+      if (typeof wire?.filterTimeline !== 'function') return;
 
       this.resetTimelinePagination();
       const request = this.timelinePaginationRequest;
       this.timelineFiltering = true;
       this.timelineFilterError = false;
       try {
-        await scopedWire.filterTimeline(this.timelineFilter, this.timelineSearch);
+        await wire.filterTimeline(this.timelineFilter, this.timelineSearch);
       } catch {
         if (request === this.timelinePaginationRequest && profileId === shell.summary.id)
           this.timelineFilterError = true;
@@ -155,7 +156,10 @@ export function createTimeline(context) {
           this.timelineFiltering = false;
           this.$nextTick?.(() => {
             this.syncTimelineSelection();
-            this.$refs?.timelineList?.scrollTo?.({ top: 0, behavior: 'instant' });
+            this.$refs?.timelineList?.scrollTo?.({
+              top: 0,
+              behavior: 'instant',
+            });
             const sentinel = this.$root?.querySelector?.('[data-ndb-timeline-page-sentinel]');
             if (sentinel) this.observeTimelinePageEnd(sentinel, wire);
           });

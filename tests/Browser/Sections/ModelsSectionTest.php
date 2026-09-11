@@ -538,7 +538,7 @@ it('shows original Blade and compiled source paths in normal interface type', fu
         ->assertSee('Blade template')
         ->assertSee('tests/Fixtures/views/model-compiled.blade.php')
         ->assertSee('Compiled location')
-        ->assertSee('storage/framework/views/')
+        ->assertSee(str_replace(base_path().'/', '', config('view.compiled')))
         ->assertScript(<<<'JS'
             (() => {
                 window.newdebugbarModelCompiledClipboard = [];
