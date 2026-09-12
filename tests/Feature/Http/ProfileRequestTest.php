@@ -44,6 +44,21 @@ it('loads the toolbar state before Livewire starts Alpine', function () {
         ->and($toolbar)->toBeLessThan($livewireScript);
 });
 
+it('shields the parsed toolbar from host Alpine instances until Livewire boots', function () {
+    $response = response('<!doctype html><html><body>Application response</body></html>');
+
+    app(BarInjector::class)->inject($response, (string) Str::uuid());
+
+    $content = $response->getContent();
+    $toolbar = strpos($content, 'id="newdebugbar"');
+    $guard = strpos($content, '._x_ignore = true');
+    $livewireScript = strpos($content, 'data-update-uri=');
+
+    expect($guard)->toBeInt()
+        ->and($toolbar)->toBeLessThan($guard)
+        ->and($guard)->toBeLessThan($livewireScript);
+});
+
 it('serves its compiled assets through local package routes', function () {
     $response = $this->get('/__newdebugbar/assets/newdebugbar.css')
         ->assertOk()

@@ -113,6 +113,38 @@ trait DefinesTestApplication
             fn () => $profiledPage('Second request', '/profiled', 'Previous request'),
         );
 
+        $router->get('/host-alpine/alpine.js', fn () => response()->file(
+            dirname(__DIR__, 2).'/node_modules/alpinejs/dist/module.esm.js',
+            ['Content-Type' => 'application/javascript'],
+        ));
+
+        $router->middleware(ProfileRequest::class)->get('/host-alpine', function () {
+            foreach (['alpha', 'beta'] as $value) {
+                DB::select('select ? as host_alpine_value', [$value]);
+            }
+
+            return response(<<<'HTML'
+                <!doctype html>
+                <html>
+                    <head>
+                        <meta name="viewport" content="width=device-width, initial-scale=1">
+                        <title>Host Alpine</title>
+                        <script type="module">
+                            import Alpine from '/host-alpine/alpine.js';
+
+                            window.Alpine = Alpine;
+                            Alpine.start();
+                        </script>
+                    </head>
+                    <body>
+                        <main>
+                            <h1 data-testid="host-page" x-data="{ shown: true }" x-show="shown">Host Alpine page</h1>
+                        </main>
+                    </body>
+                </html>
+                HTML);
+        });
+
         $router->middleware(ProfileRequest::class)->get('/profiled-timeline-long', function () {
             foreach (range(1, 110) as $number) {
                 DB::select($number === 110 ? 'select ? as final_timeline_number' : 'select ? as timeline_number', [$number]);

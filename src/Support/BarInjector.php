@@ -12,6 +12,17 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /** Adds the Livewire toolbar and package assets to supported HTML responses. */
 final class BarInjector
 {
+    /**
+     * A host page may start its own Alpine instance, and whichever instance
+     * initializes the toolbar first owns it. A host instance lacks Livewire's
+     * `$wire` support, so this flag makes every Alpine instance skip the toolbar
+     * until the bundle releases it to Livewire's own Alpine on `livewire:init`
+     * (see resources/js/alpine-handoff.js).
+     */
+    private const ALPINE_HANDOFF_GUARD = '<script data-navigate-once="true">'
+        ."(() => { const el = document.getElementById('newdebugbar'); if (el) el._x_ignore = true; })()"
+        .'</script>';
+
     public function __construct(
         private readonly LivewireManager $livewire,
         private readonly AssetUrl $assets,
@@ -36,6 +47,7 @@ final class BarInjector
             .'<link rel="stylesheet" href="'.$stylesheet.'" data-navigate-once="true">';
         $body = '<script src="'.$script.'" data-navigate-once="true"></script>'
             .$component
+            .self::ALPINE_HANDOFF_GUARD
             .$livewireScripts;
         if (preg_match('/<\/head\s*>/i', $html) === 1) {
             $html = preg_replace('/<\/head\s*>/i', $head.'$0', $html, 1) ?? $html;
