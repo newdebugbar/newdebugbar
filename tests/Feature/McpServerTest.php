@@ -718,7 +718,7 @@ it('masks captured view values at the MCP boundary', function () {
     expect($views['data']['payload']['items'][0]['data'])
         ->label->toBe('[string]')
         ->private_value->toBe('[string]')
-        ->rows->toBe('[array]');
+        ->rows->toBe('[string]');
 });
 
 it('paginates one inspector and hides private request values', function () {

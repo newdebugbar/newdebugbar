@@ -3,6 +3,7 @@
 namespace NewDebugBar\Support;
 
 use Closure;
+use Countable;
 use Illuminate\Auth\Access\Events\GateEvaluated;
 use Illuminate\Auth\Access\Response as AuthorizationResponse;
 use Illuminate\Bus\Queueable;
@@ -59,6 +60,7 @@ use Illuminate\Routing\Events\PreparingResponse;
 use Illuminate\Routing\Events\ResponsePrepared;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Routing\Events\Routing;
+use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 use NewDebugBar\ProfileManager;
 use NewDebugBar\Storage\BackgroundActivityStore;
@@ -1393,21 +1395,20 @@ final class EventRegistrar
         return $data;
     }
 
+    /**
+     * Blade's @include forwards the caller's entire scope, so every nested
+     * partial repeats the same collections. Expanding them costs
+     * O(views × data) per request and runs accessors that can lazy-load
+     * relations, so arrayables are labelled instead; the redactor labels any
+     * other object by class.
+     */
     private function normalizeViewDataValue(mixed $value, int $depth = 0): mixed
     {
-        if ($depth >= 5) {
-            return $value;
-        }
-
         if ($value instanceof Arrayable) {
-            try {
-                $value = $value->toArray();
-            } catch (Throwable) {
-                return $value;
-            }
+            return $this->arrayableLabel($value);
         }
 
-        if (! is_array($value)) {
+        if ($depth >= 5 || ! is_array($value)) {
             return $value;
         }
 
@@ -1416,6 +1417,23 @@ final class EventRegistrar
         }
 
         return $value;
+    }
+
+    private function arrayableLabel(Arrayable $value): string
+    {
+        if ($value instanceof Model) {
+            $key = $value->getKey();
+
+            return '['.$value::class.(is_scalar($key) ? '#'.$key : '').']';
+        }
+
+        if ($value instanceof Countable && ! $value instanceof LazyCollection) {
+            $count = count($value);
+
+            return '['.$value::class.': '.$count.' '.($count === 1 ? 'item' : 'items').']';
+        }
+
+        return '['.$value::class.']';
     }
 
     private function manager(): ProfileManager
