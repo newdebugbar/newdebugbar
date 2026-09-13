@@ -2,6 +2,7 @@
 
 use NewDebugBar\Collectors\CacheCollector;
 use NewDebugBar\Collectors\ExceptionCollector;
+use NewDebugBar\Collectors\ItemCollector;
 use NewDebugBar\Collectors\LogCollector;
 use NewDebugBar\Collectors\QueryCollector;
 use NewDebugBar\Collectors\RedisCollector;
@@ -254,4 +255,26 @@ it('does not remove an older direct Redis command for a dropped cache command', 
         'duration_ms' => 1.25,
         'failed_count' => 0,
     ])->and($redis->payload()['items'][0]['key_hashes'])->toBe(['direct-key']);
+});
+
+it('does not redact items it drops past the collector cap', function () {
+    $collector = new ItemCollector(new Redactor, maxItems: 1, collectorKey: 'views', collectorLabel: 'Views');
+    $stringified = new class implements Stringable
+    {
+        public int $casts = 0;
+
+        public function __toString(): string
+        {
+            $this->casts++;
+
+            return 'view-data';
+        }
+    };
+
+    $collector->record(['name' => 'retained']);
+    $collector->record(['name' => 'dropped', 'data' => $stringified]);
+
+    expect($stringified->casts)->toBe(0)
+        ->and($collector->summary())->toMatchArray(['retained_count' => 1, 'dropped_count' => 1])
+        ->and($collector->payload()['items'][0]['name'])->toBe('retained');
 });
