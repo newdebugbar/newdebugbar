@@ -1,11 +1,32 @@
 <?php
 
+use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Contracts\Support\Renderable;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 use Illuminate\View\Component;
 use Illuminate\View\ComponentSlot;
 use Illuminate\View\InvokableComponentVariable;
 use NewDebugBar\Support\Redactor;
+
+/** Records whether reading a cached cast writes back to the model. @implements CastsAttributes<object, object> */
+final class RedactorCachedCast implements CastsAttributes
+{
+    public static int $writes = 0;
+
+    public function get(Model $model, string $key, mixed $value, array $attributes): object
+    {
+        return (object) ['value' => $value];
+    }
+
+    public function set(Model $model, string $key, mixed $value, array $attributes): array
+    {
+        self::$writes++;
+
+        return [$key => $value->value];
+    }
+}
 
 enum RedactorBackedValue: string
 {
@@ -52,6 +73,86 @@ it('bounds nested and long values', function () {
         'long' => 'abcd…',
         'nested' => ['too_deep' => '[maximum depth reached]'],
         '__truncated__' => 1,
+    ]);
+});
+
+it('captures stored model attributes and loaded relations while preserving visibility and cached casts', function () {
+    $model = new class extends Model
+    {
+        protected $casts = ['value' => RedactorCachedCast::class];
+    };
+    $owner = new class extends Model {};
+    $owner->setRawAttributes(['name' => 'Owner', 'email' => 'hidden@example.test', 'password' => 'secret'], true);
+    $owner->setHidden(['email']);
+    $model->setRawAttributes(['value' => 'stored', 'name' => 'Original name', 'private_note' => 'hidden', 'unlisted' => 'hidden'], true);
+    $model->name = 'Current name';
+    $model->setRelation('owner', $owner);
+    $model->setRelation('privateRelation', $owner);
+    $model->setVisible(['value', 'name', 'owner', 'private_note', 'privateRelation']);
+    $model->setHidden(['private_note', 'privateRelation']);
+    $cached = $model->value;
+    $cached->value = 'Held only in the cached cast';
+    RedactorCachedCast::$writes = 0;
+
+    expect((new Redactor)->clean($model, viewData: true))->toBe([
+        'value' => 'stored',
+        'name' => 'Current name',
+        'owner' => ['name' => 'Owner', 'password' => '[redacted]'],
+    ])->and(RedactorCachedCast::$writes)->toBe(0)
+        ->and($model->getRawOriginal('value'))->toBe('stored');
+});
+
+it('applies view item and depth limits before reading nested collection entries', function () {
+    $nested = new class extends Collection
+    {
+        public int $reads = 0;
+
+        public function all(): array
+        {
+            $this->reads++;
+
+            return [];
+        }
+    };
+    $redactor = new Redactor(maxDepth: 3, maxArrayItems: 2);
+
+    expect($redactor->clean([
+        'rows' => collect(['first' => $nested, 'second' => $nested, 'omitted' => $nested]),
+        'deep' => ['below' => ['ignored' => $nested]],
+        'omitted' => $nested,
+    ], viewData: true))->toBe([
+        'rows' => ['first' => [], 'second' => [], '__truncated__' => 1],
+        'deep' => ['below' => ['ignored' => '[maximum depth reached]']],
+        '__truncated__' => 1,
+    ])->and($nested->reads)->toBe(2);
+
+    expect($redactor->clean(['password' => $nested], viewData: true))->toBe(['password' => '[redacted]'])
+        ->and($nested->reads)->toBe(2);
+});
+
+it('contains failed object reads and cyclic relations within a view snapshot', function () {
+    $broken = new class extends Collection
+    {
+        public function all(): array
+        {
+            throw new RuntimeException('Unreadable collection');
+        }
+    };
+    $model = new class extends Model {};
+    $model->setRawAttributes(['name' => 'Related model'], true);
+    $model->setRelation('self', $model);
+
+    expect((new Redactor(maxDepth: 3))->clean([
+        'broken' => $broken,
+        'healthy' => 'Still retained',
+        'model' => $model,
+    ], viewData: true))->toBe([
+        'broken' => '['.$broken::class.']',
+        'healthy' => 'Still retained',
+        'model' => [
+            'name' => 'Related model',
+            'self' => ['name' => '[maximum depth reached]', 'self' => '[maximum depth reached]'],
+        ],
     ]);
 });
 

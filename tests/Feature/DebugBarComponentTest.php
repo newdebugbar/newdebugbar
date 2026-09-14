@@ -487,7 +487,7 @@ it('paginates long timelines in deterministic batches', function () {
 });
 
 it('keeps view data out of inspector html until its exact render asks', function () {
-    $profileId = $this->get('/profiled-views', ['Accept' => 'text/html'])
+    $profileId = $this->get('/profiled-context', ['Accept' => 'text/html'])
         ->assertOk()
         ->headers->get('X-NewDebugBar-Profile');
 
@@ -506,7 +506,8 @@ it('keeps view data out of inspector html until its exact render asks', function
 
     expect($data)
         ->label->toBe('Context view')
-        ->private_value->toBe('view-data-value');
+        ->private_value->toBe('view-data-value')
+        ->rows->toBe([['reference' => 'NL-1042', 'ready' => true, 'version_count' => 2]]);
 
     $component->call('loadViewData', 1);
 

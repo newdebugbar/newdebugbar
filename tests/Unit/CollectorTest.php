@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Collection;
 use NewDebugBar\Collectors\CacheCollector;
 use NewDebugBar\Collectors\ExceptionCollector;
 use NewDebugBar\Collectors\ItemCollector;
@@ -277,4 +278,25 @@ it('does not redact items it drops past the collector cap', function () {
     expect($stringified->casts)->toBe(0)
         ->and($collector->summary())->toMatchArray(['retained_count' => 1, 'dropped_count' => 1])
         ->and($collector->payload()['items'][0]['name'])->toBe('retained');
+});
+
+it('reads view collections only when their render is retained', function () {
+    $collector = new ItemCollector(new Redactor, maxItems: 1, collectorKey: 'views', collectorLabel: 'Views');
+    $rows = new class extends Collection
+    {
+        public int $reads = 0;
+
+        public function all(): array
+        {
+            $this->reads++;
+
+            return ['first' => 'Retained value'];
+        }
+    };
+    $collector->record(['name' => 'retained', 'data' => ['rows' => $rows]]);
+    $collector->record(['name' => 'dropped', 'data' => ['rows' => $rows]]);
+
+    expect($rows->reads)->toBe(1)
+        ->and($collector->payload()['items'][0]['data']['rows'])->toBe(['first' => 'Retained value'])
+        ->and($collector->summary())->toMatchArray(['count' => 2, 'retained_count' => 1, 'dropped_count' => 1]);
 });

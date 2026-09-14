@@ -25,4 +25,10 @@ final class ItemCollector extends AbstractCollector
     {
         return $this->collectorLabel;
     }
+
+    /** @param array<string, mixed> $item @return array<string, mixed> */
+    protected function cleanItem(array $item): array
+    {
+        return $this->redactor->clean($item, viewData: $this->collectorKey === 'views');
+    }
 }

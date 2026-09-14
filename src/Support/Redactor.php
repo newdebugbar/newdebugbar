@@ -5,8 +5,11 @@ namespace NewDebugBar\Support;
 use BackedEnum;
 use DateTimeInterface;
 use Illuminate\Contracts\Support\Renderable;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\View\InvokableComponentVariable;
 use Stringable;
+use Throwable;
 use UnitEnum;
 
 /** Converts captured values into bounded, JSON-safe data without rendering lazy view values. */
@@ -37,7 +40,8 @@ final class Redactor
         private readonly int $maxArrayItems = 100,
     ) {}
 
-    public function clean(mixed $value, int $depth = 0, ?string $key = null): mixed
+    /** View snapshots read stored state only, after applying the same capture limits and redaction. */
+    public function clean(mixed $value, int $depth = 0, ?string $key = null, bool $viewData = false): mixed
     {
         if ($key !== null && $this->isSensitive($key)) {
             return self::REDACTED;
@@ -47,11 +51,26 @@ final class Redactor
             return '[maximum depth reached]';
         }
 
+        if ($viewData && is_object($value)) {
+            try {
+                $value = match (true) {
+                    $value instanceof Model => $this->viewModelData($value),
+                    $value instanceof Collection => $value->all(),
+                    $value instanceof DateTimeInterface => $value->format(DateTimeInterface::ATOM),
+                    $value instanceof BackedEnum => $value->value,
+                    $value instanceof UnitEnum => $value->name,
+                    default => '['.$value::class.']',
+                };
+            } catch (Throwable) {
+                return '['.$value::class.']';
+            }
+        }
+
         if (is_array($value)) {
             $clean = [];
 
             foreach (array_slice($value, 0, $this->maxArrayItems, true) as $itemKey => $item) {
-                $clean[$itemKey] = $this->clean($item, $depth + 1, (string) $itemKey);
+                $clean[$itemKey] = $this->clean($item, $depth + 1, (string) $itemKey, $viewData);
             }
 
             if (count($value) > $this->maxArrayItems) {
@@ -97,6 +116,23 @@ final class Redactor
         }
 
         return $value;
+    }
+
+    /** @return array<string, mixed> */
+    private function viewModelData(Model $model): array
+    {
+        // Even getAttributes() executes cached casts. Read only Eloquent's stored
+        // attributes, loaded relations, and visibility rules without invoking model code.
+        $state = get_mangled_object_vars($model);
+        $data = array_merge($state["\0*\0attributes"], $state["\0*\0relations"]);
+        $visible = $state["\0*\0visible"];
+        $hidden = $state["\0*\0hidden"];
+
+        if ($visible !== []) {
+            $data = array_intersect_key($data, array_flip($visible));
+        }
+
+        return array_diff_key($data, array_flip($hidden));
     }
 
     /**

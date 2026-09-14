@@ -3,7 +3,6 @@
 namespace NewDebugBar\Support;
 
 use Closure;
-use Countable;
 use Illuminate\Auth\Access\Events\GateEvaluated;
 use Illuminate\Auth\Access\Response as AuthorizationResponse;
 use Illuminate\Bus\Queueable;
@@ -30,7 +29,6 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Database\Events\TransactionBeginning;
@@ -60,7 +58,6 @@ use Illuminate\Routing\Events\PreparingResponse;
 use Illuminate\Routing\Events\ResponsePrepared;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Routing\Events\Routing;
-use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 use NewDebugBar\ProfileManager;
 use NewDebugBar\Storage\BackgroundActivityStore;
@@ -673,7 +670,7 @@ final class EventRegistrar
                 'name' => $viewName,
                 'source' => is_string($path) ? $this->callSites->templateLocation($path) : null,
                 'composers' => $this->listenerDetails('composing: '.$viewName),
-                'data' => is_array($data) ? $this->normalizeViewData($data) : [],
+                'data' => is_array($data) ? $data : [],
                 'timing' => 'composition_marker',
             ]);
         });
@@ -1383,57 +1380,6 @@ final class EventRegistrar
         } catch (Throwable) {
             return null;
         }
-    }
-
-    /** @param array<array-key, mixed> $data @return array<array-key, mixed> */
-    private function normalizeViewData(array $data): array
-    {
-        foreach ($data as $key => $value) {
-            $data[$key] = $this->normalizeViewDataValue($value);
-        }
-
-        return $data;
-    }
-
-    /**
-     * Blade's @include forwards the caller's entire scope, so every nested
-     * partial repeats the same collections. Expanding them costs
-     * O(views × data) per request and runs accessors that can lazy-load
-     * relations, so arrayables are labelled instead; the redactor labels any
-     * other object by class.
-     */
-    private function normalizeViewDataValue(mixed $value, int $depth = 0): mixed
-    {
-        if ($value instanceof Arrayable) {
-            return $this->arrayableLabel($value);
-        }
-
-        if ($depth >= 5 || ! is_array($value)) {
-            return $value;
-        }
-
-        foreach ($value as $key => $item) {
-            $value[$key] = $this->normalizeViewDataValue($item, $depth + 1);
-        }
-
-        return $value;
-    }
-
-    private function arrayableLabel(Arrayable $value): string
-    {
-        if ($value instanceof Model) {
-            $key = $value->getKey();
-
-            return '['.$value::class.(is_scalar($key) ? '#'.$key : '').']';
-        }
-
-        if ($value instanceof Countable && ! $value instanceof LazyCollection) {
-            $count = count($value);
-
-            return '['.$value::class.': '.$count.' '.($count === 1 ? 'item' : 'items').']';
-        }
-
-        return '['.$value::class.']';
     }
 
     private function manager(): ProfileManager

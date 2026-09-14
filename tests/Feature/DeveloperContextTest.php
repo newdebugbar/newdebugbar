@@ -35,7 +35,11 @@ it('captures Laravel decisions sources transactions and view data', function () 
         ->and($profile['inspectors']['views']['payload']['items'][0])
         ->data->label->toBe('Context view')
         ->data->private_value->toBe('view-data-value')
-        ->data->rows->toBe('[Illuminate\\Support\\Collection: 1 item]')
+        ->data->rows->toBe([[
+            'reference' => 'NL-1042',
+            'ready' => true,
+            'version_count' => 2,
+        ]])
         ->render_order->toBe(1)
         ->source->file->toBe('tests/Fixtures/views/context.blade.php');
 

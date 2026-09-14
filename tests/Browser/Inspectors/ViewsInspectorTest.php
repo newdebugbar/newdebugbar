@@ -2,6 +2,51 @@
 
 use NewDebugBar\Tests\Support\DebugBarBrowser;
 
+it('opens retained collection values after refreshing and reopening the Views inspector', function (int $width, int $height, string $theme) {
+    $page = visit('/profiled-context')->resize($width, $height);
+    $preferences = json_encode(['theme' => $theme, 'favorites' => []], JSON_THROW_ON_ERROR);
+    $page->script('localStorage.setItem("newdebugbar.preferences.v1", '.json_encode($preferences, JSON_THROW_ON_ERROR).')');
+    $page->refresh();
+
+    foreach (range(1, 2) as $opening) {
+        if ($width < 640) {
+            $page->click('[data-ndb-mobile-toolbar-trigger="actions"]')
+                ->click('[data-ndb-mobile-toolbar-action="inspector"]')
+                ->click('[data-ndb-header-mobile-trigger="actions"]');
+        } else {
+            $page->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
+        }
+
+        $page->click('[data-ndb-select-inspector="views"]')
+            ->click('[data-ndb-view-group="view-1"]')
+            ->waitForText('NL-1042')
+            ->assertAttribute('#newdebugbar', 'data-ndb-theme', $theme)
+            ->assertScript(<<<'JS'
+                (() => {
+                    const code = document.querySelector('[data-ndb-view-data] code');
+                    const data = JSON.parse(code.textContent);
+
+                    return data.rows[0].reference === 'NL-1042'
+                        && data.rows[0].ready === true
+                        && data.rows[0].version_count === 2;
+                })()
+                JS)
+            ->assertNoJavaScriptErrors();
+
+        if ($opening === 1) {
+            if ($width < 640) {
+                $page->click('[data-ndb-header-mobile-trigger="actions"]')
+                    ->click('[data-ndb-header-mobile-action="shrink"]');
+            } else {
+                $page->click('[data-ndb-window-controls="expanded"] [data-ndb-window-action="shrink"]');
+            }
+        }
+    }
+})->with([
+    'desktop dark' => [1280, 720, 'dark'],
+    'mobile light' => [390, 844, 'light'],
+]);
+
 it('keeps application views primary and lazily inspects one desktop render', function () {
     $page = visit('/profiled-views');
     $page->script("localStorage.setItem('newdebugbar.preferences.v1', JSON.stringify({theme: 'dark', favorites: []}))");
