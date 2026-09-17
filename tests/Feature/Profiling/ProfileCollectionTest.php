@@ -283,7 +283,7 @@ it('captures bounded redacted outbound HTTP request and response evidence', func
     expect($inspector['summary'])
         ->count->toBe(2)
         ->failed_count->toBe(1)
-        ->duration_ms->toBeFloat()
+        ->duration_ms->toBeNumeric()->toBeGreaterThanOrEqual(0)
         ->and($inspector['payload']['items'][0])
         ->method->toBe('GET')
         ->url->toBe('https://api.example.test/v1/patients?token=%5Bredacted%5D&limit=5')

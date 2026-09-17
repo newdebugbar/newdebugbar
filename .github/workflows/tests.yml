@@ -9,30 +9,54 @@ permissions:
 
 jobs:
   package:
-    name: Laravel ${{ matrix.laravel }} / PHP ${{ matrix.php }}
+    name: Laravel ${{ matrix.laravel }} / PHP ${{ matrix.php }} / MCP ${{ matrix.mcp }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - laravel: "11"
-            php: "8.2"
-            framework: "^11.47.0"
+        laravel: ["10", "11", "12", "13"]
+        php: ["8.1", "8.2", "8.3", "8.4", "8.5"]
+        mcp: [">=0.4 <1.0", "^1.0"]
+        exclude:
+          - laravel: "10"
             mcp: "^1.0"
+          - laravel: "10"
+            php: "8.4"
+          - laravel: "10"
+            php: "8.5"
+          - laravel: "11"
+            php: "8.1"
+          - laravel: "11"
+            php: "8.5"
+          - laravel: "12"
+            php: "8.1"
+          - laravel: "13"
+            php: "8.1"
+          - laravel: "13"
+            php: "8.2"
+        include:
+          - laravel: "10"
+            framework: "^10.49"
+            testbench: "^8.36"
+            pest: "2.36.0"
+          - laravel: "11"
+            framework: "^11.45"
             testbench: "^9.15"
             pest: "^3.8.5"
           - laravel: "12"
-            php: "8.2"
             framework: "^12.41.1"
-            mcp: "^1.0"
             testbench: "^10.8"
             pest: "^3.8.5"
           - laravel: "13"
-            php: "8.5"
             framework: "^13.0"
-            mcp: "^1.0"
             testbench: "^11.1"
-            pest: "^4.3.2"
+            pest: "^4.4"
+          - laravel: "10"
+            php: "8.1"
+            framework: "^10.49"
+            mcp: "0.4.0"
+            testbench: "^8.36"
+            pest: "2.36.0"
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -41,16 +65,20 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
       - run: composer remove --dev pestphp/pest-plugin-browser --no-update
+      - if: matrix.laravel == '10'
+        run: composer remove --dev larastan/larastan --no-update
+      - if: matrix.php == '8.1'
+        run: composer remove --dev laravel/pint --no-update
       - run: composer config platform.php ${{ matrix.php }}.0
-      - if: matrix.laravel == '11'
+      - if: matrix.laravel == '10' || matrix.laravel == '11'
         run: composer config policy.advisories.block false
       - run: composer require --no-update "laravel/framework:${{ matrix.framework }}" "laravel/mcp:${{ matrix.mcp }}"
       - run: composer require --dev --no-update "orchestra/testbench:${{ matrix.testbench }}" "pestphp/pest:${{ matrix.pest }}"
       - run: composer update --with-all-dependencies --prefer-dist --no-interaction --no-progress
-      - if: matrix.laravel == '13'
+      - if: matrix.laravel == '13' && matrix.php == '8.5' && matrix.mcp == '^1.0'
         run: composer validate --strict
       - name: Audit dependencies
-        if: matrix.laravel == '13'
+        if: matrix.laravel == '13' && matrix.php == '8.5' && matrix.mcp == '^1.0'
         run: |
           for audit_attempt in 1 2 3; do
             audit_exit=0
@@ -68,9 +96,22 @@ jobs:
             echo "::warning::Packagist audit request failed; retrying in ${audit_delay} seconds."
             sleep "$audit_delay"
           done
-      - if: matrix.laravel == '13'
+      - if: matrix.laravel == '13' && matrix.php == '8.5' && matrix.mcp == '^1.0'
         run: composer analyse
       - run: composer test:php
+
+  mcp-windows:
+    name: MCP stdio / Windows
+    runs-on: windows-2025
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: "8.3"
+          coverage: none
+      - run: composer install --prefer-dist --no-interaction --no-progress
+      - run: php vendor/bin/pest tests/Integration/McpStdioTest.php
 
   frontend:
     name: Frontend

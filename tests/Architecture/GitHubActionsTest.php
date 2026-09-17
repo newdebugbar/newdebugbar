@@ -12,7 +12,7 @@ it('pins CI runners and external actions', function () {
     expect($runnerMatches[1])->not->toBeEmpty();
 
     foreach ($runnerMatches[1] as $runner) {
-        expect($runner)->toBe('ubuntu-24.04');
+        expect($runner)->toBeIn(['ubuntu-24.04', 'windows-2025']);
     }
 
     preg_match_all('/^\s*- uses:\s+([^\s#]+)/m', $workflow, $actionMatches);
