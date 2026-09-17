@@ -148,3 +148,11 @@ jobs:
       - run: composer lint:check
       - run: npx playwright install --only-shell chromium
       - run: composer test:browser
+      - name: Upload browser failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: browser-failure-screenshots
+          path: tests/Browser/Screenshots
+          if-no-files-found: ignore
+          retention-days: 7

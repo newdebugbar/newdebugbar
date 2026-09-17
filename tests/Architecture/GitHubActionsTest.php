@@ -15,7 +15,7 @@ it('pins CI runners and external actions', function () {
         expect($runner)->toBeIn(['ubuntu-24.04', 'windows-2025']);
     }
 
-    preg_match_all('/^\s*- uses:\s+([^\s#]+)/m', $workflow, $actionMatches);
+    preg_match_all('/^\s*(?:-\s*)?uses:\s+([^\s#]+)/m', $workflow, $actionMatches);
     expect($actionMatches[1])->not->toBeEmpty();
 
     foreach ($actionMatches[1] as $action) {

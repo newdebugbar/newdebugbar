@@ -66,7 +66,7 @@ it('reorders favorites with the keyboard and drag and drop', function () {
     $page->keys('[data-ndb-select-inspector="logs"]', 'Shift+ArrowUp');
     DebugBarBrowser::assertFavoriteOrder($page, 'logs,request,queries');
 
-    $page->drag('[data-ndb-inspector="queries"]', '[data-ndb-inspector="logs"]');
+    DebugBarBrowser::dragInspector($page, 'queries', 'logs');
     DebugBarBrowser::assertFavoriteOrder($page, 'queries,logs,request');
 
     $page

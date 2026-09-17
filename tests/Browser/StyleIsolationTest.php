@@ -1447,10 +1447,8 @@ it('keeps host styles and package styles isolated', function () {
                 };
                 const failures = Object.entries(checks).filter(([, passed]) => ! passed).map(([name]) => name);
 
-                if (failures.length > 0) throw new Error('Mobile workspace isolation failed: ' + failures.join(', '));
-
-                return true;
+                return failures;
             })()
-            JS)
+            JS, [])
         ->assertNoJavaScriptErrors();
 });

@@ -329,6 +329,7 @@ it('adapts the model list and details into a mobile drill in flow', function () 
         ->click('[data-ndb-header-mobile-trigger="actions"]')
         ->click('[data-ndb-header-mobile-action="palette"]')
         ->click('[data-ndb-command="inspector:models"]')
+        ->assertScript(DebugBarBrowser::waitForDetailsScript())
         ->assertVisible('[data-ndb-model-list]')
         ->assertScript(<<<'JS'
             (() => {

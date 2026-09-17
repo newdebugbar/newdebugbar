@@ -57,7 +57,29 @@ it('navigates and saves inspector ordering inside either mobile menu', function 
 
     DebugBarBrowser::assertFavoriteOrder($page, 'request,queries,models');
 
+    $page->script(<<<'JS'
+        window.newdebugbarInspectorDragEvents = [];
+        for (const type of ['dragstart', 'dragover', 'drop', 'dragend']) {
+            document.getElementById('newdebugbar').addEventListener(type, (event) => {
+                window.newdebugbarInspectorDragEvents.push({ type: event.type, trusted: event.isTrusted });
+            }, { capture: true });
+        }
+        JS);
+
     DebugBarBrowser::dragInspector($page, 'models', 'queries');
+
+    $page->assertScript(<<<'JS'
+        (() => {
+            const events = window.newdebugbarInspectorDragEvents;
+            const types = events.map((event) => event.type);
+
+            return events.every((event) => event.trusted)
+                && types[0] === 'dragstart'
+                && types.includes('dragover')
+                && types.indexOf('dragover') < types.indexOf('drop')
+                && types.at(-1) === 'dragend';
+        })()
+        JS);
 
     DebugBarBrowser::assertFavoriteOrder($page, 'request,models,queries');
 
