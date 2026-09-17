@@ -223,6 +223,11 @@ final class DebugBarBrowser
                     viewport: [innerWidth, innerHeight],
                     favorites: [...Alpine.$data(document.getElementById('newdebugbar')).favorites],
                     saved: JSON.parse(localStorage.getItem('newdebugbar.preferences.v1'))?.favorites,
+                    rows: [...document.querySelectorAll('#newdebugbar [data-ndb-favorite="true"]')].map(row => ({
+                        key: row.dataset.ndbInspector,
+                        sortKey: row._x_sort_key,
+                        box: row.getBoundingClientRect().toJSON(),
+                    })),
                     events: window.newdebugbarInspectorDragEvents ?? [],
                 }))()
                 JS);

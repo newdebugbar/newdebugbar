@@ -77,8 +77,6 @@ it('navigates and saves inspector ordering inside either mobile menu', function 
                     rows: [...root.querySelectorAll('[data-ndb-favorite="true"]')].map(row => ({
                         key: row.dataset.ndbInspector,
                         sortKey: row._x_sort_key,
-                        top: row.getBoundingClientRect().top,
-                        height: row.getBoundingClientRect().height,
                     })),
                 });
                 if (window.newdebugbarInspectorDragEvents.length > 40) window.newdebugbarInspectorDragEvents.shift();
@@ -127,7 +125,7 @@ it('navigates and saves inspector ordering inside either mobile menu', function 
 })->with([
     'short light phone' => ['light', 320, 568],
     'dark phone' => ['dark', 390, 844],
-]);
+])->with(range(1, 8));
 
 it('keeps mobile metric values readable across duration formats', function (int $width) {
     $page = visit('/profiled')
