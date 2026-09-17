@@ -13,6 +13,9 @@ abstract class TestCase extends Orchestra
 {
     use DefinesTestApplication;
 
+    /** @var array<string, mixed> */
+    protected array $environmentOverrides = [];
+
     protected function getPackageProviders($app): array
     {
         return [
@@ -54,6 +57,7 @@ abstract class TestCase extends Orchestra
         ];
         $app['config']->set('logging.channels', $loggingChannels);
         $app['config']->set('queue.default', 'sync');
+        $app['config']->set($this->environmentOverrides);
     }
 
     protected function setUp(): void

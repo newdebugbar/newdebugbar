@@ -7,13 +7,13 @@ return [
     |--------------------------------------------------------------------------
     |
     | The "enabled" value controls all profiling, routes, interface work, and
-    | the local MCP server. It defaults to true so installing the development
-    | package is enough to use it. Set the environment variable to false when
-    | a local task needs the package installed but completely inactive.
+    | the local MCP server. Null follows Laravel's app.debug setting, which
+    | normally comes from APP_DEBUG. Set the environment variable to true or
+    | false to override that default within the allowed environments.
     |
     */
 
-    'enabled' => env('NEWDEBUGBAR_ENABLED', true),
+    'enabled' => env('NEWDEBUGBAR_ENABLED'),
 
     /*
     |--------------------------------------------------------------------------

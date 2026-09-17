@@ -193,6 +193,10 @@ final class NewDebugBarServiceProvider extends ServiceProvider
 
     public function boot(Router $router, Dispatcher $events): void
     {
+        if (config('newdebugbar.enabled') === null) {
+            config(['newdebugbar.enabled' => (bool) config('app.debug', false)]);
+        }
+
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'newdebugbar');
 
         $this->publishes([
