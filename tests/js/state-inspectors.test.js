@@ -79,6 +79,33 @@ test('favorites can be pinned and reordered', () => {
   assert.deepEqual(visibleKeys(), ['queries', 'request', 'logs']);
 });
 
+test('drag changes persist before drop for both navigation groups', () => {
+  const browser = runtime({ favorites: ['request', 'queries'] });
+  const state = createNewDebugBar(summary, browser);
+  state.init();
+
+  state.inspectorSortConfig.onChange({
+    item: { dataset: { ndbInspector: 'queries' } },
+    newDraggableIndex: 0,
+  });
+
+  assert.deepEqual(state.favorites, ['queries', 'request']);
+  assert.deepEqual(JSON.parse(browser.values.get(STORAGE_KEY)).favorites, ['queries', 'request']);
+
+  state.toggleFavorite('request');
+  state.inspectorSortConfig.onChange({
+    item: { dataset: { ndbInspector: 'request' } },
+    newDraggableIndex: 0,
+  });
+
+  assert.deepEqual(state.inspectorOrder, ['request', 'logs', 'queries']);
+  assert.deepEqual(JSON.parse(browser.values.get(STORAGE_KEY)).inspectorOrder, [
+    'request',
+    'logs',
+    'queries',
+  ]);
+});
+
 test('inspector order survives reload, skips quiet inspectors, and stays independent of favorites', () => {
   const browser = runtime({
     favorites: ['request'],

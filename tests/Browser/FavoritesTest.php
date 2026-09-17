@@ -77,3 +77,66 @@ it('reorders favorites with the keyboard and drag and drop', function () {
 
     $page->assertNoJavaScriptErrors();
 });
+
+it('keeps a dragged favorite in place when the profile refreshes', function (string $theme, int $width, int $height) {
+    $page = visit('/profiled')->resize($width, $height);
+    $preferences = json_encode([
+        'theme' => $theme,
+        'favorites' => ['request', 'queries', 'models'],
+    ], JSON_THROW_ON_ERROR);
+    $page->script("localStorage.setItem('newdebugbar.preferences.v1', JSON.stringify({$preferences}))");
+    $page->refresh();
+
+    if ($width < 640) {
+        $page->click('[data-ndb-mobile-toolbar-trigger="actions"]')
+            ->click('[data-ndb-mobile-toolbar-action="inspector"]')
+            ->assertScript(DebugBarBrowser::waitForDetailsScript())
+            ->click('[data-ndb-header-mobile-trigger="actions"]');
+    } else {
+        $page->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]')
+            ->assertScript(DebugBarBrowser::waitForDetailsScript());
+    }
+
+    $page->script(<<<'JS'
+        const root = document.getElementById('newdebugbar');
+        window.newdebugbarProfileRefreshedDuringDrag = false;
+        root.querySelector('[data-ndb-sort-group="favorites"]').addEventListener('change', () => {
+            const state = Alpine.$data(root);
+            window.newdebugbarProfileRefreshedDuringDrag = true;
+            window.dispatchEvent(new CustomEvent('newdebugbar-profile-refreshed', {
+                detail: {
+                    summary: {
+                        ...state.summary,
+                        completion_state: 'complete',
+                        inspectors: state.summary.inspectors.map(inspector => ({ ...inspector })),
+                    },
+                    relatedProfiles: [],
+                },
+            }));
+        }, { once: true });
+        JS);
+
+    DebugBarBrowser::dragInspector($page, 'models', 'queries');
+
+    $page->assertScript('window.newdebugbarProfileRefreshedDuringDrag');
+    DebugBarBrowser::assertFavoriteOrder($page, 'request,models,queries');
+
+    $page->refresh();
+    if ($width < 640) {
+        $page->click('[data-ndb-mobile-toolbar-trigger="actions"]');
+    } else {
+        $page->click('[data-ndb-window-controls="compact"] [data-ndb-window-action="expand"]');
+    }
+
+    DebugBarBrowser::assertFavoriteOrder($page, 'request,models,queries');
+    $page->assertNoJavaScriptErrors();
+})->with([
+    'tall light desktop' => ['light', 1440, 1100],
+    'tall dark desktop' => ['dark', 1440, 1100],
+    'short light desktop' => ['light', 1440, 700],
+    'short dark desktop' => ['dark', 1440, 700],
+    'light phone' => ['light', 390, 844],
+    'dark phone' => ['dark', 390, 844],
+    'short light phone' => ['light', 320, 568],
+    'short dark phone' => ['dark', 320, 568],
+]);

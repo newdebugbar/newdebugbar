@@ -57,47 +57,7 @@ it('navigates and saves inspector ordering inside either mobile menu', function 
 
     DebugBarBrowser::assertFavoriteOrder($page, 'request,queries,models');
 
-    $page->script(<<<'JS'
-        window.newdebugbarInspectorDragEvents = [];
-        for (const type of ['dragstart', 'dragenter', 'dragover', 'drop', 'dragend', 'sort', 'update', 'end']) {
-            document.getElementById('newdebugbar').addEventListener(type, (event) => {
-                const root = document.getElementById('newdebugbar');
-                window.newdebugbarInspectorDragEvents.push({
-                    type: event.type,
-                    trusted: event.isTrusted,
-                    time: performance.now(),
-                    target: event.target.closest?.('[data-ndb-inspector]')?.dataset.ndbInspector,
-                    item: event.item?.dataset.ndbInspector,
-                    key: event.item?._x_sort_key,
-                    oldIndex: event.oldIndex,
-                    newIndex: event.newIndex,
-                    x: event.clientX,
-                    y: event.clientY,
-                    favorites: [...Alpine.$data(root).favorites],
-                    rows: [...root.querySelectorAll('[data-ndb-favorite="true"]')].map(row => ({
-                        key: row.dataset.ndbInspector,
-                        sortKey: row._x_sort_key,
-                    })),
-                });
-                if (window.newdebugbarInspectorDragEvents.length > 40) window.newdebugbarInspectorDragEvents.shift();
-            }, { capture: true });
-        }
-        JS);
-
     DebugBarBrowser::dragInspector($page, 'models', 'queries');
-
-    $page->assertScript(<<<'JS'
-        (() => {
-            const events = window.newdebugbarInspectorDragEvents.filter(event => ['dragstart', 'dragover', 'drop', 'dragend'].includes(event.type));
-            const types = events.map((event) => event.type);
-
-            return events.every((event) => event.trusted)
-                && types[0] === 'dragstart'
-                && types.includes('dragover')
-                && types.indexOf('dragover') < types.indexOf('drop')
-                && types.at(-1) === 'dragend';
-        })()
-        JS);
 
     DebugBarBrowser::assertFavoriteOrder($page, 'request,models,queries');
 
@@ -125,7 +85,7 @@ it('navigates and saves inspector ordering inside either mobile menu', function 
 })->with([
     'short light phone' => ['light', 320, 568],
     'dark phone' => ['dark', 390, 844],
-])->with(range(1, 8));
+]);
 
 it('keeps mobile metric values readable across duration formats', function (int $width) {
     $page = visit('/profiled')

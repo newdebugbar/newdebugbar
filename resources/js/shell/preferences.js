@@ -87,6 +87,9 @@ export function createPreferences(context) {
             if (preview !== item) preview.setAttribute('x-ignore', '');
           });
         },
+        // Keep Alpine's order current so a profile refresh cannot undo a drag before drop.
+        onChange: ({ item, newDraggableIndex }) =>
+          this.sortInspector(item.dataset.ndbInspector, newDraggableIndex),
         onEnd: null,
       };
     },

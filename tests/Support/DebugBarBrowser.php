@@ -2,9 +2,7 @@
 
 namespace NewDebugBar\Tests\Support;
 
-use Pest\Browser\Playwright\Client;
 use PHPUnit\Framework\ExpectationFailedException;
-use ReflectionProperty;
 
 /** Waits for rendered inspector state and drives native browser gestures in tests. */
 final class DebugBarBrowser
@@ -225,10 +223,8 @@ final class DebugBarBrowser
                     saved: JSON.parse(localStorage.getItem('newdebugbar.preferences.v1'))?.favorites,
                     rows: [...document.querySelectorAll('#newdebugbar [data-ndb-favorite="true"]')].map(row => ({
                         key: row.dataset.ndbInspector,
-                        sortKey: row._x_sort_key,
                         box: row.getBoundingClientRect().toJSON(),
                     })),
-                    events: window.newdebugbarInspectorDragEvents ?? [],
                 }))()
                 JS);
 
@@ -246,30 +242,7 @@ final class DebugBarBrowser
         $encodedSelector = json_encode($sourceSelector, JSON_THROW_ON_ERROR);
         $page->script("document.querySelector({$encodedSelector}).scrollIntoView({block: 'center'})");
 
-        $browser = $page->page();
-        $browser->locator($sourceSelector)->hover();
-        $targetBox = $browser->locator('[data-ndb-inspector="'.$target.'"]')->boundingBox();
-        expect($targetBox)->not->toBeNull();
-        $destination = [
-            'x' => $targetBox['x'] + $targetBox['width'] / 2,
-            'y' => $targetBox['y'] + $targetBox['height'] / 2,
-        ];
-
-        // Pest exposes the page but no mouse API; use its existing Playwright channel.
-        $guid = (new ReflectionProperty($browser, 'guid'))->getValue($browser);
-        $mouse = fn (string $method, array $parameters) => iterator_to_array(
-            Client::instance()->execute($guid, $method, $parameters),
-        );
-        $mouse('mouseDown', ['button' => 'left']);
-
-        try {
-            $mouse('mouseMove', $destination);
-            $page->assertScript("document.querySelector({$encodedSelector}).classList.contains('ndb-inspector-dragging')");
-            // Playwright requires a second move to reliably deliver dragover before drop.
-            $mouse('mouseMove', $destination);
-        } finally {
-            $mouse('mouseUp', ['button' => 'left']);
-        }
+        $page->drag($sourceSelector, '[data-ndb-inspector="'.$target.'"]');
     }
 
     public static function selectInspectorViaPalette(mixed $page, string $inspector): void
