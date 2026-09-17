@@ -11,5 +11,5 @@ parameters:
         - config
     stubFiles:
         - phpstan/stubs/laravel-events.stub
-    phpVersion: 80100
+    phpVersion: 80200
     tmpDir: .phpstan.cache

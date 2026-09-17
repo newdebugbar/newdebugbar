@@ -8,43 +8,68 @@ use Laravel\Mcp\Schema\Implementation;
 test('the real stdio server advertises complete profile access', function () {
     $root = dirname(__DIR__, 2);
     $files = new Filesystem;
-    $cachePath = sys_get_temp_dir().'/newdebugbar-mcp-'.bin2hex(random_bytes(8));
+    $cachePath = $root.'/.phpunit.cache/newdebugbar-mcp-'.bin2hex(random_bytes(8));
     $files->ensureDirectoryExists($cachePath, 0700);
-    $client = new Client(
-        new class('/usr/bin/env', ['APP_ENV=local', 'APP_PACKAGES_CACHE='.$cachePath.'/packages.php', 'APP_SERVICES_CACHE='.$cachePath.'/services.php', PHP_BINARY, $root.'/vendor/bin/testbench', 'mcp:start', 'newdebugbar']) extends StdioTransport
-        {
-            public function receive(): string
-            {
-                $line = parent::receive();
-
-                if (json_decode($line, true) === null) {
-                    throw new RuntimeException('Unexpected MCP subprocess output: '.substr(
-                        ($this->process?->getOutput() ?? $line).($this->process?->getErrorOutput() ?? ''),
-                        0,
-                        4_000,
-                    ));
-                }
-
-                return $line;
-            }
-        },
-        new Implementation('newdebugbar-tests', '1.0.0'),
-    );
+    $cacheEnvironmentPath = $cachePath;
+    if (DIRECTORY_SEPARATOR === '\\'
+        && strlen($cachePath) >= 3
+        && $cachePath[1] === ':'
+        && ($cachePath[2] === '\\' || $cachePath[2] === '/')) {
+        $cacheEnvironmentPath = substr($cachePath, 2);
+    }
+    $environment = [
+        'APP_ENV' => 'local',
+        'APP_PACKAGES_CACHE' => $cacheEnvironmentPath.'/packages.php',
+        'APP_SERVICES_CACHE' => $cacheEnvironmentPath.'/services.php',
+    ];
+    $previousEnvironment = [];
+    $client = null;
 
     try {
+        foreach ($environment as $name => $value) {
+            $previousEnvironment[$name] = [
+                'getenv' => getenv($name),
+                'env_exists' => array_key_exists($name, $_ENV),
+                'env' => $_ENV[$name] ?? null,
+            ];
+            putenv("{$name}={$value}");
+            $_ENV[$name] = $value;
+        }
+
+        $client = new Client(
+            new class(PHP_BINARY, [$root.'/vendor/bin/testbench', 'mcp:start', 'newdebugbar']) extends StdioTransport
+            {
+                public function receive(): string
+                {
+                    $line = parent::receive();
+
+                    if (json_decode($line, true) === null) {
+                        throw new RuntimeException('Unexpected MCP subprocess output: '.substr(
+                            ($this->process?->getOutput() ?? $line).($this->process?->getErrorOutput() ?? ''),
+                            0,
+                            4_000,
+                        ));
+                    }
+
+                    return $line;
+                }
+            },
+            new Implementation('newdebugbar-tests', '1.0.0'),
+        );
+
         $client->withTimeout(10)->connect();
-        $initialization = $client->initializeResult();
+        $discovery = $client->discoverResult();
         $tools = $client->tools();
         $missing = $client->callTool('get-debug-profile-data', [
             'profile_id' => '00000000-0000-4000-8000-000000000000',
             'path' => '/inspectors',
         ]);
 
-        expect($initialization?->serverInfo->name)->toBe('New Debug Bar')
+        expect($discovery?->serverInfo?->name)->toBe('New Debug Bar')
             ->and($files->exists($cachePath.'/packages.php'))->toBeTrue()
             ->and($files->exists($cachePath.'/services.php'))->toBeTrue()
-            ->and($initialization?->serverInfo->version)->toBe('1.1.0')
-            ->and($initialization?->instructions)->toContain('get-debug-profile-data', '/inspectors')
+            ->and($discovery?->serverInfo?->version)->toBe('1.1.0')
+            ->and($discovery?->instructions)->toContain('get-debug-profile-data', '/inspectors')
             ->and($tools->keys()->all())->toBe([
                 'list-debug-profiles',
                 'get-debug-profile-inspector',
@@ -64,7 +89,18 @@ test('the real stdio server advertises complete profile access', function () {
                 ],
             ]);
     } finally {
-        $client->disconnect();
+        $client?->disconnect();
+        foreach ($previousEnvironment as $name => $environment) {
+            $environment['getenv'] === false
+                ? putenv($name)
+                : putenv("{$name}={$environment['getenv']}");
+
+            if ($environment['env_exists']) {
+                $_ENV[$name] = $environment['env'];
+            } else {
+                unset($_ENV[$name]);
+            }
+        }
         $files->deleteDirectory($cachePath);
     }
 })->skip(
