@@ -3,6 +3,7 @@
 namespace NewDebugBar\Tests\Support;
 
 use Pest\Browser\Playwright\Client;
+use PHPUnit\Framework\ExpectationFailedException;
 use ReflectionProperty;
 
 /** Waits for rendered inspector state and drives native browser gestures in tests. */
@@ -210,11 +211,28 @@ final class DebugBarBrowser
 
     public static function assertFavoriteOrder(mixed $page, string $order): void
     {
-        $page->assertScript(<<<'JS'
+        try {
+            $page->assertScript(<<<'JS'
             Array.from(document.querySelectorAll('#newdebugbar [data-ndb-inspector][data-ndb-favorite="true"]'))
                 .map((inspector) => inspector.dataset.ndbInspector)
                 .join(',')
             JS, $order);
+        } catch (ExpectationFailedException $exception) {
+            $diagnostics = $page->script(<<<'JS'
+                (() => ({
+                    viewport: [innerWidth, innerHeight],
+                    favorites: [...Alpine.$data(document.getElementById('newdebugbar')).favorites],
+                    saved: JSON.parse(localStorage.getItem('newdebugbar.preferences.v1'))?.favorites,
+                    events: window.newdebugbarInspectorDragEvents ?? [],
+                }))()
+                JS);
+
+            throw new ExpectationFailedException(
+                $exception->getMessage()."\nInspector drag diagnostics: ".json_encode($diagnostics, JSON_THROW_ON_ERROR),
+                $exception->getComparisonFailure(),
+                $exception,
+            );
+        }
     }
 
     public static function dragInspector(mixed $page, string $source, string $target): void

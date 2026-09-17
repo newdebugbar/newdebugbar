@@ -59,9 +59,29 @@ it('navigates and saves inspector ordering inside either mobile menu', function 
 
     $page->script(<<<'JS'
         window.newdebugbarInspectorDragEvents = [];
-        for (const type of ['dragstart', 'dragover', 'drop', 'dragend']) {
+        for (const type of ['dragstart', 'dragenter', 'dragover', 'drop', 'dragend', 'sort', 'update', 'end']) {
             document.getElementById('newdebugbar').addEventListener(type, (event) => {
-                window.newdebugbarInspectorDragEvents.push({ type: event.type, trusted: event.isTrusted });
+                const root = document.getElementById('newdebugbar');
+                window.newdebugbarInspectorDragEvents.push({
+                    type: event.type,
+                    trusted: event.isTrusted,
+                    time: performance.now(),
+                    target: event.target.closest?.('[data-ndb-inspector]')?.dataset.ndbInspector,
+                    item: event.item?.dataset.ndbInspector,
+                    key: event.item?._x_sort_key,
+                    oldIndex: event.oldIndex,
+                    newIndex: event.newIndex,
+                    x: event.clientX,
+                    y: event.clientY,
+                    favorites: [...Alpine.$data(root).favorites],
+                    rows: [...root.querySelectorAll('[data-ndb-favorite="true"]')].map(row => ({
+                        key: row.dataset.ndbInspector,
+                        sortKey: row._x_sort_key,
+                        top: row.getBoundingClientRect().top,
+                        height: row.getBoundingClientRect().height,
+                    })),
+                });
+                if (window.newdebugbarInspectorDragEvents.length > 40) window.newdebugbarInspectorDragEvents.shift();
             }, { capture: true });
         }
         JS);
@@ -70,7 +90,7 @@ it('navigates and saves inspector ordering inside either mobile menu', function 
 
     $page->assertScript(<<<'JS'
         (() => {
-            const events = window.newdebugbarInspectorDragEvents;
+            const events = window.newdebugbarInspectorDragEvents.filter(event => ['dragstart', 'dragover', 'drop', 'dragend'].includes(event.type));
             const types = events.map((event) => event.type);
 
             return events.every((event) => event.trusted)
