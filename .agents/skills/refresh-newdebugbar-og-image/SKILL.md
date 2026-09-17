@@ -11,12 +11,12 @@ A refresh updates the real product evidence, not the design. Use the current OG 
 
 Inspect current Git state and project instructions in each repository touched. These are the expected locations; verify them rather than assuming the checkout or running assets are current.
 
-| Purpose | Location |
-| --- | --- |
-| Package | `/Users/benjamin/Sites/new-debug-bar` |
-| Benchmark | `/Users/benjamin/newdebugbar/benchmark` |
-| Populated request | `http://newdebugbar-benchmark.test/trips/kyoto-autumn` |
-| Website | `/Users/benjamin/newdebugbar/website` |
+| Purpose               | Location                                               |
+| --------------------- | ------------------------------------------------------ |
+| Package               | `/Users/benjamin/Sites/new-debug-bar`                  |
+| Benchmark             | `/Users/benjamin/newdebugbar/benchmark`                |
+| Populated request     | `http://newdebugbar-benchmark.test/trips/kyoto-autumn` |
+| Website               | `/Users/benjamin/newdebugbar/website`                  |
 | Local-only OG preview | `http://newdebugbar.test/__newdebugbar/social-preview` |
 
 Within the website:
@@ -36,6 +36,8 @@ When the bar has changed, take a fresh capture; re-exporting an old screenshot i
 Use the built-in browser first. Inspect the existing source image, then capture the real populated **Requests inspector in dark mode**, retaining its story and useful Favorites. Do not switch to Queries, another tool, another theme, or invented data merely to improve the picture.
 
 Capture the complete product surface without the host page or scrim. Temporarily hide host siblings and make only the host backgrounds transparent; preserve product styling. A 1600 × 1000 desktop viewport at DPR 1 has been used for the current 1536 × 780 source. Confirm the actual surface bounds each time. Keep transparent outer corners, sharp UI text, and the real aspect ratio; never stretch the product to fit. Save and inspect the capture in a temporary location first.
+
+The product source must contain no visible scrollbars, including sidebar, nested inspector, table, code, or preview scrollbars. Suppress scrollbar painting with temporary capture-only CSS (`scrollbar-width: none` and scoped `::-webkit-scrollbar` rules), keeping scrolling and content intact. Do not rely on overlay scrollbars fading or hide overflow to remove them. Inspect the saved source at original resolution before composing it; downscaling and perspective can conceal defects. Reload or close the capture page afterward to remove temporary styles.
 
 **The current source is shared by the homepage and documentation.** If it is already current, reuse it. If it needs replacement and only the OG image was requested, resolve that scope before overwriting it: get approval to refresh the shared source, or isolate the new capture as an OG-only source under `resources/images/screenshots` and update only the OG template reference. Confirm that Vite can resolve any new source path; adding a file does not guarantee a manifest entry. Do not silently refresh all desktop/mobile or light/dark website assets. Preserve intrinsic dimensions in any consuming markup you do change.
 
@@ -58,7 +60,7 @@ Use browser rendering, not image generation or raster retouching. The approved B
 
 ## Finish within scope
 
-- Visually inspect the final PNG at 1200 × 630 and a 300-pixel-wide feed preview. Confirm the original positioning, crisp glowing description, softly separated 3D screenshot, and absence of host remnants, black bands, or accidental edge crops.
+- Visually inspect the final PNG at 1200 × 630 and a 300-pixel-wide feed preview. Confirm the original positioning, crisp glowing description, softly separated 3D screenshot, and absence of scrollbars within the screenshot, host remnants, black bands, or accidental edge crops. A scrollbar in either the source or final image requires recapture.
 - Replace the tracked final PNG only after inspection, then copy it unchanged to the package's `.github/readme/newdebugbar-og.png`. Keep the README's single OG image; do not restore the old standalone inspector screenshot. Keep only the needed image and source/template changes; do not add temporary captures or progress notes to either repository.
 - For routine OG refreshes, **do not run application tests, formatters, or builds**. If current package assets, a new source path, or stale preview CSS makes a build necessary, explain the concrete dependency and ask before running it; do not substitute stale evidence.
 - Commit the refresh locally with its matching source changes. Do not push or deploy until the user approves that refresh.
